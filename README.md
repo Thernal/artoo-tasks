@@ -34,3 +34,13 @@ ARTOO_PLUGIN_DEV="$PWD/target/debug/libartoo_tasks.dylib" path/to/artoo/target/d
 
 `ARTOO_TASKS_FIXTURE=<folder>` reads the API's answers from files there instead of the tracker
 (`_rest_api_2_issue_PAY-412.json`), for pictures that show no one's real work.
+
+## Tests
+
+`cargo test` builds the tests against the SDK like the plugin; the test binary then needs the SDK and Rust's own `std`
+on the library path, which Cargo does not give it on macOS:
+
+```sh
+DYLD_LIBRARY_PATH="path/to/artoo/target/debug/deps:$(rustc --print sysroot)/lib/rustlib/$(rustc -vV | sed -n 's/^host: //p')/lib" \
+  target/debug/deps/artoo_tasks-<hash>
+```

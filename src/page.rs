@@ -133,7 +133,7 @@ impl Page {
     }
 
     fn page_frame(&self) -> artoo_plugin_sdk::gpui::Div {
-        island().flex_1().flex().flex_col().min_h_0().bg(theme::editor())
+        island().flex_1().flex().flex_col().min_h_0().min_w_0().overflow_hidden().bg(theme::editor())
     }
 
     fn board_page(&mut self, cx: &mut Context<Self>) -> AnyElement {
@@ -193,7 +193,7 @@ impl Page {
                     .border_color(theme::border())
                     .child(filter),
             )
-            .child(div().id("tasks-list").flex_1().min_h_0().overflow_y_scroll().child(body))
+            .child(div().id("tasks-list").flex_1().min_h_0().flex().flex_col().overflow_y_scroll().child(body))
             .into_any_element()
     }
 
@@ -345,6 +345,7 @@ impl Page {
                     .child(head)
                     .child(
                         div()
+                            .w_full()
                             .flex()
                             .items_start()
                             .gap(px(16.))
@@ -360,7 +361,7 @@ impl Page {
     /// under its paragraph.
     fn description(&mut self, issue: &Issue, cx: &mut Context<Self>) -> AnyElement {
         let paras = model::paragraphs(&issue.description);
-        let mut body = div().flex().flex_col().gap(px(10.)).px(px(24.)).py(px(14.));
+        let mut body = div().flex().flex_col().gap(px(10.)).pl(px(12.)).pr(px(24.)).py(px(14.));
         if paras.is_empty() {
             body = body.child(div().text_size(px(13.)).text_color(theme::muted()).child("No description"));
         }
@@ -374,15 +375,16 @@ impl Page {
                     .group("para")
                     .relative()
                     .rounded(px(4.))
-                    .px(px(6.))
+                    .pl(px(28.))
+                    .pr(px(6.))
                     .py(px(2.))
                     .when(on, |d| d.bg(theme::agent_bg()))
                     .child(
                         div()
                             .id(SharedString::from(format!("para-add-{n}")))
                             .absolute()
-                            .left(px(-20.))
-                            .top(px(2.))
+                            .left(px(4.))
+                            .top(px(3.))
                             .size(px(18.))
                             .rounded(px(4.))
                             .flex()
@@ -394,7 +396,7 @@ impl Page {
                             .invisible()
                             .group_hover("para", |s| s.visible())
                             .when(on, |s| s.visible())
-                            .child(icons::icon("plus").size(px(12.)))
+                            .child(icons::icon("plus").size(px(12.)).text_color(theme::on_accent()))
                             .on_click(cx.listener(move |this, _, _, cx| this.open_note(key.clone(), n, cx))),
                     )
                     .child(div().text_size(px(13.)).line_height(px(20.)).text_color(theme::text()).child(para)),
@@ -437,7 +439,7 @@ impl Page {
                     .bg(theme::hover())
                     .text_size(px(11.))
                     .text_color(theme::muted())
-                    .child(icons::icon("pin").size(px(11.)))
+                    .child(icons::icon("pin").size(px(11.)).text_color(theme::muted()))
                     .child(place),
             )
             .into_any_element();
@@ -450,7 +452,7 @@ impl Page {
                 }
             });
         });
-        let add = controls::primary_button("tasks-note-add", "Add to drafts", "cmd-enter")
+        let add = controls::primary_button("tasks-note-add", "Add to drafts", "⌘↵")
             .bg(theme::agent())
             .on_click(cx.listener(|this, _, _, cx| this.add_note(cx)));
         let cancel = div()
@@ -574,7 +576,7 @@ impl Render for Page {
             Some(key) => self.issue_page(key, cx),
             None => self.board_page(cx),
         };
-        div().size_full().flex().flex_col().child(page)
+        div().size_full().min_w_0().flex().flex_col().child(page)
     }
 }
 
