@@ -25,6 +25,8 @@ pub const NOTE: &str = "tasks.note";
 /// A note for the agent being written on paragraph `para` of issue `key`'s description.
 struct Note {
     key: String,
+    /// The issue's site.
+    site: String,
     para: usize,
     compose: Compose,
 }
@@ -46,8 +48,9 @@ impl Page {
     pub fn show(&mut self, route: Option<&Route>, fresh: bool, cx: &mut Context<Self>) {
         self.route = route.cloned();
         let key = route.filter(|r| r.kind == ISSUE).and_then(places_of::key_of);
+        let site = route.and_then(places_of::site_of);
         self.store.update(cx, |s, cx| match key {
-            Some(key) => s.read_issue(&key, fresh, cx),
+            Some(key) => s.read_issue(&key, site.as_deref(), fresh, cx),
             None => {
                 s.read_boards(cx);
                 s.read_rows(fresh, cx);
@@ -60,9 +63,10 @@ impl Page {
         self.note.is_some()
     }
 
-    fn open_note(&mut self, key: String, para: usize, cx: &mut Context<Self>) {
+    fn open_note(&mut self, key: String, site: String, para: usize, cx: &mut Context<Self>) {
         self.note = Some(Note {
             key,
+            site,
             para,
             compose: Compose {
                 path: String::new(),
@@ -117,7 +121,7 @@ impl Page {
         if body.is_empty() {
             return;
         }
-        let data = places_of::paragraph_place(&note.key, note.para);
+        let data = places_of::paragraph_place(&note.key, &note.site, note.para);
         let agents = self
             .frame
             .services()
@@ -155,7 +159,7 @@ impl Page {
                 .into_any_element();
         }
         let mine = store.mine;
-        let rows = store.board.and_then(|b| store.rows.get(&(b, mine)));
+        let rows = store.board.clone().and_then(|b| store.rows.get(&(b, mine)));
         let body: AnyElement = match rows {
             None | Some(Read::Reading) => controls::skeleton("tasks-rows", 8),
             Some(Read::Failed(why)) => {
@@ -213,6 +217,7 @@ impl Page {
             }
         }
         states.sort_by_key(|(rank, _)| *rank);
+        let host = self.store.read(cx).board.as_ref().map(|b| b.0.clone());
         let mut list = div().flex().flex_col().px(px(8.)).py(px(6.));
         for (_, state) in states {
             let of: Vec<&Row> = rows.iter().filter(|r| r.state == state).collect();
@@ -227,7 +232,7 @@ impl Page {
                     .child(format!("{} {}", state.to_uppercase(), of.len())),
             );
             for r in of {
-                let key = r.key.clone();
+                let (key, host) = (r.key.clone(), host.clone());
                 let frame = self.frame.clone();
                 let who = r.assignee.clone().unwrap_or_else(|| "Unassigned".into());
                 list = list.child(
@@ -258,10 +263,9 @@ impl Page {
                                         .child(format!("{} · {who} · {}", r.kind, model::day(&r.updated))),
                                 ),
                         )
-                        .on_click(move |_, _, cx| frame.open(places_of::issue_route(&key), cx)),
+                        .on_click(move |_, _, cx| frame.open(places_of::issue_route(&key, host.as_deref()), cx)),
                 );
             }
-            let _ = &cx;
         }
         list.into_any_element()
     }
@@ -368,7 +372,7 @@ impl Page {
         }
         for (ix, para) in paras.into_iter().enumerate() {
             let n = ix + 1;
-            let key = issue.row.key.clone();
+            let (key, site) = (issue.row.key.clone(), issue.site.clone());
             let on = self.note.as_ref().is_some_and(|note| note.key == key && note.para == n);
             body = body.child(
                 div()
@@ -398,7 +402,7 @@ impl Page {
                             .group_hover("para", |s| s.visible())
                             .when(on, |s| s.visible())
                             .child(icons::icon("plus").size(px(12.)).text_color(theme::on_accent()))
-                            .on_click(cx.listener(move |this, _, _, cx| this.open_note(key.clone(), n, cx))),
+                            .on_click(cx.listener(move |this, _, _, cx| this.open_note(key.clone(), site.clone(), n, cx))),
                     )
                     .child(
                         div()
@@ -525,7 +529,7 @@ fn subtasks(issue: &Issue, frame: &Rc<dyn Frame>) -> impl IntoElement {
     let done = issue.subtasks.iter().filter(|s| s.category == "done").count();
     let mut list = div().flex().flex_col().py(px(4.));
     for s in &issue.subtasks {
-        let (key, frame) = (s.key.clone(), frame.clone());
+        let (key, site, frame) = (s.key.clone(), issue.site.clone(), frame.clone());
         list = list.child(
             artoo_plugin_sdk::kit::row(SharedString::from(format!("sub-{}", s.key)), false)
                 .h(px(36.))
@@ -543,7 +547,7 @@ fn subtasks(issue: &Issue, frame: &Rc<dyn Frame>) -> impl IntoElement {
                         .child(s.summary.clone()),
                 )
                 .child(div().text_size(px(12.)).text_color(theme::muted()).child(s.state.clone()))
-                .on_click(move |_, _, cx| frame.open(places_of::issue_route(&key), cx)),
+                .on_click(move |_, _, cx| frame.open(places_of::issue_route(&key, Some(&site)), cx)),
         );
     }
     section("Sub-tasks", None)
@@ -594,10 +598,10 @@ impl Render for Page {
     }
 }
 
-/// The side panel: the boards by site, the picked one filled.
-pub fn side(store: &Entity<Store>, frame: &Rc<dyn Frame>, cx: &mut App) -> AnyElement {
+/// The side panel at `width`: the boards by site, the picked one filled; the sites not read, and why.
+pub fn side(store: &Entity<Store>, frame: &Rc<dyn Frame>, width: f32, cx: &mut App) -> AnyElement {
     let s = store.read(cx);
-    let mut list = div().flex().flex_col().gap(px(2.)).px(px(8.)).py(px(8.));
+    let mut list = div().w(px(width)).min_w_0().flex().flex_col().gap(px(2.)).px(px(8.)).py(px(8.));
     list = list.child(
         div()
             .px(px(8.))
@@ -615,16 +619,16 @@ pub fn side(store: &Entity<Store>, frame: &Rc<dyn Frame>, cx: &mut App) -> AnyEl
                     site = b.site.clone();
                     list = list.child(div().px(px(8.)).pt(px(4.)).text_size(px(11.)).text_color(theme::faint()).child(site.clone()));
                 }
-                let (id, store, frame) = (b.id, store.clone(), frame.clone());
+                let (id, store, frame) = (b.key(), store.clone(), frame.clone());
                 list = list.child(
-                    artoo_plugin_sdk::kit::row(SharedString::from(format!("board-{}", b.id)), s.board == Some(b.id))
+                    artoo_plugin_sdk::kit::row(SharedString::from(format!("board-{}-{}", b.site, b.id)), s.board.as_ref() == Some(&id))
                         .h(px(30.))
                         .gap(px(8.))
                         .child(icons::icon("layers").size(px(14.)).text_color(theme::muted()))
                         .child(div().text_size(px(13.)).text_color(theme::text()).truncate().child(b.name.clone()))
                         .on_click(move |_, _, cx| {
                             store.update(cx, |s, cx| {
-                                s.board = Some(id);
+                                s.board = Some(id.clone());
                                 s.read_rows(false, cx);
                                 cx.notify();
                             });
@@ -635,6 +639,13 @@ pub fn side(store: &Entity<Store>, frame: &Rc<dyn Frame>, cx: &mut App) -> AnyEl
         }
         Some(Read::Failed(why)) => list = list.child(div().px(px(8.)).text_size(px(12.)).text_color(theme::muted()).child(why.clone())),
         _ => list = list.child(controls::skeleton("tasks-boards", 3)),
+    }
+    if matches!(s.boards, Some(Read::Done(_))) {
+        for why in &s.unread {
+            list = list.child(
+                div().w_full().px(px(8.)).pt(px(6.)).text_size(px(12.)).text_color(theme::muted()).child(why.clone()),
+            );
+        }
     }
     list.into_any_element()
 }

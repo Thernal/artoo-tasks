@@ -9,14 +9,21 @@ use artoo_plugin_sdk::serde_json::{self, Value, json};
 use artoo_plugin_sdk::tools::{self, Tool};
 use std::rc::Rc;
 
-/// The page of an issue: `tasks.issue`, its key.
+/// The page of an issue: `tasks.issue`, its key and the host of its site when known.
 pub const ISSUE: &str = "tasks.issue";
 
-pub fn issue_route(key: &str) -> Route {
-    Route {
-        kind: ISSUE.into(),
-        args: json!({ "key": key }).to_string(),
-    }
+pub fn issue_route(key: &str, site: Option<&str>) -> Route {
+    let args = match site {
+        Some(site) => json!({ "key": key, "site": site }),
+        None => json!({ "key": key }),
+    };
+    Route { kind: ISSUE.into(), args: args.to_string() }
+}
+
+/// An issue page's site, when it says.
+pub fn site_of(route: &Route) -> Option<String> {
+    let v: Value = serde_json::from_str(&route.args).ok()?;
+    v["site"].as_str().map(str::to_owned)
 }
 
 /// An issue page's key.
@@ -25,14 +32,19 @@ pub fn key_of(route: &Route) -> Option<String> {
     v["key"].as_str().map(str::to_owned)
 }
 
-fn first_site() -> Result<jira::Site, String> {
+/// The sites a tool reads: the one of host `site` when it names one, else every site.
+fn sites_for(site: Option<String>) -> Result<Vec<jira::Site>, String> {
     let (sites, missing) = jira::sites();
-    sites.into_iter().next().ok_or_else(|| {
-        missing
-            .first()
-            .cloned()
-            .unwrap_or_else(|| "No tracker is connected in Artoo".into())
-    })
+    if sites.is_empty() {
+        return Err(missing.first().cloned().unwrap_or_else(|| "No tracker is connected in Artoo".into()));
+    }
+    match site {
+        Some(host) => (sites.into_iter())
+            .find(|s| s.host() == host)
+            .map(|s| vec![s])
+            .ok_or_else(|| format!("No tracker at {host} is connected in Artoo")),
+        None => Ok(sites),
+    }
 }
 
 fn arg(args: &str, name: &str) -> Option<String> {
@@ -45,21 +57,22 @@ pub fn add_tools(cx: &mut App) {
     let issue = Tool {
         name: "jira.issue",
         description: "An issue of the team's Jira, whole: its facts, description, sub-tasks and comments",
-        input: r#"{"type":"object","properties":{"key":{"type":"string","description":"The issue's key, PAY-412"}},"required":["key"]}"#,
+        input: r#"{"type":"object","properties":{"key":{"type":"string","description":"The issue's key, PAY-412"},"site":{"type":"string","description":"The tracker's host, jira.example.com; every tracker connected when left out"}},"required":["key"]}"#,
         call: Rc::new(|args: String, cx: &mut App| -> Task<Result<String, String>> {
             let Some(key) = arg(&args, "key") else {
                 return Task::ready(Err("key is missing".into()));
             };
+            let site = arg(&args, "site");
             cx.background_spawn(async move {
-                let site = first_site()?;
-                model::read_issue(&site, &key).map(|i| model::digest(&i))
+                let sites = sites_for(site)?;
+                model::read_issue_on(&sites, &key).map(|i| model::digest(&i))
             })
         }),
     };
     let search = Tool {
         name: "jira.search",
         description: "Issues of the team's Jira a JQL query finds: each one's key, summary, state and assignee",
-        input: r#"{"type":"object","properties":{"jql":{"type":"string","description":"A JQL query: project = PAY AND status != Done"},"max":{"type":"integer","description":"At most this many, 20 when left out"}},"required":["jql"]}"#,
+        input: r#"{"type":"object","properties":{"jql":{"type":"string","description":"A JQL query: project = PAY AND status != Done"},"max":{"type":"integer","description":"At most this many from each tracker, 20 when left out"},"site":{"type":"string","description":"The tracker's host, jira.example.com; every tracker connected when left out"}},"required":["jql"]}"#,
         call: Rc::new(|args: String, cx: &mut App| -> Task<Result<String, String>> {
             let Some(jql) = arg(&args, "jql") else {
                 return Task::ready(Err("jql is missing".into()));
@@ -69,20 +82,29 @@ pub fn add_tools(cx: &mut App) {
                 .and_then(|v| v["max"].as_u64())
                 .unwrap_or(20)
                 .min(100) as usize;
+            let site = arg(&args, "site");
             cx.background_spawn(async move {
-                let site = first_site()?;
-                let rows = model::search(&site, &jql, max)?;
-                if rows.is_empty() {
-                    return Ok(format!("Nothing matches {jql}"));
+                let sites = sites_for(site)?;
+                let many = sites.len() > 1;
+                let (mut lines, mut unread) = (Vec::new(), Vec::new());
+                for site in &sites {
+                    match model::search(site, &jql, max) {
+                        Ok(rows) => lines.extend(rows.iter().map(|r| {
+                            let who = r.assignee.as_deref().unwrap_or("unassigned");
+                            let at = if many { format!(" · {}", site.host()) } else { String::new() };
+                            format!("{} {} ({} · {} · {who}{at})", r.key, r.summary, r.kind, r.state)
+                        })),
+                        Err(why) => unread.push(why),
+                    }
                 }
-                Ok(rows
-                    .iter()
-                    .map(|r| {
-                        let who = r.assignee.as_deref().unwrap_or("unassigned");
-                        format!("{} {} ({} · {} · {who})", r.key, r.summary, r.kind, r.state)
-                    })
-                    .collect::<Vec<_>>()
-                    .join("\n"))
+                if lines.is_empty() && !unread.is_empty() {
+                    return Err(unread.join("\n"));
+                }
+                if lines.is_empty() {
+                    lines.push(format!("Nothing matches {jql}"));
+                }
+                lines.extend(unread.into_iter().map(|why| format!("Not searched: {why}")));
+                Ok(lines.join("\n"))
             })
         }),
     };
@@ -93,9 +115,9 @@ pub fn add_tools(cx: &mut App) {
     }
 }
 
-/// A paragraph of an issue's description as a note's place: `{"key":"PAY-412","para":4}`.
-pub fn paragraph_place(key: &str, para: usize) -> String {
-    json!({ "key": key, "para": para }).to_string()
+/// A paragraph of an issue's description as a note's place: `{"key":"PAY-412","site":"jira.example.com","para":4}`.
+pub fn paragraph_place(key: &str, site: &str, para: usize) -> String {
+    json!({ "key": key, "site": site, "para": para }).to_string()
 }
 
 /// `jira.issue`: an issue, or a paragraph of its description; `jira.board`: a board as it is filtered.
@@ -130,7 +152,7 @@ pub fn add_places(cx: &mut App) {
         tool: Some("jira.issue"),
         route: Rc::new(|data: &str| {
             let v: Value = serde_json::from_str(data).ok()?;
-            Some(issue_route(v["key"].as_str()?))
+            Some(issue_route(v["key"].as_str()?, v["site"].as_str()))
         }),
     };
     let board = Kind {
@@ -145,9 +167,10 @@ pub fn add_places(cx: &mut App) {
         }),
         digest: Rc::new(|data: &str, cx: &App| {
             let v: Value = serde_json::from_str(data).unwrap_or_default();
-            let (board, mine) = (v["board"].as_u64().unwrap_or_default(), v["mine"].as_bool() == Some(true));
+            let site = v["site"].as_str().unwrap_or_default().to_owned();
+            let (board, mine) = ((site, v["board"].as_u64().unwrap_or_default()), v["mine"].as_bool() == Some(true));
             let store = store::peek(cx);
-            let rows = store.as_ref().and_then(|s| match s.read(cx).rows.get(&(board, mine)) {
+            let rows = store.as_ref().and_then(|s| match s.read(cx).rows.get(&(board.clone(), mine)) {
                 Some(store::Read::Done(rows)) => Some(rows.clone()),
                 _ => None,
             });
@@ -158,7 +181,7 @@ pub fn add_places(cx: &mut App) {
                     .map(|r| format!("{} {} ({})", r.key, r.summary, r.state))
                     .collect::<Vec<_>>()
                     .join("\n"),
-                None => format!("Board {board}."),
+                None => format!("Board {} on {}.", board.1, board.0),
             }
         }),
         tool: Some("jira.search"),

@@ -5,12 +5,21 @@ use crate::wiki;
 use artoo_plugin_sdk::core::markdown;
 use artoo_plugin_sdk::serde_json::Value;
 
+/// A board as the plugin keys it: its site's host and its id there — two sites may each have a board 7.
+pub type BoardId = (String, u64);
+
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Board {
     pub id: u64,
     pub name: String,
     /// The site it is on (its host).
     pub site: String,
+}
+
+impl Board {
+    pub fn key(&self) -> BoardId {
+        (self.site.clone(), self.id)
+    }
 }
 
 /// An issue as a list shows it.
@@ -32,6 +41,8 @@ pub struct Row {
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct Issue {
     pub row: Row,
+    /// The site it is on (its host).
+    pub site: String,
     pub description: String,
     pub reporter: Option<String>,
     pub labels: Vec<String>,
@@ -78,6 +89,7 @@ pub fn issue(site: &Site, v: &Value) -> Issue {
     let head = self::row(v);
     Issue {
         url: format!("{}/browse/{}", site.url, head.key),
+        site: site.host().to_owned(),
         row: head,
         description: text(&f["description"]),
         reporter: name(&f["reporter"]),
@@ -137,6 +149,22 @@ pub fn read_issue(site: &Site, key: &str) -> Result<Issue, String> {
         ),
     )?;
     Ok(issue(site, &v))
+}
+
+/// Issue `key` from the first of `sites` that has it: the others answer that they have no such issue.
+pub fn read_issue_on(sites: &[Site], key: &str) -> Result<Issue, String> {
+    let mut why = Vec::new();
+    for site in sites {
+        match read_issue(site, key) {
+            Ok(issue) => return Ok(issue),
+            Err(e) => why.push((e.contains(" has no "), e)),
+        }
+    }
+    match why.iter().find(|(none, _)| !none) {
+        Some((_, e)) => Err(e.clone()),
+        None if sites.is_empty() => Err("No tracker is connected".into()),
+        None => Err(format!("No tracker has {key}")),
+    }
 }
 
 /// The issues `jql` finds, at most `max`.

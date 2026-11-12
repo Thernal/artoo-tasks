@@ -21,8 +21,10 @@ https://jira.example.com
 https://example.atlassian.net you@example.com
 ```
 
-A site alone is Jira Server or Data Center, read with a personal access token; a site with an email is Jira Cloud,
-read with that email and an API token. The token is the file `~/.config/tokens/<host>`.
+Every site named is read: the side panel lists each one's boards under its host, an issue opens from its own site,
+and the agents' tools read them all (or the one a call names). A site alone is Jira Server or Data Center, read with a
+personal access token; a site with an email is Jira Cloud, read with that email and an API token. The token is the
+file `~/.config/tokens/<host>`.
 
 ## Build and run
 
@@ -34,7 +36,8 @@ ARTOO_PLUGIN_DEV="$PWD/target/debug/libartoo_tasks.dylib" path/to/artoo/target/d
 ```
 
 `ARTOO_TASKS_FIXTURE=<folder>` reads the API's answers from files there instead of the tracker
-(`_rest_api_2_issue_PAY-412.json`), for pictures that show no one's real work.
+(`_rest_api_2_issue_PAY-412.json`), for pictures that show no one's real work; its own `trackers.txt` names its sites,
+and a folder named for a site's host holds that site's answers.
 
 ## Tests
 

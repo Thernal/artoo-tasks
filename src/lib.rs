@@ -2,7 +2,7 @@
 //! note for your agent on a paragraph of an issue; tools agents call for an issue or a search. Reads only.
 //!
 //! The trackers are named in `<data>/plugins/artoo-tasks/trackers.txt` (`https://jira.example.com`, an email after
-//! it for Jira Cloud), each one's token in `~/.config/tokens/<host>`.
+//! it for Jira Cloud), a line each, every one read; each one's token in `~/.config/tokens/<host>`.
 
 mod agents;
 mod jira;
@@ -109,17 +109,23 @@ fn install(cx: &mut App) {
                 }),
                 called: |route| if route.is_some() { "this issue" } else { "this board" },
                 link: Rc::new(move |route: Option<&Route>, _, _, cx: &App| {
-                    let key = route.and_then(agents::key_of).ok_or("A board has no link of its own yet")?;
+                    let route = route.ok_or("A board has no link of its own yet")?;
+                    let key = agents::key_of(route).ok_or("A board has no link of its own yet")?;
                     let s = link_store.read(cx);
-                    let site = s.site().ok_or("No tracker is connected")?;
-                    Ok(Link {
-                        url: format!("{}/browse/{key}", site.url),
-                        what: key,
-                    })
+                    let url = match s.issue(&key) {
+                        Some(issue) => issue.url.clone(),
+                        None => {
+                            let site = (agents::site_of(route).and_then(|host| s.site_of(&host)))
+                                .or_else(|| s.sites.first().cloned())
+                                .ok_or("No tracker is connected")?;
+                            format!("{}/browse/{key}", site.url)
+                        }
+                    };
+                    Ok(Link { url, what: key })
                 }),
                 view: view.clone().into(),
-                side: Some(Rc::new(move |_route: Option<&Route>, _width: f32, cx: &mut App| {
-                    Some(page::side(&side_store, &side_frame, cx))
+                side: Some(Rc::new(move |_route: Option<&Route>, width: f32, cx: &mut App| {
+                    Some(page::side(&side_store, &side_frame, width, cx))
                 })),
                 show: Rc::new(move |route: Option<&Route>, fresh: bool, cx: &mut App| {
                     shows.update(cx, |p, cx| p.show(route, fresh, cx))
