@@ -9,6 +9,7 @@ mod jira;
 mod model;
 mod page;
 mod store;
+mod wiki;
 
 use artoo_plugin_sdk::core::route::Route;
 use artoo_plugin_sdk::gpui::{self, App, AppContext, prelude::*};

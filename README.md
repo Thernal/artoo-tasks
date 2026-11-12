@@ -4,7 +4,8 @@ An [Artoo](https://github.com/Thernal/artoo) plugin: your tracker's boards and i
 Inbox, Code, Branches and Merge requests. The first stage reads Jira; nothing is written to the tracker.
 
 - **Tasks** (`⌃⌘5`): the side panel's boards; a board's issues grouped by state, `Mine · All`; an issue's page — its
-  facts, description, sub-tasks, comments and details.
+  facts, description, sub-tasks, comments and details, the description and comments drawn from Jira's wiki markup
+  (headings, bold and italic, `{{monospace}}`, links, lists, `{code}`, quotes, tables).
 - **A note for your agent on a paragraph** of an issue's description: `+` on the paragraph's edge, the app's
   composer, `⌘↵` adds it to your drafts in the Agents window, where it waits and goes like a note on a line. The agent
   reads it as `PAY-412 · description · ¶4` with the paragraph as its context.

@@ -1,6 +1,8 @@
 //! What the plugin reads of a tracker, as plain types: a board, an issue in a list, an issue whole.
 
 use crate::jira::{self, Site};
+use crate::wiki;
+use artoo_plugin_sdk::core::markdown;
 use artoo_plugin_sdk::serde_json::Value;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -149,13 +151,15 @@ pub fn search(site: &Site, jql: &str, max: usize) -> Result<Vec<Row>, String> {
     Ok(v["issues"].as_array().into_iter().flatten().map(row).collect())
 }
 
-/// A description's paragraphs: its blocks between empty lines.
+/// A description's paragraphs, each as markdown: its blocks — a paragraph, a heading, a list, a code block — as
+/// markdown reads them from Jira's wiki text.
 pub fn paragraphs(text: &str) -> Vec<String> {
-    let text = text.replace("\r\n", "\n");
-    text.split("\n\n")
-        .map(str::trim)
-        .filter(|p| !p.is_empty())
-        .map(str::to_owned)
+    let md = wiki::to_markdown(text);
+    let lines: Vec<&str> = md.lines().collect();
+    (markdown::parse_lines(&md).into_iter())
+        .filter_map(|(_, (first, last))| lines.get(first as usize - 1..last as usize))
+        .map(|lines| lines.join("\n"))
+        .filter(|p| !p.trim().is_empty())
         .collect()
 }
 
@@ -177,7 +181,7 @@ pub fn digest(issue: &Issue) -> String {
         out.push_str(&format!("A sub-task of {parent}.\n"));
     }
     if !issue.description.trim().is_empty() {
-        out.push_str(&format!("\n## Description\n\n{}\n", issue.description.trim()));
+        out.push_str(&format!("\n## Description\n\n{}\n", wiki::to_markdown(issue.description.trim())));
     }
     if !issue.subtasks.is_empty() {
         out.push_str("\n## Sub-tasks\n\n");
@@ -188,7 +192,7 @@ pub fn digest(issue: &Issue) -> String {
     if !issue.comments.is_empty() {
         out.push_str("\n## Comments\n");
         for c in &issue.comments {
-            out.push_str(&format!("\n{} ({}):\n{}\n", c.author, day(&c.created), c.body.trim()));
+            out.push_str(&format!("\n{} ({}):\n{}\n", c.author, day(&c.created), wiki::to_markdown(c.body.trim())));
         }
     }
     out

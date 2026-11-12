@@ -5,6 +5,7 @@
 use crate::agents::{self as places_of, ISSUE};
 use crate::model::{self, Issue, Row};
 use crate::store::{Read, Store};
+use crate::wiki;
 use artoo_plugin_sdk::agents::places;
 use artoo_plugin_sdk::core::route::Route;
 use artoo_plugin_sdk::core::textedit::TextEdit;
@@ -12,7 +13,7 @@ use artoo_plugin_sdk::gpui::{
     AnyElement, App, Context, Entity, FontWeight, KeyDownEvent, SharedString, Window, div, prelude::*,
 };
 use artoo_plugin_sdk::kit::composer::{Compose, ComposeAct, Look, Target, Typed as Written};
-use artoo_plugin_sdk::kit::{controls, icons, island, px, theme};
+use artoo_plugin_sdk::kit::{controls, icons, island, markdown, px, theme};
 use artoo_plugin_sdk::shell::{Frame, Typed};
 use std::rc::Rc;
 
@@ -322,7 +323,7 @@ impl Page {
             .gap(px(16.))
             .child(self.description(&issue, cx))
             .when(!issue.subtasks.is_empty(), |d| d.child(subtasks(&issue, &self.frame)))
-            .child(comments(&issue));
+            .child(comments(&issue, cx));
         let details = section("Details", None).child(
             div()
                 .flex()
@@ -399,7 +400,13 @@ impl Page {
                             .child(icons::icon("plus").size(px(12.)).text_color(theme::on_accent()))
                             .on_click(cx.listener(move |this, _, _, cx| this.open_note(key.clone(), n, cx))),
                     )
-                    .child(div().text_size(px(13.)).line_height(px(20.)).text_color(theme::text()).child(para)),
+                    .child(
+                        div()
+                            .text_size(px(13.))
+                            .line_height(px(20.))
+                            .text_color(theme::text())
+                            .child(markdown::body(&para, true, format!("tasks-para-{n}"), None, None, cx)),
+                    ),
             );
             if on {
                 body = body.child(self.composer(cx));
@@ -544,12 +551,13 @@ fn subtasks(issue: &Issue, frame: &Rc<dyn Frame>) -> impl IntoElement {
         .child(list)
 }
 
-fn comments(issue: &Issue) -> impl IntoElement {
+fn comments(issue: &Issue, cx: &App) -> impl IntoElement {
     let mut list = div().flex().flex_col().gap(px(14.)).px(px(16.)).py(px(12.));
     if issue.comments.is_empty() {
         list = list.child(div().text_size(px(13.)).text_color(theme::muted()).child("No comments"));
     }
-    for c in &issue.comments {
+    for (ix, c) in issue.comments.iter().enumerate() {
+        let body = wiki::to_markdown(c.body.trim());
         list = list.child(
             div()
                 .flex()
@@ -563,7 +571,13 @@ fn comments(issue: &Issue) -> impl IntoElement {
                         .child(div().font_weight(FontWeight::SEMIBOLD).text_color(theme::text()).child(c.author.clone()))
                         .child(div().text_color(theme::muted()).child(model::day(&c.created).to_owned())),
                 )
-                .child(div().text_size(px(13.)).line_height(px(20.)).text_color(theme::text()).child(c.body.trim().to_owned())),
+                .child(
+                    div()
+                        .text_size(px(13.))
+                        .line_height(px(20.))
+                        .text_color(theme::text())
+                        .child(markdown::body(&body, true, format!("tasks-comment-{ix}"), None, None, cx)),
+                ),
         );
     }
     section("Comments", Some(issue.comments.len())).child(list)
