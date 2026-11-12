@@ -1,0 +1,12 @@
+# Task management for Artoo: Jira's boards and issues as a space, read from the tracker (the first stage).
+[package]
+name = "artoo-tasks"
+version = "0.1.0"
+edition = "2024"
+repository = "https://github.com/Thernal/artoo-tasks"
+
+# A shared library Artoo loads. The SDK is no dependency here: `scripts/build.sh` gives it to rustc, as std is given.
+[lib]
+crate-type = ["dylib"]
+
+[workspace]
