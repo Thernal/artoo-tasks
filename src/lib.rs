@@ -1,5 +1,6 @@
 //! Task management for Artoo, its first stage: a tracker's boards and issues as the Tasks space, read from Jira; a
-//! note for your agent on a paragraph of an issue; tools agents call for an issue or a search. Reads only.
+//! note for your agent on a paragraph of an issue or on a board as it is filtered; tools agents call for an issue or
+//! a search. Reads only.
 //!
 //! The trackers are named in `<data>/plugins/artoo-tasks/trackers.txt` (`https://jira.example.com`, an email after
 //! it for Jira Cloud), a line each, every one read; each one's token in `~/.config/tokens/<host>`.
@@ -21,7 +22,7 @@ use artoo_plugin_sdk::shell::{
 use artoo_plugin_sdk::{self as sdk, Meta};
 use std::rc::Rc;
 
-gpui::actions!(artoo_tasks, [GoToTasks]);
+gpui::actions!(artoo_tasks, [GoToTasks, NoteOnBoard]);
 
 sdk::plugin!(
     Meta {
@@ -54,6 +55,12 @@ fn install(cx: &mut App) {
             .key("ctrl-cmd-5", when::TAB)
             .menu(Menu::Go, "Tasks"),
     );
+    add_action(
+        cx,
+        Action::new("tasks.board-note", NoteOnBoard)
+            .words("Note for an agent on the board")
+            .order(36),
+    );
     agents::add_tools(cx);
     agents::add_places(cx);
     add_parts(cx, |frame, _window, cx| {
@@ -64,11 +71,18 @@ fn install(cx: &mut App) {
         let shows = view.clone();
         let (row_store, path_store, link_store) = (store.clone(), store.clone(), store.clone());
         let (open_view, key_view, left_view) = (view.clone(), view.clone(), view.clone());
+        let (note_frame, note_view) = (frame.clone(), view.clone());
         Parts {
-            actions: vec![(
-                Box::new(GoToTasks),
-                Rc::new(move |_, cx| goes.go_space(page::SPACE, cx)),
-            )],
+            actions: vec![
+                (Box::new(GoToTasks), Rc::new(move |_, cx| goes.go_space(page::SPACE, cx))),
+                (
+                    Box::new(NoteOnBoard),
+                    Rc::new(move |_, cx| {
+                        note_frame.open_space(page::SPACE, cx);
+                        note_view.update(cx, |p, cx| p.open_board_note(cx));
+                    }),
+                ),
+            ],
             inputs: vec![Input {
                 id: page::NOTE,
                 open: Rc::new(move |cx| open_view.read(cx).note_open()),
@@ -109,9 +123,13 @@ fn install(cx: &mut App) {
                 }),
                 called: |route| if route.is_some() { "this issue" } else { "this board" },
                 link: Rc::new(move |route: Option<&Route>, _, _, cx: &App| {
-                    let route = route.ok_or("A board has no link of its own yet")?;
-                    let key = agents::key_of(route).ok_or("A board has no link of its own yet")?;
                     let s = link_store.read(cx);
+                    let Some(route) = route else {
+                        let board = s.picked().ok_or("No board is open")?;
+                        let site = s.site_of(&board.site).ok_or("No tracker is connected")?;
+                        return Ok(Link { url: model::board_url(&site, board.id), what: board.name.clone() });
+                    };
+                    let key = agents::key_of(route).ok_or("This page has no link")?;
                     let url = match s.issue(&key) {
                         Some(issue) => issue.url.clone(),
                         None => {

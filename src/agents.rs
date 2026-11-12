@@ -120,6 +120,25 @@ pub fn paragraph_place(key: &str, site: &str, para: usize) -> String {
     json!({ "key": key, "site": site, "para": para }).to_string()
 }
 
+/// The board picked, as it is filtered, as a note's place:
+/// `{"site":"jira.example.com","board":7,"name":"Payments","mine":true,"count":3}`.
+pub fn board_place(board: &model::BoardId, name: &str, mine: bool, count: Option<usize>) -> String {
+    let mut v = json!({ "site": board.0, "board": board.1, "name": name, "mine": mine });
+    if let Some(n) = count {
+        v["count"] = json!(n);
+    }
+    v.to_string()
+}
+
+/// A board's place in words: `Payments · Mine · 3 issues`.
+pub fn board_words(name: &str, mine: bool, count: Option<usize>) -> String {
+    let mut words = format!("{name} · {}", if mine { "Mine" } else { "All" });
+    if let Some(n) = count {
+        words.push_str(&format!(" · {n} {}", if n == 1 { "issue" } else { "issues" }));
+    }
+    words
+}
+
 /// `jira.issue`: an issue, or a paragraph of its description; `jira.board`: a board as it is filtered.
 pub fn add_places(cx: &mut App) {
     let issue = Kind {
@@ -157,13 +176,10 @@ pub fn add_places(cx: &mut App) {
     };
     let board = Kind {
         kind: "jira.board",
-        reads: Rc::new(|data: &str, cx: &App| {
+        reads: Rc::new(|data: &str, _: &App| {
             let v: Value = serde_json::from_str(data).unwrap_or_default();
-            let mine = if v["mine"].as_bool() == Some(true) { "Mine" } else { "All" };
-            let name = store::peek(cx)
-                .and_then(|s| s.read(cx).picked().map(|b| b.name.clone()))
-                .unwrap_or_else(|| "A board".into());
-            format!("{name} · {mine}")
+            let name = v["name"].as_str().unwrap_or("A board");
+            board_words(name, v["mine"].as_bool() == Some(true), v["count"].as_u64().map(|n| n as usize))
         }),
         digest: Rc::new(|data: &str, cx: &App| {
             let v: Value = serde_json::from_str(data).unwrap_or_default();
@@ -174,14 +190,17 @@ pub fn add_places(cx: &mut App) {
                 Some(store::Read::Done(rows)) => Some(rows.clone()),
                 _ => None,
             });
+            let name = v["name"].as_str().unwrap_or("A board");
+            let head = format!("The board {} on {}", board_words(name, mine, None), board.0);
             match rows {
-                Some(rows) => rows
-                    .iter()
-                    .take(40)
-                    .map(|r| format!("{} {} ({})", r.key, r.summary, r.state))
-                    .collect::<Vec<_>>()
-                    .join("\n"),
-                None => format!("Board {} on {}.", board.1, board.0),
+                Some(rows) => {
+                    let list = (rows.iter().take(40))
+                        .map(|r| format!("{} {} ({})", r.key, r.summary, r.state))
+                        .collect::<Vec<_>>()
+                        .join("\n");
+                    format!("{head}, its issues:\n\n{list}")
+                }
+                None => format!("{head}."),
             }
         }),
         tool: Some("jira.search"),
@@ -191,5 +210,19 @@ pub fn add_places(cx: &mut App) {
         if let Err(why) = places::add(cx, kind) {
             eprintln!("artoo-tasks: {why}");
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn a_board_note_reads_as_the_board_is_filtered() {
+        assert_eq!(board_words("Payments", true, Some(3)), "Payments · Mine · 3 issues");
+        assert_eq!(board_words("Payments", false, Some(1)), "Payments · All · 1 issue");
+        assert_eq!(board_words("Payments", false, None), "Payments · All");
+        let place: Value = serde_json::from_str(&board_place(&("jira.example.com".into(), 7), "Payments", true, Some(3))).unwrap();
+        assert_eq!(place, json!({"site": "jira.example.com", "board": 7, "name": "Payments", "mine": true, "count": 3}));
     }
 }

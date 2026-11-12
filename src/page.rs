@@ -1,20 +1,23 @@
 //! The Tasks space in one tab: its own page, the board picked as a list of its issues grouped by state; an issue's
-//! page — its facts, its description, sub-tasks and comments, its details —, with a note for an agent on a paragraph
-//! of its description (#212) in the app's composer; and the side panel's boards.
+//! page — its facts, its description, sub-tasks and comments, its details —; a note for an agent (#212) on a
+//! paragraph of a description or on the board as it is filtered (its ⋯, ⌘K), in the app's composer; and the side
+//! panel's boards.
 
 use crate::agents::{self as places_of, ISSUE};
-use crate::model::{self, Issue, Row};
+use crate::model::{self, BoardId, Issue, Row};
 use crate::store::{Read, Store};
 use crate::wiki;
 use artoo_plugin_sdk::agents::places;
 use artoo_plugin_sdk::core::route::Route;
 use artoo_plugin_sdk::core::textedit::TextEdit;
 use artoo_plugin_sdk::gpui::{
-    AnyElement, App, Context, Entity, FontWeight, KeyDownEvent, SharedString, Window, div, prelude::*,
+    AnyElement, App, ClickEvent, ClipboardItem, Context, Entity, FontWeight, KeyDownEvent, Pixels, Point, SharedString,
+    Window, div, prelude::*,
 };
 use artoo_plugin_sdk::kit::composer::{Compose, ComposeAct, Look, Target, Typed as Written};
+use artoo_plugin_sdk::kit::hover::Hover;
 use artoo_plugin_sdk::kit::{controls, icons, island, markdown, px, theme};
-use artoo_plugin_sdk::shell::{Frame, Typed};
+use artoo_plugin_sdk::shell::{Frame, MenuItem, Typed};
 use std::rc::Rc;
 
 /// The space's id.
@@ -22,12 +25,27 @@ pub const SPACE: &str = "tasks";
 /// The note composer's input.
 pub const NOTE: &str = "tasks.note";
 
-/// A note for the agent being written on paragraph `para` of issue `key`'s description.
+/// Where a note for the agent is being written.
+enum Spot {
+    /// Paragraph `para` of issue `key`'s description, on site `site`.
+    Para { key: String, site: String, para: usize },
+    /// The board picked as it is filtered now, with how many issues it shows when they were read.
+    Board { board: BoardId, name: String, mine: bool, count: Option<usize> },
+}
+
+impl Spot {
+    /// What the note's place says, as the Agents window says it.
+    fn words(&self) -> String {
+        match self {
+            Spot::Para { key, para, .. } => format!("{key} · description · ¶{para}"),
+            Spot::Board { name, mine, count, .. } => places_of::board_words(name, *mine, *count),
+        }
+    }
+}
+
+/// A note for the agent being written.
 struct Note {
-    key: String,
-    /// The issue's site.
-    site: String,
-    para: usize,
+    spot: Spot,
     compose: Compose,
 }
 
@@ -63,11 +81,39 @@ impl Page {
         self.note.is_some()
     }
 
-    fn open_note(&mut self, key: String, site: String, para: usize, cx: &mut Context<Self>) {
+    /// A note for the agent on the board picked, as it is filtered now (its ⋯, ⌘K).
+    pub fn open_board_note(&mut self, cx: &mut Context<Self>) {
+        let s = self.store.read(cx);
+        let Some(board) = s.picked().cloned() else {
+            self.frame.error("Open a board to write a note on it".into(), cx);
+            return;
+        };
+        let count = match s.rows.get(&(board.key(), s.mine)) {
+            Some(Read::Done(rows)) => Some(rows.len()),
+            _ => None,
+        };
+        let spot = Spot::Board { board: board.key(), name: board.name.clone(), mine: s.mine, count };
+        self.open_note(spot, cx);
+    }
+
+    /// The board's ⋯: a note for the agent on it, its link.
+    fn more_menu(&mut self, at: Point<Pixels>, cx: &mut Context<Self>) {
+        let page = cx.entity().downgrade();
+        let s = self.store.read(cx);
+        let link = (s.picked()).and_then(|b| Some(model::board_url(&s.site_of(&b.site)?, b.id)));
+        let note = MenuItem::new("Note for an agent…", move |_, cx| {
+            page.update(cx, |p, cx| p.open_board_note(cx)).ok();
+        });
+        let copy = match link {
+            Some(url) => MenuItem::new("Copy link", move |_, cx| cx.write_to_clipboard(ClipboardItem::new_string(url.clone()))),
+            None => MenuItem::off("Copy link"),
+        };
+        self.frame.menu(at, vec![vec![note, copy]], cx);
+    }
+
+    fn open_note(&mut self, spot: Spot, cx: &mut Context<Self>) {
         self.note = Some(Note {
-            key,
-            site,
-            para,
+            spot,
             compose: Compose {
                 path: String::new(),
                 old: false,
@@ -121,12 +167,17 @@ impl Page {
         if body.is_empty() {
             return;
         }
-        let data = places_of::paragraph_place(&note.key, &note.site, note.para);
+        let (kind, data) = match &note.spot {
+            Spot::Para { key, site, para } => ("jira.issue", places_of::paragraph_place(key, site, *para)),
+            Spot::Board { board, name, mine, count } => {
+                ("jira.board", places_of::board_place(board, name, *mine, *count))
+            }
+        };
         let agents = self
             .frame
             .services()
             .get::<Rc<dyn artoo_plugin_sdk::agents::tab::Agents>>();
-        match (places::on(cx, "jira.issue", &data), agents) {
+        match (places::on(cx, kind, &data), agents) {
             (Some(on), Some(agents)) => {
                 agents.add_comment(places::note(on, body), cx);
                 self.frame.show_tool(Some(artoo_plugin_sdk::agents::view::WINDOW), cx);
@@ -174,6 +225,20 @@ impl Page {
             .into_any_element(),
             Some(Read::Done(rows)) => self.rows(rows.clone(), cx),
         };
+        let board_note = self.note.as_ref().is_some_and(|n| matches!(n.spot, Spot::Board { .. }));
+        let more = div()
+            .id("tasks-more")
+            .size(px(28.))
+            .flex()
+            .items_center()
+            .justify_center()
+            .rounded(px(6.))
+            .cursor_pointer()
+            .hover(|s| s.bg(theme::hover()))
+            .when(board_note, |s| s.bg(theme::hover()))
+            .child(icons::icon("ellipsis").size(px(16.)).text_color(theme::muted()))
+            .tip("More: Note for an agent…, Copy link")
+            .on_click(cx.listener(|this, e: &ClickEvent, _, cx| this.more_menu(e.position(), cx)));
         let filter = ["Mine", "All"].into_iter().fold(controls::group(), |g, label| {
             let on = (label == "Mine") == mine;
             g.child(controls::chip(SharedString::from(format!("tasks-{label}")), label, on).on_click(
@@ -196,8 +261,15 @@ impl Page {
                     .h(px(44.))
                     .border_b_1()
                     .border_color(theme::border())
-                    .child(filter),
+                    .child(filter)
+                    .child(div().flex_1())
+                    .child(more),
             )
+            .when(board_note, |d| {
+                d.child(
+                    div().flex_none().px(px(12.)).py(px(10.)).border_b_1().border_color(theme::border()).child(self.composer(cx)),
+                )
+            })
             .child(div().id("tasks-list").flex_1().min_h_0().flex().flex_col().overflow_y_scroll().child(body))
             .into_any_element()
     }
@@ -373,7 +445,9 @@ impl Page {
         for (ix, para) in paras.into_iter().enumerate() {
             let n = ix + 1;
             let (key, site) = (issue.row.key.clone(), issue.site.clone());
-            let on = self.note.as_ref().is_some_and(|note| note.key == key && note.para == n);
+            let on = self.note.as_ref().is_some_and(
+                |note| matches!(&note.spot, Spot::Para { key: k, para, .. } if *k == key && *para == n),
+            );
             body = body.child(
                 div()
                     .id(SharedString::from(format!("para-{n}")))
@@ -402,7 +476,10 @@ impl Page {
                             .group_hover("para", |s| s.visible())
                             .when(on, |s| s.visible())
                             .child(icons::icon("plus").size(px(12.)).text_color(theme::on_accent()))
-                            .on_click(cx.listener(move |this, _, _, cx| this.open_note(key.clone(), site.clone(), n, cx))),
+                            .on_click(cx.listener(move |this, _, _, cx| {
+                                let spot = Spot::Para { key: key.clone(), site: site.clone(), para: n };
+                                this.open_note(spot, cx)
+                            })),
                     )
                     .child(
                         div()
@@ -413,18 +490,18 @@ impl Page {
                     ),
             );
             if on {
-                body = body.child(self.composer(cx));
+                body = body.child(div().pl(px(28.)).child(self.composer(cx)));
             }
         }
         section("Description", None).child(body).into_any_element()
     }
 
-    /// The app's composer, for the agent, at its paragraph.
+    /// The app's composer, for the agent, at its place.
     fn composer(&self, cx: &mut Context<Self>) -> AnyElement {
         let Some(note) = &self.note else {
             return div().into_any_element();
         };
-        let place = format!("{} · description · ¶{}", note.key, note.para);
+        let place = note.spot.words();
         let head = div()
             .flex()
             .flex_col()
@@ -490,7 +567,7 @@ impl Page {
             link_base: None,
         };
         let input = note.compose.render_input(look, acts, cx);
-        artoo_plugin_sdk::shell::input_box(div().id("tasks-note-box").pl(px(28.)).child(input), NOTE, &self.frame)
+        artoo_plugin_sdk::shell::input_box(div().id("tasks-note-box").child(input), NOTE, &self.frame)
             .into_any_element()
     }
 }

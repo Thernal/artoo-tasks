@@ -9,6 +9,9 @@ Inbox, Code, Branches and Merge requests. The first stage reads Jira; nothing is
 - **A note for your agent on a paragraph** of an issue's description: `+` on the paragraph's edge, the app's
   composer, `⌘↵` adds it to your drafts in the Agents window, where it waits and goes like a note on a line. The agent
   reads it as `PAY-412 · description · ¶4` with the paragraph as its context.
+- **A note for your agent on a board**: the board's `⋯` (or ⌘K, Note for an agent on the board) opens the composer
+  over its issues; its place is the board as it is filtered, `Payments · Mine · 3 issues`, and the agent gets the
+  issues it shows. The `⋯` also copies the board's link.
 - **Tools for agents**, through Artoo's MCP server while Artoo runs: `jira_issue` (an issue whole) and `jira_search`
   (a JQL query).
 

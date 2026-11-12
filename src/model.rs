@@ -108,6 +108,11 @@ pub fn issue(site: &Site, v: &Value) -> Issue {
     }
 }
 
+/// Board `id`'s page on `site`: Jira Server's address, which Jira Cloud sends on to its own.
+pub fn board_url(site: &Site, id: u64) -> String {
+    format!("{}/secure/RapidBoard.jspa?rapidView={id}", site.url)
+}
+
 const ROW_FIELDS: &str = "summary,issuetype,status,assignee,priority,updated,parent";
 
 /// The boards of `site`.
