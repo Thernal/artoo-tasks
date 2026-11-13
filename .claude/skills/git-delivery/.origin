@@ -1,0 +1,8 @@
+repo=git@github.com:Thernal/knowledge.git
+kind=skill
+skill=git-delivery
+path=skills/git-delivery
+ref=default
+commit=0aae407832c15d480d078f5e82c2fdc4ad749285
+tree=fd4ea78d6ef73bcf0daee2ecd772ef385f125a72
+installed_at=2026-11-13T14:01:36Z

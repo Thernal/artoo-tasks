@@ -1,0 +1,8 @@
+repo=git@github.com:Thernal/knowledge.git
+kind=skill
+skill=knowledge-lookup
+path=skills/knowledge-lookup
+ref=default
+commit=0aae407832c15d480d078f5e82c2fdc4ad749285
+tree=94b275887ed4aede311adcdd4a7eb91322b5efb8
+installed_at=2026-11-13T14:01:55Z
