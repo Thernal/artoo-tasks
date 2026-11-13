@@ -70,6 +70,8 @@ pub fn add_tools(cx: &mut App) {
                     return Task::ready(Err("key is missing".into()));
                 };
                 let site = arg(&args, "site");
+                // The kinds other plugins offer, read here: the Tasks space may not have been opened.
+                crate::trackers::read_offered(cx);
                 cx.background_spawn(async move {
                     let sites = sites_for(site)?;
                     model::read_issue_on(&sites, &key).map(|i| model::digest(&i))
@@ -92,6 +94,7 @@ pub fn add_tools(cx: &mut App) {
                     .unwrap_or(20)
                     .min(100) as usize;
                 let site = arg(&args, "site");
+                crate::trackers::read_offered(cx);
                 cx.background_spawn(async move {
                     let sites = sites_for(site)?;
                     let many = sites.len() > 1;

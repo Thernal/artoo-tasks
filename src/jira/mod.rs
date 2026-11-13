@@ -26,10 +26,10 @@ pub fn settings_file() -> Option<PathBuf> {
 }
 
 /// Every site the settings name, each with its token: `~/.config/tokens/<host>`, as the Mac keeps internal hosts'
-/// tokens; a site with no token is left out, and why is said. A fixture's sites are its `trackers.txt`, else one
-/// example site, and take no token.
+/// tokens; a site with no token is left out, and why is said, as is one of a kind no plugin offers now. A fixture's
+/// sites are its `trackers.txt`, else one example site, and take no token.
 pub fn sites() -> (Vec<Site>, Vec<String>) {
-    match fixture() {
+    let read = match fixture() {
         Some(dir) => {
             let text = std::fs::read_to_string(dir.join("trackers.txt"))
                 .unwrap_or_else(|_| "https://jira.example.com".into());
@@ -41,29 +41,44 @@ pub fn sites() -> (Vec<Site>, Vec<String>) {
                 .unwrap_or_default();
             named(&text, token_of)
         }
-    }
+    };
+    let (sites, mut why) = read;
+    let known = trackers::kinds();
+    let (ours, gone): (Vec<Site>, Vec<Site>) =
+        (sites.into_iter()).partition(|s| known.iter().any(|k| k.id == s.kind));
+    why.extend(gone.iter().map(|s| {
+        format!(
+            "{} is a tracker of `{}`, whose plugin is not installed or is off",
+            s.host(),
+            s.kind
+        )
+    }));
+    (ours, why)
 }
 
-/// What the news are listed under: the trackers' name — `Jira`, `Trello`, or `Tasks` when there are both. Read as
-/// the plugin installs, before other plugins offer their kinds: a site of theirs counts as Jira's here.
+/// What the news are listed under: the trackers' name when they are all Jira or all Trello, else `Tasks`. Read as
+/// the plugin installs, before other plugins offer their kinds: a site of theirs is known by the kind its line says.
 pub fn trackers_named() -> &'static str {
     let text = match fixture() {
         Some(dir) => std::fs::read_to_string(dir.join("trackers.txt")).unwrap_or_default(),
         None => (settings_file().and_then(|f| std::fs::read_to_string(f).ok())).unwrap_or_default(),
     };
     let (sites, _) = named(&text, |_| Some(String::new()));
-    match (
-        sites.iter().any(SiteExt::trello),
-        sites.iter().any(|s| !s.trello()),
-    ) {
-        (true, true) => "Tasks",
-        (true, false) => "Trello",
-        _ => "Jira",
+    named_by(&sites)
+}
+
+fn named_by(sites: &[Site]) -> &'static str {
+    if sites.iter().all(SiteExt::trello) && !sites.is_empty() {
+        "Trello"
+    } else if sites.iter().all(|s| s.kind == trackers::JIRA) {
+        "Jira"
+    } else {
+        "Tasks"
     }
 }
 
-/// The sites `text` names, a line each (`url [email]`, `#` a comment), each with the token `token` gives its host; a
-/// host named again is read once.
+/// The sites `text` names, a line each (`url [user] [kind=<id>]`, `#` a comment), each with the token `token` gives
+/// its host; a host named again is read once. A line's kind is the one it says, else the one claiming its host.
 fn named(text: &str, token: impl Fn(&str) -> Option<String>) -> (Vec<Site>, Vec<String>) {
     let (mut sites, mut why) = (Vec::<Site>::new(), Vec::new());
     for line in text
@@ -77,13 +92,16 @@ fn named(text: &str, token: impl Fn(&str) -> Option<String>) -> (Vec<Site>, Vec<
             .unwrap_or_default()
             .trim_end_matches('/')
             .to_owned();
-        let user = words.next().map(str::to_owned);
+        let (kinds, users): (Vec<&str>, Vec<&str>) = words.partition(|w| w.starts_with("kind="));
         let mut site = Site {
             url,
-            user,
+            user: users.first().map(|u| (*u).to_owned()),
             ..Default::default()
         };
-        site.kind = trackers::kind_of(site.host());
+        site.kind = match kinds.first() {
+            Some(k) => k["kind=".len()..].to_owned(),
+            None => trackers::kind_of(site.host()),
+        };
         if sites.iter().any(|s| s.host() == site.host()) {
             continue;
         }
@@ -411,6 +429,28 @@ mod tests {
     fn basic_takes_base64() {
         assert_eq!(base64(b"a@b.c:tok"), "YUBiLmM6dG9r");
         assert_eq!(base64(b"ab"), "YWI=");
+    }
+
+    #[test]
+    fn a_line_says_its_kind_else_its_host_does() {
+        let text =
+            "https://desk.acme.example kind=acme\nhttps://trello.com key\nhttps://jira.example.com";
+        let (sites, _) = named(text, |_| Some(String::new()));
+        let read: Vec<_> = (sites.iter())
+            .map(|s| (s.host(), s.kind.as_str(), s.user.as_deref()))
+            .collect();
+        assert_eq!(
+            read,
+            [
+                ("desk.acme.example", "acme", None),
+                ("trello.com", "trello", Some("key")),
+                ("jira.example.com", "jira", None),
+            ]
+        );
+        assert_eq!(named_by(&sites), "Tasks");
+        assert_eq!(named_by(&sites[1..2]), "Trello");
+        assert_eq!(named_by(&sites[2..]), "Jira");
+        assert_eq!(named_by(&[]), "Jira");
     }
 
     #[test]

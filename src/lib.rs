@@ -55,7 +55,7 @@ gpui::actions!(
         AddSubtask,
         ToggleLayout,
         GroupBy,
-        OpenInJira,
+        OpenInTracker,
         ReadAgain,
         NoteHere,
         Reply,
@@ -178,13 +178,13 @@ fn commands() -> Vec<Action> {
             .here("Group by…")
             .order(46),
         a(
-            "tasks.jira",
-            Box::new(OpenInJira),
-            "Open in Jira",
+            "tasks.tracker",
+            Box::new(OpenInTracker),
+            "Open in the tracker",
             "alt-cmd-j",
             SPACE_KEYS,
         )
-        .here("Open in Jira")
+        .here("Open in the tracker")
         .order(47),
         a(
             "tasks.read",
@@ -347,7 +347,7 @@ fn install(cx: &mut App) {
             (Box::new(AddSubtask), on(Page::key_subtask)),
             (Box::new(ToggleLayout), on(Page::toggle_view)),
             (Box::new(GroupBy), on(|p, cx| p.group_menu(None, cx))),
-            (Box::new(OpenInJira), on(Page::open_in_jira)),
+            (Box::new(OpenInTracker), on(Page::open_in_tracker)),
             (Box::new(ReadAgain), on(Page::read_again)),
             (Box::new(NoteHere), on(Page::key_note)),
             (Box::new(Reply), on(Page::key_reply)),
@@ -526,7 +526,7 @@ fn here_of(page: &Entity<Page>, route: Option<&Route>, cx: &App) -> Vec<&'static
             "tasks.subtask",
             "tasks.link",
             "tasks.note",
-            "tasks.jira",
+            "tasks.tracker",
             "tasks.copy-branch",
         ],
         None if p.drafts => vec!["tasks.new"],
@@ -537,7 +537,7 @@ fn here_of(page: &Entity<Page>, route: Option<&Route>, cx: &App) -> Vec<&'static
             "tasks.layout",
             "tasks.group",
             "tasks.board-note",
-            "tasks.jira",
+            "tasks.tracker",
         ],
     }
 }
@@ -597,13 +597,14 @@ impl Page {
     }
 
     /// ⌥⌘J: the issue on screen or picked, or the board, in Jira.
-    fn open_in_jira(&mut self, cx: &mut Context<Self>) {
+    fn open_in_tracker(&mut self, cx: &mut Context<Self>) {
         let s = self.store.read(cx);
         let url = match self.acted_on() {
             Some(key) => match s.issue(&key) {
                 Some(i) => Some(i.url.clone()),
-                None => s
-                    .site_for(&key)
+                // Jira's address of an issue not read yet; another tracker's is its issue's own.
+                None => (s.site_for(&key))
+                    .filter(|site| site.kind == trackers::JIRA)
                     .map(|site| format!("{}/browse/{key}", site.url)),
             },
             None => s

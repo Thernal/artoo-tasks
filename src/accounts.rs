@@ -191,10 +191,11 @@ impl Accounts {
             form.why = Some("The fixture's trackers are its trackers.txt".into());
             return cx.notify();
         }
-        let line = if email.is_empty() {
-            url
-        } else {
-            format!("{url} {email}")
+        // A kind other than Jira is said on the line, so a site whose plugin is gone is not read as Jira.
+        let kind = (site.kind != trackers::JIRA).then(|| format!(" kind={}", site.kind));
+        let line = match email.is_empty() {
+            true => format!("{url}{}", kind.unwrap_or_default()),
+            false => format!("{url} {email}{}", kind.unwrap_or_default()),
         };
         let replaced = form.host.clone();
         if let Err(why) = keep_site(

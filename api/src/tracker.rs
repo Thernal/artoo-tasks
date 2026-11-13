@@ -45,6 +45,8 @@ pub struct Caps {
     pub labels: bool,
     /// A project's key shown beside its name (`PAY`), as its issues' keys start with it.
     pub project_keys: bool,
+    /// A workflow that allows some moves and not others, drawn over the page (View workflow…).
+    pub workflow: bool,
 }
 
 impl Caps {
@@ -56,6 +58,7 @@ impl Caps {
         subtasks: true,
         labels: true,
         project_keys: true,
+        workflow: true,
     };
     /// None of them.
     pub const NONE: Caps = Caps {
@@ -65,6 +68,7 @@ impl Caps {
         subtasks: false,
         labels: false,
         project_keys: false,
+        workflow: false,
     };
 }
 

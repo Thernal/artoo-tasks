@@ -6,6 +6,7 @@ use crate::look;
 use crate::model::{self, Epic, Field, Move, Person, Row, Write};
 use crate::page::{Anchor, INPUT_POP, Page, Pop, PopKind};
 use crate::store::{Read, Store};
+use crate::trackers::SiteExt;
 use artoo_plugin_sdk::core::textedit::TextEdit;
 use artoo_plugin_sdk::gpui;
 use artoo_plugin_sdk::gpui::{
@@ -185,11 +186,17 @@ impl Page {
                         cur.rule = true;
                         rows.push(cur);
                     }
-                    let mut wf = PopRow::new(Lead::Icon("branch"), "View workflow…", Act::Workflow);
-                    wf.hint = Some("W".into());
-                    wf.key = Some('w');
-                    wf.rule = true;
-                    rows.push(wf);
+                    // A tracker whose every state is a move from any other (Trello's lists) has no workflow to show.
+                    if s.site_for(&pop.key)
+                        .is_some_and(|site| site.caps().workflow)
+                    {
+                        let mut wf =
+                            PopRow::new(Lead::Icon("branch"), "View workflow…", Act::Workflow);
+                        wf.hint = Some("W".into());
+                        wf.key = Some('w');
+                        wf.rule = true;
+                        rows.push(wf);
+                    }
                 }
                 if let Some(Read::Failed(why)) = s.moves.get(&pop.key) {
                     rows.push(PopRow::new(Lead::Icon("alert"), why.clone(), Act::Nothing));

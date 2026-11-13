@@ -1,6 +1,6 @@
 //! The page bar of the Tasks space (`Pages::bar`): a board's name, Mine · All with their counts and the people
-//! beside them, the filter, List · Board, `⋯`, Open in Jira and New task; the drafts' count and New task; an issue's
-//! board and key, `⋯` and Open in Jira.
+//! beside them, the filter, List · Board, `⋯`, Open in its tracker and New task; the drafts' count and New task; an
+//! issue's board and key, `⋯` and Open in its tracker.
 
 use crate::board::in_play;
 use crate::model;
@@ -12,7 +12,7 @@ use artoo_plugin_sdk::kit::{controls, icons, px, theme};
 use artoo_plugin_sdk::shell::bar::BarAction;
 use artoo_plugin_sdk::shell::{BarParts, MenuItem, PagePath, PathUp};
 
-/// Open in Jira (or Trello): `url` in the browser, ⌥⌘J.
+/// Open in its tracker (`Open in Jira`, `Open in Trello`): `url` in the browser, ⌥⌘J.
 fn in_jira(url: String) -> BarAction {
     let fold = url.clone();
     let words = format!("Open in {}", crate::trackers::tracker_of(&url));

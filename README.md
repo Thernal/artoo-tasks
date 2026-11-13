@@ -39,17 +39,20 @@ Test, Save. The sites are kept in `~/Library/Application Support/Artoo/plugins/a
 https://jira.example.com
 https://example.atlassian.net you@example.com
 https://trello.com <your API key>
+https://desk.acme.example kind=acme
 ```
 
 A site alone is Jira Server or Data Center, read with a personal access token; a site with an email is Jira Cloud,
 read with that email and an API token; `trello.com` is Trello, read with your API key and a token made for it
-(trello.com/power-ups/admin). The token is the file `~/.config/tokens/<host>` (mode 600).
+(trello.com/power-ups/admin). A site of a tracker another plugin adds says its kind (`kind=acme`, Accounts writes it):
+while that plugin is off, the site is left out and Settings says why, rather than read as Jira. The token is the file
+`~/.config/tokens/<host>` (mode 600).
 
 ## A tracker of your own
 
 A company's tracker is added by a plugin of its own, in Rust, beside Tasks: it depends on the SDK and on this
 repository's `api/` crate (`artoo-tasks-api`) alone, and in its `install` offers its kind — its name, the hosts its
-sites are on, what its sign-in asks, what it has (priority, types, sprints, sub-tasks, labels, project keys) — and how a
+sites are on, what its sign-in asks, what it has (priority, types, sprints, sub-tasks, labels, project keys, a workflow) — and how a
 site of it is opened as a `Tracker`:
 
 ```rust
