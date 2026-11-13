@@ -1,33 +1,42 @@
 # Tasks — task management for Artoo
 
 An [Artoo](https://github.com/Thernal/artoo) plugin: your tracker's boards and issues as the Tasks space, beside
-Inbox, Code, Branches and Merge requests. The first stage reads Jira; nothing is written to the tracker.
+Inbox, Code, Branches and Merge requests. It reads and writes Jira (Cloud, Server and Data Center).
 
-- **Tasks** (`⌃⌘5`): the side panel's boards; a board's issues grouped by state, `Mine · All`; an issue's page — its
-  facts, description, sub-tasks, comments and details, the description and comments drawn from Jira's wiki markup
-  (headings, bold and italic, `{{monospace}}`, links, lists, `{code}`, quotes, tables).
-- **A note for your agent on a paragraph** of an issue's description: `+` on the paragraph's edge, the app's
-  composer, `⌘↵` adds it to your drafts in the Agents window, where it waits and goes like a note on a line. The agent
-  reads it as `PAY-412 · description · ¶4` with the paragraph as its context.
-- **A note for your agent on a board**: the board's `⋯` (or ⌘K, Note for an agent on the board) opens the composer
-  over its issues; its place is the board as it is filtered, `Payments · Mine · 3 issues`, and the agent gets the
-  issues it shows. The `⋯` also copies the board's link.
-- **Tools for agents**, through Artoo's MCP server while Artoo runs: `jira_issue` (an issue whole) and `jira_search`
-  (a JQL query).
+- **A board** (`⌃⌘5`): the side panel's boards under each site's host, Drafts at its foot; a board's issues as a
+  list beside a preview, or as columns (List · Board, `V`), grouped by state, story or epic (`G`), `Mine · All` with
+  the people's faces beside them, the filter (`⌘F`). Each row's state chip moves the issue (`⌥S`), its face assigns
+  it (`A`, `I` to you); the epic, the sprint, Blocked by.
+- **An issue's page**: its facts as controls (state by the workflow, the fields a move asks, assignee, priority,
+  type, epic, sprint); the title and the description edited in place, kept on this Mac until saved, a change someone
+  else saved meanwhile compared before yours goes; sub-tasks with an empty row (`N`), linked issues (`L`),
+  attachments and pictures where they stand, details from the edit screen. Comments: yours to everyone, edited and
+  deleted, a reply mentioning who wrote last (`R`), people mentioned by name (`@Juniper.Hale`); `⇥` sends it to your
+  agent instead.
+- **Someone else's change**: what is on screen is read again each minute; a line over the title says who changed
+  what, dots mark it.
+- **New task** (`⌥⌘N`): a sheet over the window — project, type, epic, summary, description, assignee, priority,
+  labels, sprint, then what the project's create screen requires; `⌘↵` creates it, `⌘S` keeps a draft.
+- **The Inbox**: an issue assigned to you (also a toast), a mention of you, a change on an issue of yours — each
+  switched in Settings → Notifications.
+- **⌘K**: the Tasks tab finds the issues read by key or words; Here offers what the page on screen does.
+- **Notes for your agent**: `+` on a paragraph of the description (`C`), or on a board (`⋯`, Note for an agent);
+  the agent reads it with its place, `PAY-412 · description · ¶4`, or the board's issues as filtered.
+- **Tools for agents**, through Artoo's MCP server while Artoo runs: `jira_issue`, `jira_search`, and
+  `jira_comment` — a comment an agent writes waits on the issue's page for you to post, edit or discard.
 
 ## Connect
 
-Name each site on a line of `~/Library/Application Support/Artoo/plugins/artoo-tasks/trackers.txt`:
+Settings → Accounts → Trackers: Add a tracker, its site, your email (Jira Cloud) and a token, Test, Save. The sites
+are kept in `~/Library/Application Support/Artoo/plugins/artoo-tasks/trackers.txt`, one a line:
 
 ```text
 https://jira.example.com
 https://example.atlassian.net you@example.com
 ```
 
-Every site named is read: the side panel lists each one's boards under its host, an issue opens from its own site,
-and the agents' tools read them all (or the one a call names). A site alone is Jira Server or Data Center, read with a
-personal access token; a site with an email is Jira Cloud, read with that email and an API token. The token is the
-file `~/.config/tokens/<host>`.
+A site alone is Jira Server or Data Center, read with a personal access token; a site with an email is Jira Cloud,
+read with that email and an API token. The token is the file `~/.config/tokens/<host>` (mode 600).
 
 ## Build and run
 
@@ -38,9 +47,10 @@ way, see `scripts/`). Against a clone of Artoo, with its SDK built in `target/de
 ARTOO_PLUGIN_DEV="$PWD/target/debug/libartoo_tasks.dylib" path/to/artoo/target/debug/artoo
 ```
 
-`ARTOO_TASKS_FIXTURE=<folder>` reads the API's answers from files there instead of the tracker
-(`_rest_api_2_issue_PAY-412.json`), for pictures that show no one's real work; its own `trackers.txt` names its sites,
-and a folder named for a site's host holds that site's answers.
+`ARTOO_TASKS_FIXTURE=<folder>` reads the API's answers from files there instead of the tracker, for pictures that show
+no one's real work: `python3 scripts/fixture.py` writes `fixtures/` (the Payments board). Its own `trackers.txt` names
+its sites, a folder named for a site's host holds that site's answers (`_rest_api_2_issue_PAY-412.json`), and a write
+is recorded in its `writes.log` and answered from `POST_rest_api_2_issue.json` when there is one.
 
 ## Tests
 

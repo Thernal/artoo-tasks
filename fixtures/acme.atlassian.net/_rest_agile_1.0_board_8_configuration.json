@@ -1,0 +1,23 @@
+{
+ "id": 8,
+ "columnConfig": {
+  "columns": [
+   {
+    "name": "To do",
+    "statuses": [
+     {
+      "id": "10000"
+     }
+    ]
+   },
+   {
+    "name": "Done",
+    "statuses": [
+     {
+      "id": "10002"
+     }
+    ]
+   }
+  ]
+ }
+}

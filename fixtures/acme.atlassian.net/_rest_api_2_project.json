@@ -1,0 +1,17 @@
+[
+ {
+  "id": "10010",
+  "key": "PAY",
+  "name": "Payments"
+ },
+ {
+  "id": "10011",
+  "key": "LED",
+  "name": "Ledger"
+ },
+ {
+  "id": "10012",
+  "key": "PLAT",
+  "name": "Platform"
+ }
+]

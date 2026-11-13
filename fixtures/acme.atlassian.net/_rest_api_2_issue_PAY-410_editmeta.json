@@ -1,0 +1,174 @@
+{
+ "fields": {
+  "summary": {
+   "required": true,
+   "name": "Summary",
+   "schema": {
+    "type": "string",
+    "system": "summary"
+   },
+   "operations": [
+    "set"
+   ]
+  },
+  "description": {
+   "required": false,
+   "name": "Description",
+   "schema": {
+    "type": "string",
+    "system": "description"
+   },
+   "operations": [
+    "set"
+   ]
+  },
+  "priority": {
+   "required": false,
+   "name": "Priority",
+   "schema": {
+    "type": "priority",
+    "system": "priority"
+   },
+   "operations": [
+    "set"
+   ],
+   "allowedValues": [
+    {
+     "id": "1",
+     "name": "Highest"
+    },
+    {
+     "id": "2",
+     "name": "High"
+    },
+    {
+     "id": "3",
+     "name": "Medium"
+    },
+    {
+     "id": "4",
+     "name": "Low"
+    },
+    {
+     "id": "5",
+     "name": "Lowest"
+    }
+   ]
+  },
+  "labels": {
+   "required": false,
+   "name": "Labels",
+   "schema": {
+    "type": "array",
+    "items": "string",
+    "system": "labels"
+   },
+   "operations": [
+    "add",
+    "set",
+    "remove"
+   ]
+  },
+  "duedate": {
+   "required": false,
+   "name": "Due date",
+   "schema": {
+    "type": "date",
+    "system": "duedate"
+   },
+   "operations": [
+    "set"
+   ]
+  },
+  "components": {
+   "required": false,
+   "name": "Components",
+   "schema": {
+    "type": "array",
+    "items": "component",
+    "system": "components"
+   },
+   "operations": [
+    "add",
+    "set",
+    "remove"
+   ],
+   "allowedValues": [
+    {
+     "id": "10100",
+     "name": "Refunds API"
+    },
+    {
+     "id": "10101",
+     "name": "Ledger"
+    },
+    {
+     "id": "10102",
+     "name": "Merchant reports"
+    }
+   ]
+  },
+  "customfield_10016": {
+   "required": false,
+   "name": "Story points",
+   "schema": {
+    "type": "number",
+    "custom": "com.atlassian.jira.plugin.system.customfieldtypes:float",
+    "customId": 10016
+   },
+   "operations": [
+    "set"
+   ]
+  },
+  "fixVersions": {
+   "required": false,
+   "name": "Fix versions",
+   "schema": {
+    "type": "array",
+    "items": "version",
+    "system": "fixVersions"
+   },
+   "operations": [
+    "add",
+    "set",
+    "remove"
+   ],
+   "allowedValues": [
+    {
+     "id": "10200",
+     "name": "2.5",
+     "released": false
+    },
+    {
+     "id": "10201",
+     "name": "2.6",
+     "released": false
+    }
+   ]
+  },
+  "customfield_10020": {
+   "required": false,
+   "name": "Sprint",
+   "schema": {
+    "type": "array",
+    "items": "json",
+    "custom": "com.pyxis.greenhopper.jira:gh-sprint",
+    "customId": 10020
+   },
+   "operations": [
+    "set"
+   ]
+  },
+  "assignee": {
+   "required": false,
+   "name": "Assignee",
+   "schema": {
+    "type": "user",
+    "system": "assignee"
+   },
+   "operations": [
+    "set"
+   ]
+  }
+ }
+}

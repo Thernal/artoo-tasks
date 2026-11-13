@@ -1,36 +1,115 @@
-//! The Tasks space in one tab: its own page, the board picked as a list of its issues grouped by state; an issue's
-//! page — its facts, its description, sub-tasks and comments, its details —; a note for an agent (#212) on a
-//! paragraph of a description or on the board as it is filtered (its ⋯, ⌘K), in the app's composer; and the side
-//! panel's boards.
+//! The Tasks space in one tab: its own page — the board picked, as a list beside a preview or as columns, or the
+//! drafts —, an issue's page, the popovers both open, a note for an agent (#212) on a paragraph or on the board as it
+//! is filtered, in the app's composer. Drawn in `board.rs`, `issue.rs`, `pop.rs`, `sheet.rs`; the side panel and the
+//! page bar in `side.rs` and `bar.rs`.
 
 use crate::agents::{self as places_of, ISSUE};
-use crate::model::{self, BoardId, Issue, Row};
+use crate::keep::{Group, View};
+use crate::model::BoardId;
 use crate::store::{Read, Store};
-use crate::wiki;
 use artoo_plugin_sdk::agents::places;
 use artoo_plugin_sdk::core::route::Route;
 use artoo_plugin_sdk::core::textedit::TextEdit;
 use artoo_plugin_sdk::gpui::{
-    AnyElement, App, ClickEvent, ClipboardItem, Context, Entity, FontWeight, KeyDownEvent, Pixels, Point, SharedString,
-    Window, div, prelude::*,
+    self, AnyElement, App, ClipboardItem, Context, Entity, KeyDownEvent, Pixels, Point,
+    ScrollHandle, Window, div, prelude::*,
 };
 use artoo_plugin_sdk::kit::composer::{Compose, ComposeAct, Look, Target, Typed as Written};
-use artoo_plugin_sdk::kit::hover::Hover;
-use artoo_plugin_sdk::kit::{controls, icons, island, markdown, px, theme};
+use artoo_plugin_sdk::kit::{controls, icons, px, theme};
 use artoo_plugin_sdk::shell::{Frame, MenuItem, Typed};
+use std::collections::HashSet;
 use std::rc::Rc;
+use std::time::Duration;
 
 /// The space's id.
 pub const SPACE: &str = "tasks";
 /// The note composer's input.
 pub const NOTE: &str = "tasks.note";
+/// A popover's input: its filter, its keys.
+pub const INPUT_POP: &str = "tasks.pop";
+/// The comment composer's.
+pub const INPUT_COMMENT: &str = "tasks.comment";
+/// The description being edited.
+pub const INPUT_DESC: &str = "tasks.description";
+/// The sub-tasks' empty row.
+pub const INPUT_SUB: &str = "tasks.subtask";
+/// The summary being edited.
+pub const INPUT_TITLE: &str = "tasks.title";
+
+/// Where a popover hangs: a row of the board, the preview, the issue page's facts, a sub-task, a detail, the
+/// people beside Mine · All.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum Anchor {
+    Row(String),
+    Preview,
+    Issue,
+    Sub(String),
+    Detail(String),
+    Faces,
+    /// A select of New task, by its field.
+    Sheet(String),
+}
+
+impl Anchor {
+    pub fn id(&self) -> String {
+        match self {
+            Anchor::Row(k) => format!("row-{k}"),
+            Anchor::Preview => "pv".into(),
+            Anchor::Issue => "issue".into(),
+            Anchor::Sub(k) => format!("sub-{k}"),
+            Anchor::Detail(f) => format!("detail-{f}"),
+            Anchor::Faces => "faces".into(),
+            Anchor::Sheet(f) => format!("sheet-{f}"),
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum PopKind {
+    /// Move to: the moves the workflow allows.
+    Move,
+    /// A move that asks for fields.
+    Ask,
+    Assign,
+    Epic,
+    /// Everyone on the board, beside Mine · All.
+    People,
+    /// A field's values, by its id: priority, sprint, labels, components.
+    Field(String),
+    /// A select of New task, by its field.
+    Sheet(String),
+}
+
+/// A popover open.
+pub struct Pop {
+    pub kind: PopKind,
+    pub anchor: Anchor,
+    /// The issue it is about.
+    pub key: String,
+    pub filter: String,
+    pub edit: TextEdit,
+    /// The row the keyboard is on.
+    pub at: usize,
+    /// A move that asks, and the value picked for each field it asks.
+    pub ask: Option<crate::model::Move>,
+    pub asked: Vec<usize>,
+}
 
 /// Where a note for the agent is being written.
-enum Spot {
+pub enum Spot {
     /// Paragraph `para` of issue `key`'s description, on site `site`.
-    Para { key: String, site: String, para: usize },
-    /// The board picked as it is filtered now, with how many issues it shows when they were read.
-    Board { board: BoardId, name: String, mine: bool, count: Option<usize> },
+    Para {
+        key: String,
+        site: String,
+        para: usize,
+    },
+    /// The board picked as it is filtered now, with how many issues it shows.
+    Board {
+        board: BoardId,
+        name: String,
+        mine: bool,
+        count: Option<usize>,
+    },
 }
 
 impl Spot {
@@ -38,99 +117,450 @@ impl Spot {
     fn words(&self) -> String {
         match self {
             Spot::Para { key, para, .. } => format!("{key} · description · ¶{para}"),
-            Spot::Board { name, mine, count, .. } => places_of::board_words(name, *mine, *count),
+            Spot::Board {
+                name, mine, count, ..
+            } => places_of::board_words(name, *mine, *count),
         }
     }
 }
 
 /// A note for the agent being written.
-struct Note {
-    spot: Spot,
-    compose: Compose,
+pub struct Note {
+    pub spot: Spot,
+    pub compose: Compose,
+}
+
+/// A composer of the kit's, empty, for `target`.
+pub fn compose(target: Target, text: &str) -> Compose {
+    Compose {
+        path: String::new(),
+        old: false,
+        first: None,
+        line: 0,
+        code: String::new(),
+        edit: TextEdit::new(text.to_owned()),
+        at: String::new(),
+        target,
+        error: None,
+        preview: false,
+        pick: 0,
+        closed: None,
+        page: None,
+        file: None,
+        answers: None,
+    }
 }
 
 pub struct Page {
-    store: Entity<Store>,
-    frame: Rc<dyn Frame>,
-    route: Option<Route>,
-    note: Option<Note>,
+    pub store: Entity<Store>,
+    pub frame: Rc<dyn Frame>,
+    pub route: Option<Route>,
+    pub note: Option<Note>,
+    /// The issue picked on the board.
+    pub pick: Option<String>,
+    /// The groups folded; Done's column is folded until it is in `unfolded`.
+    pub folded_ids: HashSet<String>,
+    pub unfolded: HashSet<String>,
+    pub pop: Option<Pop>,
+    /// A move the tracker refused: where its reason shows, and to what it was.
+    pub refusal: Option<(Anchor, String)>,
+    pub refused_to: Option<String>,
+    /// The workflow of an issue shown over the page.
+    pub workflow: Option<String>,
+    /// The drafts on screen in place of the board, the one picked.
+    pub drafts: bool,
+    pub draft_pick: Option<u64>,
+    pub rows_scroll: ScrollHandle,
+    pub issue_scroll: ScrollHandle,
+    /// The issue page's composers and fields.
+    pub issue: crate::issue::IssueState,
+    /// The New task sheet, when open.
+    pub sheet: Option<crate::sheet::Sheet>,
+    /// Whether New task is over the window: the part's `Overlay` reads it.
+    pub sheet_shown: Rc<std::cell::Cell<bool>>,
 }
 
 impl Page {
     pub fn new(store: Entity<Store>, frame: Rc<dyn Frame>, cx: &mut Context<Self>) -> Self {
-        cx.observe(&store, |_, _, cx| cx.notify()).detach();
-        Self { store, frame, route: None, note: None }
+        cx.observe(&store, |p: &mut Self, _, cx| {
+            p.sheet_heard(cx);
+            cx.notify()
+        })
+        .detach();
+        // What is on screen is read again every minute: someone else's change shows (`Store::note_change`).
+        cx.spawn(async move |this, cx| {
+            loop {
+                cx.background_executor()
+                    .timer(Duration::from_secs(60))
+                    .await;
+                let Ok(()) = this.update(cx, |p, cx| p.read_again(cx)) else {
+                    break;
+                };
+            }
+        })
+        .detach();
+        Self {
+            store,
+            frame,
+            route: None,
+            note: None,
+            pick: None,
+            folded_ids: HashSet::new(),
+            unfolded: HashSet::new(),
+            pop: None,
+            refusal: None,
+            refused_to: None,
+            workflow: None,
+            drafts: false,
+            draft_pick: None,
+            rows_scroll: ScrollHandle::new(),
+            issue_scroll: ScrollHandle::new(),
+            issue: Default::default(),
+            sheet: None,
+            sheet_shown: Rc::default(),
+        }
+    }
+
+    /// The issue page's key, when one is on screen.
+    pub fn issue_key(&self) -> Option<String> {
+        self.route
+            .as_ref()
+            .filter(|r| r.kind == ISSUE)
+            .and_then(places_of::key_of)
+    }
+
+    /// The issue or the board on screen read again, quietly.
+    pub fn read_again(&mut self, cx: &mut Context<Self>) {
+        let key = self.issue_key();
+        let site = self.route.as_ref().and_then(places_of::site_of);
+        self.store.update(cx, |s, cx| match key {
+            Some(key) => s.read_issue(&key, site.as_deref(), true, cx),
+            None => s.read_board(true, cx),
+        });
     }
 
     /// What is on screen now; read anew when it was just opened.
     pub fn show(&mut self, route: Option<&Route>, fresh: bool, cx: &mut Context<Self>) {
+        if self.route.as_ref() != route {
+            self.pop = None;
+            self.refusal = None;
+            self.workflow = None;
+        }
         self.route = route.cloned();
-        let key = route.filter(|r| r.kind == ISSUE).and_then(places_of::key_of);
+        let key = self.issue_key();
         let site = route.and_then(places_of::site_of);
+        if key.is_some() {
+            self.drafts = false;
+        }
         self.store.update(cx, |s, cx| match key {
-            Some(key) => s.read_issue(&key, site.as_deref(), fresh, cx),
+            Some(key) => {
+                s.read_issue(&key, site.as_deref(), fresh, cx);
+                s.read_screen(&key, cx);
+            }
             None => {
                 s.read_boards(cx);
-                s.read_rows(fresh, cx);
+                s.read_board(fresh, cx);
             }
         });
         cx.notify();
+    }
+
+    /// Issue `key` picked on the board: read whole for the preview.
+    pub fn pick_row(&mut self, key: &str, cx: &mut Context<Self>) {
+        if self.pick.as_deref() != Some(key) {
+            self.pick = Some(key.to_owned());
+            self.refusal = None;
+        }
+        let k = key.to_owned();
+        self.store
+            .update(cx, |s, cx| s.read_issue(&k, None, false, cx));
+        cx.notify();
+    }
+
+    /// Issue `key`'s page opened.
+    pub fn open_issue(&mut self, key: &str, cx: &mut Context<Self>) {
+        let host = self
+            .store
+            .read(cx)
+            .site_for(key)
+            .map(|s| s.host().to_owned());
+        self.frame
+            .open(places_of::issue_route(key, host.as_deref()), cx);
+    }
+
+    /// ↑ ↓ on the board: the next row picked.
+    pub fn step(&mut self, down: bool, cx: &mut Context<Self>) {
+        let Some(shown) = self.board_shown(cx) else {
+            return;
+        };
+        let order = shown.order(&|id| self.folded(id));
+        let at = self
+            .pick
+            .as_ref()
+            .and_then(|k| order.iter().position(|x| x == k));
+        let next = match (at, down) {
+            (Some(i), true) => (i + 1).min(order.len().saturating_sub(1)),
+            (Some(i), false) => i.saturating_sub(1),
+            (None, _) => 0,
+        };
+        if let Some(key) = order.get(next).cloned() {
+            self.pick_row(&key, cx);
+            self.rows_scroll.scroll_to_item(next);
+        }
+    }
+
+    /// ↵ on the board: the picked issue opened.
+    pub fn open_picked(&mut self, cx: &mut Context<Self>) {
+        if self.drafts {
+            if let Some(id) = self.draft_pick {
+                self.open_draft(id, cx);
+            }
+            return;
+        }
+        if let Some(key) = self.pick.clone() {
+            self.open_issue(&key, cx);
+        }
+    }
+
+    /// The issue a key acts on: the page's, else the one picked on the board.
+    pub fn acted_on(&self) -> Option<String> {
+        self.issue_key().or_else(|| self.pick.clone())
+    }
+
+    /// Where a key's popover hangs: the issue page's facts, else the picked row.
+    fn key_anchor(&self, sub: bool) -> Option<(Anchor, String)> {
+        if let Some(key) = self.issue_key() {
+            return Some((
+                if sub {
+                    Anchor::Detail(String::new())
+                } else {
+                    Anchor::Issue
+                },
+                key,
+            ));
+        }
+        let key = self.pick.clone()?;
+        Some((Anchor::Row(key.clone()), key))
+    }
+
+    /// ⌥S: Move to on the issue on screen or picked.
+    pub fn key_move(&mut self, cx: &mut Context<Self>) {
+        if let Some((anchor, key)) = self.key_anchor(false) {
+            self.open_pop(PopKind::Move, anchor, &key, cx);
+        }
+    }
+
+    /// A: its people list.
+    pub fn key_assign(&mut self, cx: &mut Context<Self>) {
+        if let Some((anchor, key)) = self.key_anchor(false) {
+            self.open_pop(PopKind::Assign, anchor, &key, cx);
+        }
+    }
+
+    /// I: the issue given to you.
+    pub fn key_assign_me(&mut self, cx: &mut Context<Self>) {
+        let Some(key) = self.acted_on() else {
+            return;
+        };
+        let s = self.store.read(cx);
+        let host = s
+            .site_for(&key)
+            .map(|x| x.host().to_owned())
+            .unwrap_or_default();
+        let me = s.me.get(&host).cloned();
+        if me.is_some() {
+            self.assign(&key, me, cx);
+        }
+    }
+
+    /// ⇧E: its epic.
+    pub fn key_epic(&mut self, cx: &mut Context<Self>) {
+        if let Some((anchor, key)) = self.key_anchor(false) {
+            let anchor = if anchor == Anchor::Issue {
+                Anchor::Detail("epic".into())
+            } else {
+                anchor
+            };
+            self.open_pop(PopKind::Epic, anchor, &key, cx);
+        }
+    }
+
+    /// V: List or Board.
+    pub fn toggle_view(&mut self, cx: &mut Context<Self>) {
+        self.store.update(cx, |s, cx| {
+            if let Some(b) = s.board.clone() {
+                let v = s.kept.view(&b);
+                s.kept.set_view(
+                    b,
+                    View {
+                        board: !v.board,
+                        ..v
+                    },
+                );
+            }
+            cx.notify();
+        });
+    }
+
+    pub fn set_columns(&mut self, columns: bool, cx: &mut Context<Self>) {
+        self.store.update(cx, |s, cx| {
+            if let Some(b) = s.board.clone() {
+                let v = s.kept.view(&b);
+                s.kept.set_view(
+                    b,
+                    View {
+                        board: columns,
+                        ..v
+                    },
+                );
+            }
+            cx.notify();
+        });
+    }
+
+    /// The board grouped by `group`.
+    pub fn set_group(&mut self, group: Group, cx: &mut Context<Self>) {
+        self.store.update(cx, |s, cx| {
+            if let Some(b) = s.board.clone() {
+                let v = s.kept.view(&b);
+                s.kept.set_view(b, View { group, ..v });
+            }
+            cx.notify();
+        });
+    }
+
+    /// G, or Group ▾: State, Story, Epic.
+    pub fn group_menu(&mut self, at: Option<Point<Pixels>>, cx: &mut Context<Self>) {
+        let now = {
+            let s = self.store.read(cx);
+            s.board
+                .as_ref()
+                .map(|b| s.kept.view(b).group)
+                .unwrap_or_default()
+        };
+        let page = cx.entity().downgrade();
+        let items = [Group::State, Group::Story, Group::Epic]
+            .into_iter()
+            .map(|g| {
+                let page = page.clone();
+                MenuItem::new(g.word(), move |_, cx| {
+                    page.update(cx, |p, cx| p.set_group(g, cx)).ok();
+                })
+                .checked(g == now)
+            })
+            .collect();
+        let at = at.unwrap_or_else(|| gpui::point(px(600.), px(120.)));
+        self.frame.menu(at, vec![items], cx);
+    }
+
+    /// Mine or All.
+    pub fn set_mine(&mut self, mine: bool, cx: &mut Context<Self>) {
+        self.store.update(cx, |s, cx| {
+            s.mine = mine;
+            cx.notify();
+        });
+    }
+
+    /// A face beside Mine · All picked, or let go.
+    pub fn toggle_face(&mut self, id: &str, cx: &mut Context<Self>) {
+        let id = id.to_owned();
+        self.store.update(cx, |s, cx| {
+            if s.faces.contains(&id) {
+                s.faces.retain(|f| *f != id);
+            } else {
+                s.faces.push(id);
+            }
+            cx.notify();
+        });
     }
 
     pub fn note_open(&self) -> bool {
         self.note.is_some()
     }
 
+    pub fn board_note_open(&self) -> bool {
+        self.note
+            .as_ref()
+            .is_some_and(|n| matches!(n.spot, Spot::Board { .. }))
+    }
+
     /// A note for the agent on the board picked, as it is filtered now (its ⋯, ⌘K).
     pub fn open_board_note(&mut self, cx: &mut Context<Self>) {
+        let count = self.board_shown(cx).map(|s| s.count);
         let s = self.store.read(cx);
         let Some(board) = s.picked().cloned() else {
-            self.frame.error("Open a board to write a note on it".into(), cx);
+            self.frame
+                .error("Open a board to write a note on it".into(), cx);
             return;
         };
-        let count = match s.rows.get(&(board.key(), s.mine)) {
-            Some(Read::Done(rows)) => Some(rows.len()),
-            _ => None,
+        let spot = Spot::Board {
+            board: board.key(),
+            name: board.name.clone(),
+            mine: s.mine,
+            count,
         };
-        let spot = Spot::Board { board: board.key(), name: board.name.clone(), mine: s.mine, count };
         self.open_note(spot, cx);
     }
 
-    /// The board's ⋯: a note for the agent on it, its link.
-    fn more_menu(&mut self, at: Point<Pixels>, cx: &mut Context<Self>) {
-        let page = cx.entity().downgrade();
-        let s = self.store.read(cx);
-        let link = (s.picked()).and_then(|b| Some(model::board_url(&s.site_of(&b.site)?, b.id)));
-        let note = MenuItem::new("Note for an agent…", move |_, cx| {
-            page.update(cx, |p, cx| p.open_board_note(cx)).ok();
-        });
-        let copy = match link {
-            Some(url) => MenuItem::new("Copy link", move |_, cx| cx.write_to_clipboard(ClipboardItem::new_string(url.clone()))),
-            None => MenuItem::off("Copy link"),
+    /// What the page bar's `⋯` holds: an issue's key, branch name and link to copy and a note for an agent on it;
+    /// a board's note and link.
+    pub fn more_items(page: &Entity<Self>, cx: &App) -> Vec<MenuItem> {
+        let p = page.read(cx);
+        let s = p.store.read(cx);
+        let weak = page.downgrade();
+        let copy = |words: String, text: Option<String>| match text {
+            Some(t) => MenuItem::new(words, move |_, cx| {
+                cx.write_to_clipboard(ClipboardItem::new_string(t.clone()))
+            }),
+            None => MenuItem::off(words),
         };
-        self.frame.menu(at, vec![vec![note, copy]], cx);
+        match p.issue_key() {
+            Some(key) => {
+                let url = s.issue(&key).map(|i| i.url.clone());
+                let branch = s.issue(&key).map(|i| branch_name(&key, &i.row.summary));
+                vec![
+                    copy(format!("Copy key  {key}"), Some(key.clone())).key("⇧⌘C"),
+                    copy("Copy branch name".into(), branch).key("⇧⌘B"),
+                    copy("Copy link".into(), url),
+                    MenuItem::new("Note for an agent…", move |_, cx| {
+                        weak.update(cx, |p, cx| p.note_on_first_paragraph(cx)).ok();
+                    })
+                    .key("C"),
+                ]
+            }
+            None => {
+                let link = (s.picked())
+                    .and_then(|b| Some(crate::model::board_url(&s.site_of(&b.site)?, b.id)));
+                vec![
+                    MenuItem::new("Note for an agent…", move |_, cx| {
+                        weak.update(cx, |p, cx| p.open_board_note(cx)).ok();
+                    })
+                    .key("C"),
+                    copy("Copy link".into(), link),
+                ]
+            }
+        }
     }
 
-    fn open_note(&mut self, spot: Spot, cx: &mut Context<Self>) {
+    /// C on an issue's page: a note on its first paragraph.
+    pub fn note_on_first_paragraph(&mut self, cx: &mut Context<Self>) {
+        let Some(key) = self.issue_key() else {
+            return;
+        };
+        let site = self
+            .store
+            .read(cx)
+            .issue(&key)
+            .map(|i| i.site.clone())
+            .unwrap_or_default();
+        let para = self.issue.hovered_para.unwrap_or(1);
+        self.open_note(Spot::Para { key, site, para }, cx);
+    }
+
+    pub fn open_note(&mut self, spot: Spot, cx: &mut Context<Self>) {
         self.note = Some(Note {
             spot,
-            compose: Compose {
-                path: String::new(),
-                old: false,
-                first: None,
-                line: 0,
-                code: String::new(),
-                edit: TextEdit::new(String::new()),
-                at: String::new(),
-                target: Target::Agent,
-                error: None,
-                preview: false,
-                pick: 0,
-                closed: None,
-                page: None,
-                file: None,
-                answers: None,
-            },
+            compose: compose(Target::Agent, ""),
         });
         self.frame.take_keyboard(NOTE, cx);
         cx.notify();
@@ -158,7 +588,7 @@ impl Page {
         }
     }
 
-    /// The note added to the tab's drafts for the agent, at its paragraph.
+    /// The note added to the tab's drafts for the agent, at its place.
     fn add_note(&mut self, cx: &mut Context<Self>) {
         let Some(note) = self.note.take() else {
             return;
@@ -168,336 +598,42 @@ impl Page {
             return;
         }
         let (kind, data) = match &note.spot {
-            Spot::Para { key, site, para } => ("jira.issue", places_of::paragraph_place(key, site, *para)),
-            Spot::Board { board, name, mine, count } => {
-                ("jira.board", places_of::board_place(board, name, *mine, *count))
+            Spot::Para { key, site, para } => {
+                ("jira.issue", places_of::paragraph_place(key, site, *para))
             }
+            Spot::Board {
+                board,
+                name,
+                mine,
+                count,
+            } => (
+                "jira.board",
+                places_of::board_place(board, name, *mine, *count),
+            ),
         };
-        let agents = self
-            .frame
-            .services()
-            .get::<Rc<dyn artoo_plugin_sdk::agents::tab::Agents>>();
-        match (places::on(cx, kind, &data), agents) {
-            (Some(on), Some(agents)) => {
-                agents.add_comment(places::note(on, body), cx);
-                self.frame.show_tool(Some(artoo_plugin_sdk::agents::view::WINDOW), cx);
-            }
-            _ => self.frame.error("Notes for agents are not here".into(), cx),
-        }
+        self.send_to_agent(kind, &data, body, cx);
         self.frame.leave_keyboard(NOTE, cx);
         cx.notify();
     }
 
-    fn page_frame(&self) -> artoo_plugin_sdk::gpui::Div {
-        island().flex_1().flex().flex_col().min_h_0().min_w_0().overflow_hidden().bg(theme::editor())
-    }
-
-    fn board_page(&mut self, cx: &mut Context<Self>) -> AnyElement {
-        let store = self.store.read(cx);
-        if store.sites.is_empty() {
-            let text = store.missing.first().cloned().unwrap_or_else(|| {
-                "Name a Jira site in the plugin's trackers.txt, its token in ~/.config/tokens".into()
-            });
-            return self
-                .page_frame()
-                .child(controls::empty_state("list-checks", "Connect a tracker".into(), text, None))
-                .into_any_element();
-        }
-        if let Some(Read::Failed(why)) = &store.boards {
-            return self
-                .page_frame()
-                .child(controls::empty_state("alert", "Boards not read".into(), why.clone(), None))
-                .into_any_element();
-        }
-        let mine = store.mine;
-        let rows = store.board.clone().and_then(|b| store.rows.get(&(b, mine)));
-        let body: AnyElement = match rows {
-            None | Some(Read::Reading) => controls::skeleton("tasks-rows", 8),
-            Some(Read::Failed(why)) => {
-                controls::empty_state("alert", "Issues not read".into(), why.clone(), None).into_any_element()
+    /// `body` added to the tab's drafts for the agent, on the place of `kind` `data`; the Agents window shown.
+    pub fn send_to_agent(&mut self, kind: &str, data: &str, body: String, cx: &mut Context<Self>) {
+        let agents = self
+            .frame
+            .services()
+            .get::<Rc<dyn artoo_plugin_sdk::agents::tab::Agents>>();
+        match (places::on(cx, kind, data), agents) {
+            (Some(on), Some(agents)) => {
+                agents.add_comment(places::note(on, body), cx);
+                self.frame
+                    .show_tool(Some(artoo_plugin_sdk::agents::view::WINDOW), cx);
             }
-            Some(Read::Done(rows)) if rows.is_empty() => controls::empty_state(
-                "list-checks",
-                if mine { "Nothing of yours here".into() } else { "No issues".into() },
-                String::new(),
-                None,
-            )
-            .into_any_element(),
-            Some(Read::Done(rows)) => self.rows(rows.clone(), cx),
-        };
-        let board_note = self.note.as_ref().is_some_and(|n| matches!(n.spot, Spot::Board { .. }));
-        let more = div()
-            .id("tasks-more")
-            .size(px(28.))
-            .flex()
-            .items_center()
-            .justify_center()
-            .rounded(px(6.))
-            .cursor_pointer()
-            .hover(|s| s.bg(theme::hover()))
-            .when(board_note, |s| s.bg(theme::hover()))
-            .child(icons::icon("ellipsis").size(px(16.)).text_color(theme::muted()))
-            .tip("More: Note for an agent…, Copy link")
-            .on_click(cx.listener(|this, e: &ClickEvent, _, cx| this.more_menu(e.position(), cx)));
-        let filter = ["Mine", "All"].into_iter().fold(controls::group(), |g, label| {
-            let on = (label == "Mine") == mine;
-            g.child(controls::chip(SharedString::from(format!("tasks-{label}")), label, on).on_click(
-                cx.listener(move |this, _, _, cx| {
-                    this.store.update(cx, |s, cx| {
-                        s.mine = label == "Mine";
-                        s.read_rows(false, cx);
-                        cx.notify();
-                    });
-                }),
-            ))
-        });
-        self.page_frame()
-            .child(
-                div()
-                    .flex()
-                    .items_center()
-                    .gap(px(10.))
-                    .px(px(16.))
-                    .h(px(44.))
-                    .border_b_1()
-                    .border_color(theme::border())
-                    .child(filter)
-                    .child(div().flex_1())
-                    .child(more),
-            )
-            .when(board_note, |d| {
-                d.child(
-                    div().flex_none().px(px(12.)).py(px(10.)).border_b_1().border_color(theme::border()).child(self.composer(cx)),
-                )
-            })
-            .child(div().id("tasks-list").flex_1().min_h_0().flex().flex_col().overflow_y_scroll().child(body))
-            .into_any_element()
-    }
-
-    /// The issues grouped by their state: those to do first, then in progress, then done.
-    fn rows(&self, rows: Vec<Row>, cx: &mut Context<Self>) -> AnyElement {
-        let rank = |c: &str| match c {
-            "new" => 0,
-            "indeterminate" => 1,
-            "done" => 2,
-            _ => 1,
-        };
-        let mut states: Vec<(usize, String)> = Vec::new();
-        for r in &rows {
-            if !states.iter().any(|(_, s)| *s == r.state) {
-                states.push((rank(&r.category), r.state.clone()));
-            }
+            _ => self.frame.error("Notes for agents are not here".into(), cx),
         }
-        states.sort_by_key(|(rank, _)| *rank);
-        let host = self.store.read(cx).board.as_ref().map(|b| b.0.clone());
-        let mut list = div().flex().flex_col().px(px(8.)).py(px(6.));
-        for (_, state) in states {
-            let of: Vec<&Row> = rows.iter().filter(|r| r.state == state).collect();
-            list = list.child(
-                div()
-                    .px(px(8.))
-                    .pt(px(12.))
-                    .pb(px(4.))
-                    .text_size(px(11.))
-                    .font_weight(FontWeight::SEMIBOLD)
-                    .text_color(theme::muted())
-                    .child(format!("{} {}", state.to_uppercase(), of.len())),
-            );
-            for r in of {
-                let (key, host) = (r.key.clone(), host.clone());
-                let frame = self.frame.clone();
-                let who = r.assignee.clone().unwrap_or_else(|| "Unassigned".into());
-                list = list.child(
-                    artoo_plugin_sdk::kit::row(SharedString::from(format!("row-{}", r.key)), false)
-                        .h(px(52.))
-                        .gap(px(12.))
-                        .child(
-                            div()
-                                .w(px(84.))
-                                .flex_none()
-                                .text_size(px(12.))
-                                .font_family(theme::code_font())
-                                .text_color(theme::muted())
-                                .child(r.key.clone()),
-                        )
-                        .child(
-                            div()
-                                .flex_1()
-                                .min_w_0()
-                                .flex()
-                                .flex_col()
-                                .child(div().text_size(px(13.)).text_color(theme::text()).truncate().child(r.summary.clone()))
-                                .child(
-                                    div()
-                                        .text_size(px(12.))
-                                        .text_color(theme::muted())
-                                        .truncate()
-                                        .child(format!("{} · {who} · {}", r.kind, model::day(&r.updated))),
-                                ),
-                        )
-                        .on_click(move |_, _, cx| frame.open(places_of::issue_route(&key, host.as_deref()), cx)),
-                );
-            }
-        }
-        list.into_any_element()
-    }
-
-    fn issue_page(&mut self, key: String, cx: &mut Context<Self>) -> AnyElement {
-        let read = self.store.read(cx).issues.get(&key).cloned();
-        let issue = match read {
-            None | Some(Read::Reading) => {
-                return self.page_frame().p(px(16.)).child(controls::skeleton("tasks-issue", 10)).into_any_element();
-            }
-            Some(Read::Failed(why)) => {
-                return self
-                    .page_frame()
-                    .child(controls::empty_state("alert", format!("{key} not read"), why, None))
-                    .into_any_element();
-            }
-            Some(Read::Done(issue)) => issue,
-        };
-        let r = &issue.row;
-        let fact = |label: &'static str, value: String| {
-            div()
-                .flex()
-                .flex_col()
-                .gap(px(4.))
-                .pr(px(28.))
-                .child(div().text_size(px(11.)).font_weight(FontWeight::SEMIBOLD).text_color(theme::muted()).child(label))
-                .child(div().text_size(px(13.)).text_color(theme::text()).child(value))
-        };
-        let head = div()
-            .flex()
-            .flex_col()
-            .gap(px(14.))
-            .px(px(24.))
-            .pt(px(20.))
-            .pb(px(16.))
-            .border_b_1()
-            .border_color(theme::border())
-            .child(
-                div()
-                    .flex()
-                    .items_center()
-                    .gap(px(10.))
-                    .child(div().text_size(px(14.)).text_color(theme::accent()).child(r.key.clone()))
-                    .child(div().text_size(px(18.)).font_weight(FontWeight::SEMIBOLD).text_color(theme::text()).child(r.summary.clone())),
-            )
-            .child(
-                div()
-                    .flex()
-                    .child(fact("STATE", r.state.clone()))
-                    .child(fact("ASSIGNEE", r.assignee.clone().unwrap_or_else(|| "Unassigned".into())))
-                    .child(fact("PRIORITY", r.priority.clone().unwrap_or_else(|| "—".into())))
-                    .child(fact("TYPE", r.kind.clone())),
-            );
-        let main = div()
-            .flex_1()
-            .min_w_0()
-            .flex()
-            .flex_col()
-            .gap(px(16.))
-            .child(self.description(&issue, cx))
-            .when(!issue.subtasks.is_empty(), |d| d.child(subtasks(&issue, &self.frame)))
-            .child(comments(&issue, cx));
-        let details = section("Details", None).child(
-            div()
-                .flex()
-                .flex_col()
-                .gap(px(10.))
-                .p(px(16.))
-                .child(detail("Labels", if issue.labels.is_empty() { "—".into() } else { issue.labels.join(", ") }))
-                .child(detail("Reporter", issue.reporter.clone().unwrap_or_else(|| "—".into())))
-                .child(detail("Created", model::day(&issue.created).to_owned()))
-                .child(detail("Updated", model::day(&r.updated).to_owned()))
-                .when_some(r.parent.clone(), |d, p| d.child(detail("Parent", p))),
-        );
-        self.page_frame()
-            .child(
-                div()
-                    .id("tasks-issue")
-                    .flex_1()
-                    .min_h_0()
-                    .overflow_y_scroll()
-                    .child(head)
-                    .child(
-                        div()
-                            .w_full()
-                            .flex()
-                            .items_start()
-                            .gap(px(16.))
-                            .p(px(20.))
-                            .child(main)
-                            .child(div().w(px(280.)).flex_none().child(details)),
-                    ),
-            )
-            .into_any_element()
-    }
-
-    /// The description by its paragraphs, each with `+` on its edge for a note to the agent; the note being written
-    /// under its paragraph.
-    fn description(&mut self, issue: &Issue, cx: &mut Context<Self>) -> AnyElement {
-        let paras = model::paragraphs(&issue.description);
-        let mut body = div().flex().flex_col().gap(px(10.)).pl(px(12.)).pr(px(24.)).py(px(14.));
-        if paras.is_empty() {
-            body = body.child(div().text_size(px(13.)).text_color(theme::muted()).child("No description"));
-        }
-        for (ix, para) in paras.into_iter().enumerate() {
-            let n = ix + 1;
-            let (key, site) = (issue.row.key.clone(), issue.site.clone());
-            let on = self.note.as_ref().is_some_and(
-                |note| matches!(&note.spot, Spot::Para { key: k, para, .. } if *k == key && *para == n),
-            );
-            body = body.child(
-                div()
-                    .id(SharedString::from(format!("para-{n}")))
-                    .group("para")
-                    .relative()
-                    .rounded(px(4.))
-                    .pl(px(28.))
-                    .pr(px(6.))
-                    .py(px(2.))
-                    .when(on, |d| d.bg(theme::agent_bg()))
-                    .child(
-                        div()
-                            .id(SharedString::from(format!("para-add-{n}")))
-                            .absolute()
-                            .left(px(4.))
-                            .top(px(3.))
-                            .size(px(18.))
-                            .rounded(px(4.))
-                            .flex()
-                            .items_center()
-                            .justify_center()
-                            .bg(theme::agent())
-                            .text_color(theme::on_accent())
-                            .cursor_pointer()
-                            .invisible()
-                            .group_hover("para", |s| s.visible())
-                            .when(on, |s| s.visible())
-                            .child(icons::icon("plus").size(px(12.)).text_color(theme::on_accent()))
-                            .on_click(cx.listener(move |this, _, _, cx| {
-                                let spot = Spot::Para { key: key.clone(), site: site.clone(), para: n };
-                                this.open_note(spot, cx)
-                            })),
-                    )
-                    .child(
-                        div()
-                            .text_size(px(13.))
-                            .line_height(px(20.))
-                            .text_color(theme::text())
-                            .child(markdown::body(&para, true, format!("tasks-para-{n}"), None, None, cx)),
-                    ),
-            );
-            if on {
-                body = body.child(div().pl(px(28.)).child(self.composer(cx)));
-            }
-        }
-        section("Description", None).child(body).into_any_element()
     }
 
     /// The app's composer, for the agent, at its place.
-    fn composer(&self, cx: &mut Context<Self>) -> AnyElement {
+    pub fn composer(&self, cx: &mut Context<Self>) -> AnyElement {
         let Some(note) = &self.note else {
             return div().into_any_element();
         };
@@ -534,7 +670,17 @@ impl Page {
         let page = cx.entity();
         let acts: artoo_plugin_sdk::kit::composer::ComposeActs = Rc::new(move |act, cx| {
             page.update(cx, |this, cx| {
-                if let (Some(note), ComposeAct::Place { at, shift, clicks, drag, lower }) = (this.note.as_mut(), act) {
+                if let (
+                    Some(note),
+                    ComposeAct::Place {
+                        at,
+                        shift,
+                        clicks,
+                        drag,
+                        lower,
+                    },
+                ) = (this.note.as_mut(), act)
+                {
                     note.compose.place(at, shift, clicks, drag, lower);
                     cx.notify();
                 }
@@ -567,162 +713,228 @@ impl Page {
             link_base: None,
         };
         let input = note.compose.render_input(look, acts, cx);
-        artoo_plugin_sdk::shell::input_box(div().id("tasks-note-box").child(input), NOTE, &self.frame)
+        artoo_plugin_sdk::shell::input_box(
+            div().id("tasks-note-box").child(input),
+            NOTE,
+            &self.frame,
+        )
+        .into_any_element()
+    }
+
+    /// The board's own page: the board, the drafts, or what is missing for them.
+    fn own_page(&mut self, cx: &mut Context<Self>) -> AnyElement {
+        let s = self.store.read(cx);
+        if s.sites.is_empty() {
+            return self.first_run(cx);
+        }
+        if let Some(Read::Failed(why)) = &s.boards {
+            let why = why.clone();
+            return (self.page_frame_own())
+                .child(controls::empty_state(
+                    "alert",
+                    "Boards not read".into(),
+                    why,
+                    None,
+                ))
+                .into_any_element();
+        }
+        if matches!(&s.boards, Some(Read::Done(b)) if b.is_empty()) {
+            let host = s
+                .sites
+                .first()
+                .map(|x| x.host().to_owned())
+                .unwrap_or_default();
+            return (self.page_frame_own())
+                .child(
+                    div()
+                        .flex_1()
+                        .flex()
+                        .flex_col()
+                        .items_center()
+                        .justify_center()
+                        .gap(px(6.))
+                        .child(
+                            div()
+                                .text_size(px(14.))
+                                .text_color(theme::text())
+                                .child(format!("No boards on {host}")),
+                        )
+                        .child(
+                            div()
+                                .text_size(px(12.))
+                                .text_color(theme::muted())
+                                .child("The token reaches 0 projects"),
+                        )
+                        .child(
+                            div()
+                                .id("tasks-accounts")
+                                .text_size(px(12.))
+                                .text_color(theme::accent())
+                                .cursor_pointer()
+                                .child("Settings → Accounts")
+                                .on_click(cx.listener(|this, _, _, cx| {
+                                    this.frame.open_settings(
+                                        artoo_plugin_sdk::hosts::connect::SETTINGS,
+                                        cx,
+                                    )
+                                })),
+                        ),
+                )
+                .into_any_element();
+        }
+        if self.drafts {
+            return self.drafts_page(cx);
+        }
+        self.board(cx)
+    }
+
+    fn page_frame_own(&self) -> gpui::Div {
+        artoo_plugin_sdk::kit::island()
+            .flex_1()
+            .flex()
+            .flex_col()
+            .min_h_0()
+            .min_w_0()
+            .overflow_hidden()
+            .bg(theme::editor())
+    }
+
+    /// No tracker yet: what the space shows, each tracker opening its row in Settings → Accounts.
+    fn first_run(&mut self, cx: &mut Context<Self>) -> AnyElement {
+        let row = |id: &'static str,
+                   name: &'static str,
+                   mark: &'static str,
+                   hue: u32,
+                   asks: &'static str,
+                   cx: &mut Context<Self>| {
+            div()
+                .flex()
+                .items_center()
+                .gap(px(12.))
+                .w(px(420.))
+                .px(px(14.))
+                .py(px(12.))
+                .rounded(px(8.))
+                .border_1()
+                .border_color(theme::island_border())
+                .child(
+                    div()
+                        .size(px(28.))
+                        .rounded(px(6.))
+                        .flex()
+                        .items_center()
+                        .justify_center()
+                        .bg(crate::look::tint(theme::code(hue), 0.2))
+                        .text_color(theme::code(hue))
+                        .font_weight(gpui::FontWeight::BOLD)
+                        .child(mark),
+                )
+                .child(
+                    div()
+                        .flex_1()
+                        .flex()
+                        .flex_col()
+                        .child(
+                            div()
+                                .text_size(px(13.))
+                                .font_weight(gpui::FontWeight::SEMIBOLD)
+                                .text_color(theme::text())
+                                .child(name),
+                        )
+                        .child(
+                            div()
+                                .text_size(px(12.))
+                                .text_color(theme::muted())
+                                .child(asks),
+                        ),
+                )
+                .child(
+                    crate::look::small_button(id, "Connect…").on_click(cx.listener(
+                        move |this, _, _, cx| {
+                            crate::accounts::open_row(Some(name.to_lowercase()), cx);
+                            this.frame
+                                .open_settings(artoo_plugin_sdk::hosts::connect::SETTINGS, cx)
+                        },
+                    )),
+                )
+        };
+        (self.page_frame_own())
+            .child(
+                div()
+                    .flex_1()
+                    .flex()
+                    .flex_col()
+                    .items_center()
+                    .justify_center()
+                    .gap(px(10.))
+                    .child(div().text_size(px(16.)).font_weight(gpui::FontWeight::SEMIBOLD).text_color(theme::text()).child("Connect a tracker"))
+                    .child(
+                        div()
+                            .text_size(px(13.))
+                            .text_color(theme::muted())
+                            .child("Its boards and issues show here, beside the code and the merge requests that do them."),
+                    )
+                    .child(
+                        div()
+                            .mt(px(10.))
+                            .flex()
+                            .flex_col()
+                            .gap(px(8.))
+                            .child(row("tasks-connect-jira", "Jira", "J", 2, "A site, an email and an API token", cx))
+                            .child(row("tasks-connect-trello", "Trello", "T", 4, "A key and a token", cx)),
+                    ),
+            )
             .into_any_element()
     }
 }
 
-fn section(title: &'static str, count: Option<usize>) -> artoo_plugin_sdk::gpui::Div {
-    div()
-        .flex()
-        .flex_col()
-        .rounded(px(8.))
-        .border_1()
-        .border_color(theme::border())
-        .child(
-            div()
-                .flex()
-                .items_center()
-                .gap(px(8.))
-                .px(px(16.))
-                .h(px(40.))
-                .border_b_1()
-                .border_color(theme::border())
-                .child(div().text_size(px(13.)).font_weight(FontWeight::SEMIBOLD).text_color(theme::text()).child(title))
-                .when_some(count, |d, n| d.child(div().text_size(px(12.)).text_color(theme::muted()).child(n.to_string()))),
-        )
-}
-
-fn detail(label: &'static str, value: String) -> impl IntoElement {
-    div()
-        .flex()
-        .gap(px(12.))
-        .text_size(px(13.))
-        .child(div().w(px(80.)).flex_none().text_color(theme::muted()).child(label))
-        .child(div().flex_1().min_w_0().text_color(theme::text()).child(value))
-}
-
-fn subtasks(issue: &Issue, frame: &Rc<dyn Frame>) -> impl IntoElement {
-    let done = issue.subtasks.iter().filter(|s| s.category == "done").count();
-    let mut list = div().flex().flex_col().py(px(4.));
-    for s in &issue.subtasks {
-        let (key, site, frame) = (s.key.clone(), issue.site.clone(), frame.clone());
-        list = list.child(
-            artoo_plugin_sdk::kit::row(SharedString::from(format!("sub-{}", s.key)), false)
-                .h(px(36.))
-                .gap(px(10.))
-                .px(px(16.))
-                .child(div().w(px(84.)).flex_none().text_size(px(12.)).font_family(theme::code_font()).text_color(theme::muted()).child(s.key.clone()))
-                .child(
-                    div()
-                        .flex_1()
-                        .min_w_0()
-                        .truncate()
-                        .text_size(px(13.))
-                        .text_color(if s.category == "done" { theme::muted() } else { theme::text() })
-                        .when(s.category == "done", |d| d.line_through())
-                        .child(s.summary.clone()),
-                )
-                .child(div().text_size(px(12.)).text_color(theme::muted()).child(s.state.clone()))
-                .on_click(move |_, _, cx| frame.open(places_of::issue_route(&key, Some(&site)), cx)),
-        );
+/// A branch's name for issue `key`: `PAY-412-refund-rounds-down-on-partial-captures`.
+pub fn branch_name(key: &str, summary: &str) -> String {
+    let words: Vec<String> = (summary.split(|c: char| !c.is_alphanumeric()))
+        .filter(|w| !w.is_empty())
+        .map(str::to_lowercase)
+        .collect();
+    let mut out = key.to_owned();
+    for w in words {
+        if out.len() + w.len() + 1 > 60 {
+            break;
+        }
+        out.push('-');
+        out.push_str(&w);
     }
-    section("Sub-tasks", None)
-        .child(div().px(px(16.)).pt(px(8.)).text_size(px(12.)).text_color(theme::muted()).child(format!("{done} of {}", issue.subtasks.len())))
-        .child(list)
-}
-
-fn comments(issue: &Issue, cx: &App) -> impl IntoElement {
-    let mut list = div().flex().flex_col().gap(px(14.)).px(px(16.)).py(px(12.));
-    if issue.comments.is_empty() {
-        list = list.child(div().text_size(px(13.)).text_color(theme::muted()).child("No comments"));
-    }
-    for (ix, c) in issue.comments.iter().enumerate() {
-        let body = wiki::to_markdown(c.body.trim());
-        list = list.child(
-            div()
-                .flex()
-                .flex_col()
-                .gap(px(4.))
-                .child(
-                    div()
-                        .flex()
-                        .gap(px(8.))
-                        .text_size(px(13.))
-                        .child(div().font_weight(FontWeight::SEMIBOLD).text_color(theme::text()).child(c.author.clone()))
-                        .child(div().text_color(theme::muted()).child(model::day(&c.created).to_owned())),
-                )
-                .child(
-                    div()
-                        .text_size(px(13.))
-                        .line_height(px(20.))
-                        .text_color(theme::text())
-                        .child(markdown::body(&body, true, format!("tasks-comment-{ix}"), None, None, cx)),
-                ),
-        );
-    }
-    section("Comments", Some(issue.comments.len())).child(list)
+    out
 }
 
 impl Render for Page {
     fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        let key = self.route.as_ref().filter(|r| r.kind == ISSUE).and_then(places_of::key_of);
-        let page = match key {
+        let page = match self.issue_key() {
             Some(key) => self.issue_page(key, cx),
-            None => self.board_page(cx),
+            None => self.own_page(cx),
         };
-        div().size_full().min_w_0().flex().flex_col().child(page)
+        let workflow = self
+            .workflow
+            .clone()
+            .map(|key| self.workflow_card(&key, cx));
+        div()
+            .size_full()
+            .min_w_0()
+            .flex()
+            .flex_col()
+            .child(page)
+            .children(workflow)
     }
 }
 
-/// The side panel at `width`: the boards by site, the picked one filled; the sites not read, and why.
-pub fn side(store: &Entity<Store>, frame: &Rc<dyn Frame>, width: f32, cx: &mut App) -> AnyElement {
-    let s = store.read(cx);
-    let mut list = div().w(px(width)).min_w_0().flex().flex_col().gap(px(2.)).px(px(8.)).py(px(8.));
-    list = list.child(
-        div()
-            .px(px(8.))
-            .pb(px(6.))
-            .text_size(px(11.))
-            .font_weight(FontWeight::SEMIBOLD)
-            .text_color(theme::muted())
-            .child("BOARDS"),
-    );
-    match &s.boards {
-        Some(Read::Done(boards)) => {
-            let mut site = String::new();
-            for b in boards {
-                if b.site != site {
-                    site = b.site.clone();
-                    list = list.child(div().px(px(8.)).pt(px(4.)).text_size(px(11.)).text_color(theme::faint()).child(site.clone()));
-                }
-                let (id, store, frame) = (b.key(), store.clone(), frame.clone());
-                list = list.child(
-                    artoo_plugin_sdk::kit::row(SharedString::from(format!("board-{}-{}", b.site, b.id)), s.board.as_ref() == Some(&id))
-                        .h(px(30.))
-                        .gap(px(8.))
-                        .child(icons::icon("layers").size(px(14.)).text_color(theme::muted()))
-                        .child(div().text_size(px(13.)).text_color(theme::text()).truncate().child(b.name.clone()))
-                        .on_click(move |_, _, cx| {
-                            store.update(cx, |s, cx| {
-                                s.board = Some(id.clone());
-                                s.read_rows(false, cx);
-                                cx.notify();
-                            });
-                            frame.go_space(SPACE, cx);
-                        }),
-                );
-            }
-        }
-        Some(Read::Failed(why)) => list = list.child(div().px(px(8.)).text_size(px(12.)).text_color(theme::muted()).child(why.clone())),
-        _ => list = list.child(controls::skeleton("tasks-boards", 3)),
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn a_branch_is_named_by_the_key_and_the_summary() {
+        assert_eq!(
+            branch_name("PAY-412", "Refund rounds down on partial captures"),
+            "PAY-412-refund-rounds-down-on-partial-captures"
+        );
+        assert!(branch_name("PAY-1", &"word ".repeat(40)).len() <= 60);
     }
-    if matches!(s.boards, Some(Read::Done(_))) {
-        for why in &s.unread {
-            list = list.child(
-                div().w_full().px(px(8.)).pt(px(6.)).text_size(px(12.)).text_color(theme::muted()).child(why.clone()),
-            );
-        }
-    }
-    list.into_any_element()
 }

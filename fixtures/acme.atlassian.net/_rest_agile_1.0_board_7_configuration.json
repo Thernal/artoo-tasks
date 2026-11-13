@@ -1,0 +1,44 @@
+{
+ "id": 7,
+ "name": "Payments",
+ "columnConfig": {
+  "columns": [
+   {
+    "name": "To do",
+    "statuses": [
+     {
+      "id": "10000"
+     }
+    ]
+   },
+   {
+    "name": "In progress",
+    "statuses": [
+     {
+      "id": "3"
+     }
+    ]
+   },
+   {
+    "name": "In review",
+    "statuses": [
+     {
+      "id": "10001"
+     }
+    ]
+   },
+   {
+    "name": "Done",
+    "statuses": [
+     {
+      "id": "10002"
+     }
+    ]
+   }
+  ]
+ },
+ "location": {
+  "type": "project",
+  "key": "PAY"
+ }
+}

@@ -1,0 +1,111 @@
+{
+ "values": [
+  {
+   "fieldId": "summary",
+   "required": true,
+   "name": "Summary",
+   "schema": {
+    "type": "string",
+    "system": "summary"
+   }
+  },
+  {
+   "fieldId": "description",
+   "required": false,
+   "name": "Description",
+   "schema": {
+    "type": "string",
+    "system": "description"
+   }
+  },
+  {
+   "fieldId": "assignee",
+   "required": false,
+   "name": "Assignee",
+   "schema": {
+    "type": "user",
+    "system": "assignee"
+   }
+  },
+  {
+   "fieldId": "priority",
+   "required": false,
+   "name": "Priority",
+   "schema": {
+    "type": "priority",
+    "system": "priority"
+   },
+   "allowedValues": [
+    {
+     "id": "1",
+     "name": "Highest"
+    },
+    {
+     "id": "2",
+     "name": "High"
+    },
+    {
+     "id": "3",
+     "name": "Medium"
+    },
+    {
+     "id": "4",
+     "name": "Low"
+    },
+    {
+     "id": "5",
+     "name": "Lowest"
+    }
+   ],
+   "hasDefaultValue": true,
+   "defaultValue": {
+    "id": "3",
+    "name": "Medium"
+   }
+  },
+  {
+   "fieldId": "labels",
+   "required": false,
+   "name": "Labels",
+   "schema": {
+    "type": "array",
+    "items": "string",
+    "system": "labels"
+   }
+  },
+  {
+   "fieldId": "customfield_10020",
+   "required": false,
+   "name": "Sprint",
+   "schema": {
+    "type": "array",
+    "items": "json",
+    "custom": "com.pyxis.greenhopper.jira:gh-sprint"
+   }
+  },
+  {
+   "fieldId": "components",
+   "required": true,
+   "name": "Components",
+   "schema": {
+    "type": "array",
+    "items": "component",
+    "system": "components"
+   },
+   "allowedValues": [
+    {
+     "id": "10100",
+     "name": "Refunds API"
+    },
+    {
+     "id": "10101",
+     "name": "Ledger"
+    },
+    {
+     "id": "10102",
+     "name": "Merchant reports"
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,38 @@
+[
+ {
+  "accountId": "u-you",
+  "displayName": "Avery Quinn",
+  "active": true,
+  "avatarUrls": {
+   "48x48": ""
+  },
+  "emailAddress": ""
+ },
+ {
+  "accountId": "u-juniper",
+  "displayName": "Juniper Hale",
+  "active": true,
+  "avatarUrls": {
+   "48x48": ""
+  },
+  "emailAddress": ""
+ },
+ {
+  "accountId": "u-kestrel",
+  "displayName": "Kestrel Okafor",
+  "active": true,
+  "avatarUrls": {
+   "48x48": ""
+  },
+  "emailAddress": ""
+ },
+ {
+  "accountId": "u-ember",
+  "displayName": "Ember Lind",
+  "active": true,
+  "avatarUrls": {
+   "48x48": ""
+  },
+  "emailAddress": ""
+ }
+]

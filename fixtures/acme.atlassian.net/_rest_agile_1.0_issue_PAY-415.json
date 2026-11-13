@@ -1,0 +1,117 @@
+{
+ "id": "30415",
+ "key": "PAY-415",
+ "self": "https://acme.atlassian.net/rest/agile/1.0/issue/30415",
+ "fields": {
+  "summary": "Round half-even once, on the total",
+  "issuetype": {
+   "id": "10003",
+   "name": "Sub-task",
+   "subtask": true,
+   "hierarchyLevel": -1
+  },
+  "status": {
+   "id": "3",
+   "name": "In Progress",
+   "statusCategory": {
+    "id": 4,
+    "key": "indeterminate",
+    "name": "In Progress"
+   }
+  },
+  "priority": {
+   "id": "2",
+   "name": "High"
+  },
+  "assignee": {
+   "accountId": "u-you",
+   "displayName": "Avery Quinn",
+   "active": true,
+   "avatarUrls": {
+    "48x48": ""
+   },
+   "emailAddress": ""
+  },
+  "reporter": {
+   "accountId": "u-you",
+   "displayName": "Avery Quinn",
+   "active": true,
+   "avatarUrls": {
+    "48x48": ""
+   },
+   "emailAddress": ""
+  },
+  "labels": [
+   "rounding"
+  ],
+  "updated": "2026-11-04T09:00:00.000+0000",
+  "created": "2026-11-03T09:00:00.000+0000",
+  "project": {
+   "id": "10010",
+   "key": "PAY",
+   "name": "Payments"
+  },
+  "comment": {
+   "comments": [],
+   "total": 0,
+   "maxResults": 50,
+   "startAt": 0
+  },
+  "subtasks": [],
+  "issuelinks": [],
+  "epic": null,
+  "sprint": {
+   "id": 34,
+   "name": "Sprint 34",
+   "state": "active",
+   "startDate": "2026-11-03T09:00:00.000Z",
+   "endDate": "2026-11-14T17:00:00.000Z",
+   "originBoardId": 7,
+   "goal": "Refunds that add up"
+  },
+  "customfield_10020": [
+   {
+    "id": 34,
+    "name": "Sprint 34",
+    "state": "active",
+    "startDate": "2026-11-03T09:00:00.000Z",
+    "endDate": "2026-11-14T17:00:00.000Z",
+    "originBoardId": 7,
+    "goal": "Refunds that add up"
+   }
+  ],
+  "customfield_10016": null,
+  "duedate": null,
+  "components": [],
+  "fixVersions": [],
+  "parent": {
+   "id": "30412",
+   "key": "PAY-412",
+   "self": "https://acme.atlassian.net/rest/api/2/issue/30412",
+   "fields": {
+    "summary": "Refund rounds down on partial captures",
+    "status": {
+     "id": "3",
+     "name": "In Progress",
+     "statusCategory": {
+      "id": 4,
+      "key": "indeterminate",
+      "name": "In Progress"
+     }
+    },
+    "priority": {
+     "id": "2",
+     "name": "High"
+    },
+    "issuetype": {
+     "id": "10004",
+     "name": "Bug",
+     "subtask": false,
+     "hierarchyLevel": 0
+    }
+   }
+  },
+  "description": "Sum the parts first, then round once, half-even.",
+  "attachment": []
+ }
+}

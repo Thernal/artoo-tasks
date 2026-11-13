@@ -1,0 +1,186 @@
+//! The page bar of the Tasks space (`Pages::bar`): a board's name, Mine · All with their counts and the people
+//! beside them, the filter, List · Board, `⋯`, Open in Jira and New task; the drafts' count and New task; an issue's
+//! board and key, `⋯` and Open in Jira.
+
+use crate::board::in_play;
+use crate::model;
+use crate::page::Page;
+use artoo_plugin_sdk::core::route::Route;
+use artoo_plugin_sdk::gpui::{App, Entity, div, prelude::*};
+use artoo_plugin_sdk::kit::hover::Hover;
+use artoo_plugin_sdk::kit::{controls, icons, px, theme};
+use artoo_plugin_sdk::shell::bar::BarAction;
+use artoo_plugin_sdk::shell::{BarParts, MenuItem, PagePath, PathUp};
+
+/// Open in Jira: `url` in the browser, ⌥⌘J.
+fn in_jira(url: String) -> BarAction {
+    let fold = url.clone();
+    BarAction::new(
+        "tasks-jira",
+        controls::bar_button("tasks-jira", "Open in Jira", "", false)
+            .child(
+                icons::icon("external")
+                    .size(px(12.))
+                    .text_color(theme::muted()),
+            )
+            .tip("Open in Jira  ⌥⌘J")
+            .on_click(move |_, _, cx| cx.open_url(&url)),
+    )
+    .folds(MenuItem::new("Open in Jira", move |_, cx| cx.open_url(&fold)).key("⌥⌘J"))
+    .fold_order(2)
+}
+
+/// New task, ⌥⌘N.
+fn new_task(page: &Entity<Page>) -> BarAction {
+    let (p1, p2) = (page.clone(), page.clone());
+    BarAction::new(
+        "tasks-new",
+        controls::bar_button("tasks-new", "New task", "", true)
+            .tip("New task  ⌥⌘N")
+            .on_click(move |_, _, cx| p1.update(cx, |p, cx| p.open_sheet(None, None, cx))),
+    )
+    .folds(
+        MenuItem::new("New task", move |_, cx| {
+            p2.update(cx, |p, cx| p.open_sheet(None, None, cx))
+        })
+        .key("⌥⌘N"),
+    )
+    .fold_order(9)
+}
+
+pub fn bar(page: &Entity<Page>, route: Option<&Route>, cx: &mut App) -> Option<BarParts> {
+    let p = page.read(cx);
+    let store = p.store.clone();
+    let s = store.read(cx);
+    if s.sites.is_empty() {
+        return Some(BarParts {
+            path: Some(path(Vec::new(), "Tasks", None)),
+            ..Default::default()
+        });
+    }
+    let board = s.picked().cloned();
+    let board_name = board
+        .as_ref()
+        .map(|b| b.name.clone())
+        .unwrap_or_else(|| "Tasks".into());
+    if let Some(route) = route {
+        let key = crate::agents::key_of(route)?;
+        let url = match s.issue(&key) {
+            Some(i) => i.url.clone(),
+            None => s
+                .site_for(&key)
+                .map(|site| format!("{}/browse/{key}", site.url))
+                .unwrap_or_default(),
+        };
+        let title = s.issue(&key).map(|i| i.row.summary.clone());
+        let mut parts = BarParts {
+            path: Some(PagePath {
+                title,
+                ..path(vec!["Tasks".into(), board_name], &key, None)
+            }),
+            ..Default::default()
+        };
+        parts.more = Page::more_items(page, cx);
+        if !url.is_empty() {
+            parts.actions.push(in_jira(url));
+        }
+        return Some(parts);
+    }
+    if p.drafts {
+        let n = s.kept.drafts.len();
+        let mut parts = BarParts {
+            path: Some(path(vec!["Tasks".into()], "Drafts", Some(n.to_string()))),
+            ..Default::default()
+        };
+        parts.actions.push(new_task(page));
+        return Some(parts);
+    }
+    let board = board?;
+    let me = s.me.get(&board.site).cloned();
+    let (mine_n, all_n) = match s.board_rows() {
+        Some(rows) => {
+            let play = in_play(rows, s.board_info());
+            let top: Vec<_> = play.into_iter().filter(|r| r.parent.is_none()).collect();
+            let mine = top
+                .iter()
+                .filter(|r| {
+                    me.as_ref()
+                        .is_some_and(|me| r.assignee.as_ref().is_some_and(|a| a.id == me.id))
+                })
+                .count();
+            (Some(mine), Some(top.len()))
+        }
+        None => (None, None),
+    };
+    let mine = s.mine;
+    let columns = s.kept.view(&board.key()).board;
+    let url = s
+        .site_of(&board.site)
+        .map(|site| model::board_url(&site, board.id));
+    let count = |n: Option<usize>| n.map(|n| format!(" {n}")).unwrap_or_default();
+    let (m1, m2) = (page.clone(), page.clone());
+    let tabs = controls::group()
+        .child(
+            controls::chip("tasks-mine", format!("Mine{}", count(mine_n)), mine)
+                .tip("Your issues  ⌃⇥")
+                .on_click(move |_, _, cx| m1.update(cx, |p, cx| p.set_mine(true, cx))),
+        )
+        .child(
+            controls::chip("tasks-all", format!("All{}", count(all_n)), !mine)
+                .tip("Everyone’s issues  ⌃⇥")
+                .on_click(move |_, _, cx| m2.update(cx, |p, cx| p.set_mine(false, cx))),
+        );
+    let faces = page.update(cx, |p, cx| p.faces(cx));
+    let view = div()
+        .flex()
+        .items_center()
+        .gap(px(10.))
+        .child(tabs)
+        .children(faces)
+        .into_any_element();
+    let (v1, v2, v3) = (page.clone(), page.clone(), page.clone());
+    let layout = controls::group()
+        .child(
+            controls::chip("tasks-list", "List", !columns)
+                .tip("List  V")
+                .on_click(move |_, _, cx| v1.update(cx, |p, cx| p.set_columns(false, cx))),
+        )
+        .child(
+            controls::chip("tasks-board", "Board", columns)
+                .tip("Board  V")
+                .on_click(move |_, _, cx| v2.update(cx, |p, cx| p.set_columns(true, cx))),
+        );
+    let mut parts = BarParts {
+        path: Some(path(vec!["Tasks".into()], &board.name, None)),
+        view: Some(view),
+        filter: Some("Filter issues"),
+        ..Default::default()
+    };
+    parts.actions.push(
+        BarAction::new("tasks-layout", layout)
+            .folds(
+                MenuItem::new(if columns { "List" } else { "Board" }, move |_, cx| {
+                    v3.update(cx, |p, cx| p.toggle_view(cx))
+                })
+                .key("V"),
+            )
+            .fold_order(1),
+    );
+    parts.more = Page::more_items(page, cx);
+    if let Some(url) = url {
+        parts.actions.push(in_jira(url));
+    }
+    parts.actions.push(new_task(page));
+    Some(parts)
+}
+
+fn path(up: Vec<String>, name: &str, count: Option<String>) -> PagePath {
+    PagePath {
+        up: up.into_iter().map(|u| PathUp::new(u, None)).collect(),
+        name: name.to_owned(),
+        mono: false,
+        hover: None,
+        count,
+        title: None,
+    }
+}

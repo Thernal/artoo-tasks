@@ -1,0 +1,20 @@
+{
+ "isLast": true,
+ "values": [
+  {
+   "id": 34,
+   "name": "Sprint 34",
+   "state": "active",
+   "startDate": "2026-11-03T09:00:00.000Z",
+   "endDate": "2026-11-14T17:00:00.000Z",
+   "originBoardId": 7,
+   "goal": "Refunds that add up"
+  },
+  {
+   "id": 35,
+   "name": "Sprint 35",
+   "state": "future",
+   "originBoardId": 7
+  }
+ ]
+}

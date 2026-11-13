@@ -1,0 +1,72 @@
+{
+ "transitions": [
+  {
+   "id": "31",
+   "name": "Review",
+   "to": {
+    "id": "10001",
+    "name": "In Review",
+    "statusCategory": {
+     "id": 4,
+     "key": "indeterminate",
+     "name": "In Progress"
+    }
+   },
+   "hasScreen": false,
+   "fields": {}
+  },
+  {
+   "id": "41",
+   "name": "Done",
+   "to": {
+    "id": "10002",
+    "name": "Done",
+    "statusCategory": {
+     "id": 3,
+     "key": "done",
+     "name": "Done"
+    }
+   },
+   "hasScreen": true,
+   "fields": {
+    "resolution": {
+     "required": true,
+     "name": "Resolution",
+     "schema": {
+      "type": "resolution",
+      "system": "resolution"
+     },
+     "allowedValues": [
+      {
+       "id": "1",
+       "name": "Done"
+      },
+      {
+       "id": "2",
+       "name": "Won't do"
+      },
+      {
+       "id": "3",
+       "name": "Duplicate"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "11",
+   "name": "Stop",
+   "to": {
+    "id": "10000",
+    "name": "To Do",
+    "statusCategory": {
+     "id": 2,
+     "key": "new",
+     "name": "To Do"
+    }
+   },
+   "hasScreen": false,
+   "fields": {}
+  }
+ ]
+}

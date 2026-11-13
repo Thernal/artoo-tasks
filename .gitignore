@@ -2,3 +2,4 @@
 /.artoo-sdk
 /dist
 Cargo.lock
+writes.log

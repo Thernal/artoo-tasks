@@ -1,0 +1,32 @@
+{
+ "isLast": true,
+ "values": [
+  {
+   "id": 7,
+   "name": "Payments",
+   "type": "scrum",
+   "location": {
+    "projectKey": "PAY",
+    "projectName": "Payments"
+   }
+  },
+  {
+   "id": 8,
+   "name": "Ledger",
+   "type": "kanban",
+   "location": {
+    "projectKey": "LED",
+    "projectName": "Ledger"
+   }
+  },
+  {
+   "id": 9,
+   "name": "Platform",
+   "type": "kanban",
+   "location": {
+    "projectKey": "PLAT",
+    "projectName": "Platform"
+   }
+  }
+ ]
+}

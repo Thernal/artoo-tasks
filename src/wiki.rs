@@ -91,9 +91,15 @@ pub fn to_markdown(wiki: &str) -> String {
             if !listed {
                 blank(&mut out);
             }
-            let indent: usize = (marks.chars().rev().skip(1)).map(|m| if m == '#' { 3 } else { 2 }).sum();
+            let indent: usize = (marks.chars().rev().skip(1))
+                .map(|m| if m == '#' { 3 } else { 2 })
+                .sum();
             let mark = if marks.ends_with('#') { "1." } else { "-" };
-            out.push(format!("{lead}{}{mark} {}", " ".repeat(indent), inline(text)));
+            out.push(format!(
+                "{lead}{}{mark} {}",
+                " ".repeat(indent),
+                inline(text)
+            ));
             (listed, table) = (true, false);
             continue;
         }
@@ -277,7 +283,8 @@ fn find(c: &[char], from: usize, s: &str) -> Option<usize> {
 /// The mark at `i` opens a span: after the line's start or a space or a mark, before a letter.
 fn opens(c: &[char], i: usize) -> bool {
     let before = i.checked_sub(1).map(|b| c[b]);
-    let starts_word = before.is_none_or(|b| b.is_whitespace() || (!b.is_alphanumeric() && b != c[i]));
+    let starts_word =
+        before.is_none_or(|b| b.is_whitespace() || (!b.is_alphanumeric() && b != c[i]));
     let next = c.get(i + 1);
     starts_word && next.is_some_and(|n| !n.is_whitespace() && *n != c[i])
 }
@@ -285,22 +292,68 @@ fn opens(c: &[char], i: usize) -> bool {
 /// Where the span the mark at `i` opens closes: the same mark after a letter, before the word's end.
 fn closes(c: &[char], i: usize) -> Option<usize> {
     (i + 2..c.len()).find(|&j| {
-        c[j] == c[i] && !c[j - 1].is_whitespace() && c.get(j + 1).is_none_or(|n| !n.is_alphanumeric())
+        c[j] == c[i]
+            && !c[j - 1].is_whitespace()
+            && c.get(j + 1).is_none_or(|n| !n.is_alphanumeric())
     })
+}
+
+/// A person as a mention is written in markdown here: `@Juniper.Hale`.
+pub fn handle(name: &str) -> String {
+    name.split_whitespace().collect::<Vec<_>>().join(".")
+}
+
+/// What a mention's name is made of: `jhale`, `accountid:5b10…`, `Juniper.Hale`.
+fn mention_char(c: char) -> bool {
+    c.is_alphanumeric() || matches!(c, '.' | '_' | '-' | ':')
+}
+
+/// `md` with each mention `@name` that `to` knows written as what it gives: an account to a name to read, and back.
+pub fn mentions_as(md: &str, to: impl Fn(&str) -> Option<String>) -> String {
+    let c: Vec<char> = md.chars().collect();
+    let mut out = String::with_capacity(md.len());
+    let mut i = 0;
+    while i < c.len() {
+        if c[i] == '@' && (i == 0 || c[i - 1].is_whitespace() || c[i - 1] == '(') {
+            let mut name: String = c[i + 1..]
+                .iter()
+                .take_while(|x| mention_char(**x))
+                .collect();
+            while name.ends_with('.') {
+                name.pop();
+            }
+            if let Some(new) = (!name.is_empty()).then(|| to(&name)).flatten() {
+                out.push('@');
+                out.push_str(&new);
+                i += 1 + name.chars().count();
+                continue;
+            }
+        }
+        out.push(c[i]);
+        i += 1;
+    }
+    out
 }
 
 /// `[text|url]`, `[url]`, `[~user]`, `[#anchor]`, `[^file]` as markdown; None when it is no link.
 fn link(inner: &str) -> Option<String> {
-    let web = |u: &str| ["http://", "https://", "mailto:", "file:"].iter().any(|p| u.starts_with(p));
+    let web = |u: &str| {
+        ["http://", "https://", "mailto:", "file:"]
+            .iter()
+            .any(|p| u.starts_with(p))
+    };
     if let Some(user) = inner.strip_prefix('~') {
-        return Some(format!("@{}", user.trim_start_matches("accountid:")));
+        // Whole, `accountid:` kept: a Cloud mention goes back as it came (`from_markdown`); a page draws it named.
+        return Some(format!("@{user}"));
     }
     if let Some(name) = inner.strip_prefix('^').or_else(|| inner.strip_prefix('#')) {
         return Some(name.to_owned());
     }
     match inner.split('|').collect::<Vec<_>>()[..] {
         [url] if web(url.trim()) => Some(format!("<{}>", url.trim())),
-        [text, url, ..] if web(url.trim()) => Some(format!("[{}]({})", inline(text.trim()), url.trim())),
+        [text, url, ..] if web(url.trim()) => {
+            Some(format!("[{}]({})", inline(text.trim()), url.trim()))
+        }
         [text, other, ..] => Some(format!("{} ({})", inline(text.trim()), other.trim())),
         _ => None,
     }
@@ -312,6 +365,174 @@ fn picture(inner: &str) -> Option<&str> {
     let ext = name.rsplit_once('.')?.1.to_ascii_lowercase();
     let pictures = ["png", "jpg", "jpeg", "gif", "svg", "webp", "bmp"];
     (!name.contains(' ') && pictures.contains(&ext.as_str())).then_some(name)
+}
+
+/// Markdown as Jira's wiki markup, for what is written in the app and sent: a description, a comment. Headings, bold
+/// and italic, `code`, links, lists, fenced code, quotes and rules; a paragraph that is a picture's name alone
+/// (`*shot.png*`, as `to_markdown` reads one) the picture again.
+pub fn from_markdown(md: &str) -> String {
+    let md = md.replace("\r\n", "\n");
+    let mut out: Vec<String> = Vec::new();
+    let mut fence: Option<String> = None;
+    for line in md.lines() {
+        if let Some(open) = &fence {
+            if line.trim_start().starts_with(open.as_str()) {
+                out.push("{code}".into());
+                fence = None;
+            } else {
+                out.push(line.to_owned());
+            }
+            continue;
+        }
+        let trimmed = line.trim_start();
+        if let Some(rest) = trimmed
+            .strip_prefix("```")
+            .or_else(|| trimmed.strip_prefix("~~~"))
+        {
+            fence = Some(trimmed[..3].to_owned());
+            let lang = rest.trim();
+            out.push(if lang.is_empty() {
+                "{code}".into()
+            } else {
+                format!("{{code:{lang}}}")
+            });
+            continue;
+        }
+        let indent = line.len() - trimmed.len();
+        let depth = indent / 2 + 1;
+        if let Some(n) = (1..=6).find(|n| trimmed.starts_with(&format!("{} ", "#".repeat(*n)))) {
+            out.push(format!("h{n}. {}", inline_wiki(&trimmed[n + 1..])));
+        } else if trimmed == "---" || trimmed == "***" || trimmed == "___" {
+            out.push("----".into());
+        } else if let Some(rest) = trimmed
+            .strip_prefix("> ")
+            .or_else(|| (trimmed == ">").then_some(""))
+        {
+            out.push(format!("bq. {}", inline_wiki(rest)));
+        } else if let Some(rest) = trimmed
+            .strip_prefix("- ")
+            .or_else(|| trimmed.strip_prefix("* "))
+            .or_else(|| trimmed.strip_prefix("+ "))
+        {
+            out.push(format!("{} {}", "*".repeat(depth), inline_wiki(rest)));
+        } else if let Some(rest) = numbered(trimmed) {
+            out.push(format!("{} {}", "#".repeat(depth), inline_wiki(rest)));
+        } else if let Some(name) = picture_alone(trimmed) {
+            out.push(format!("!{name}|thumbnail!"));
+        } else {
+            out.push(inline_wiki(line));
+        }
+    }
+    if fence.is_some() {
+        out.push("{code}".into());
+    }
+    out.join("\n")
+}
+
+/// `1. item`'s item.
+fn numbered(line: &str) -> Option<&str> {
+    let digits = line.chars().take_while(char::is_ascii_digit).count();
+    (digits > 0)
+        .then(|| line[digits..].strip_prefix(". "))
+        .flatten()
+}
+
+/// `*shot.png*` alone: the picture's name.
+fn picture_alone(line: &str) -> Option<&str> {
+    let name = line.strip_prefix('*')?.strip_suffix('*')?;
+    let lower = name.to_lowercase();
+    let picture = [".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp", ".svg"]
+        .iter()
+        .any(|e| lower.ends_with(e));
+    (picture && !name.contains(' ') && !name.starts_with('*')).then_some(name)
+}
+
+/// A line's markdown inline marks as the wiki's: `**b**` `*b*`, `*i*` `_i_`, `` `c` `` `{{c}}`, `[t](u)` `[t|u]`,
+/// `~~s~~` `-s-`, `\x` `x`.
+fn inline_wiki(text: &str) -> String {
+    let c: Vec<char> = text.chars().collect();
+    let mut out = String::with_capacity(text.len());
+    let mut i = 0;
+    let find = |from: usize, pat: &str| -> Option<usize> {
+        let p: Vec<char> = pat.chars().collect();
+        (from..c.len()).find(|&j| c[j..].starts_with(&p))
+    };
+    while i < c.len() {
+        let rest = &c[i..];
+        if rest.starts_with(&['\\']) && i + 1 < c.len() {
+            out.push(c[i + 1]);
+            i += 2;
+            continue;
+        }
+        if rest.starts_with(&['`'])
+            && let Some(end) = find(i + 1, "`")
+        {
+            out.push_str("{{");
+            out.extend(&c[i + 1..end]);
+            out.push_str("}}");
+            i = end + 1;
+            continue;
+        }
+        if rest.starts_with(&['*', '*']) || rest.starts_with(&['_', '_']) {
+            let mark: String = rest[..2].iter().collect();
+            if let Some(end) = find(i + 2, &mark).filter(|e| *e > i + 2) {
+                out.push('*');
+                out.push_str(&inline_wiki(&c[i + 2..end].iter().collect::<String>()));
+                out.push('*');
+                i = end + 2;
+                continue;
+            }
+        }
+        if rest.starts_with(&['~', '~'])
+            && let Some(end) = find(i + 2, "~~").filter(|e| *e > i + 2)
+        {
+            out.push('-');
+            out.push_str(&inline_wiki(&c[i + 2..end].iter().collect::<String>()));
+            out.push('-');
+            i = end + 2;
+            continue;
+        }
+        if (c[i] == '*' || c[i] == '_') && i + 1 < c.len() && !c[i + 1].is_whitespace() {
+            let mark = c[i].to_string();
+            if let Some(end) =
+                find(i + 1, &mark).filter(|e| *e > i + 1 && !c[*e - 1].is_whitespace())
+            {
+                out.push('_');
+                out.push_str(&inline_wiki(&c[i + 1..end].iter().collect::<String>()));
+                out.push('_');
+                i = end + 1;
+                continue;
+            }
+        }
+        if c[i] == '['
+            && let Some(close) = find(i + 1, "](")
+            && let Some(end) = find(close + 2, ")")
+        {
+            let words: String = c[i + 1..close].iter().collect();
+            let url: String = c[close + 2..end].iter().collect();
+            out.push_str(&format!("[{}|{url}]", inline_wiki(&words)));
+            i = end + 1;
+            continue;
+        }
+        if c[i] == '@' {
+            // A mention as `to_markdown` reads one: `@jhale`, `@accountid:5b10…`; a sentence's full stop is not its.
+            let mut name: String = c[i + 1..]
+                .iter()
+                .take_while(|x| mention_char(**x))
+                .collect();
+            while name.ends_with('.') {
+                name.pop();
+            }
+            if !name.is_empty() && (i == 0 || c[i - 1].is_whitespace()) {
+                out.push_str(&format!("[~{name}]"));
+                i += 1 + name.chars().count();
+                continue;
+            }
+        }
+        out.push(c[i]);
+        i += 1;
+    }
+    out
 }
 
 #[cfg(test)]
@@ -337,11 +558,64 @@ mod tests {
 
     #[test]
     fn marks_inside_words_and_code_stay_as_written() {
-        assert_eq!(inline("snake_case_name and a-b-c and 2 * 3"), "snake_case_name and a-b-c and 2 * 3");
+        assert_eq!(
+            inline("snake_case_name and a-b-c and 2 * 3"),
+            "snake_case_name and a-b-c and 2 * 3"
+        );
         assert_eq!(inline("{{a_b*c}} -gone- +under+"), "`a_b*c` ~~gone~~ under");
-        assert_eq!(inline("List<String> [~jhale] [PAY-412] !shot.png|thumbnail!"), "List\\<String> @jhale [PAY-412] *shot.png*");
+        assert_eq!(
+            inline("List<String> [~jhale] [PAY-412] !shot.png|thumbnail!"),
+            "List\\<String> @jhale [PAY-412] *shot.png*"
+        );
         assert_eq!(inline("{color:red}*late*{color}"), "**late**");
         assert_eq!(to_markdown("{code}one(){code}"), "```\none()\n```");
         assert_eq!(to_markdown("{quote}\nSaid so.\n{quote}"), "> Said so.");
+    }
+
+    #[test]
+    fn markdown_goes_back_as_wiki() {
+        assert_eq!(from_markdown("## Steps"), "h2. Steps");
+        assert_eq!(
+            from_markdown("**Bold** and *it* with `code` and [docs](https://x.example)"),
+            "*Bold* and _it_ with {{code}} and [docs|https://x.example]"
+        );
+        assert_eq!(
+            from_markdown("- one\n  - two\n1. first"),
+            "* one\n** two\n# first"
+        );
+        assert_eq!(
+            from_markdown("```rust\nlet a = 1;\n```"),
+            "{code:rust}\nlet a = 1;\n{code}"
+        );
+        assert_eq!(from_markdown("*shot.png*"), "!shot.png|thumbnail!");
+        assert_eq!(from_markdown("> quoted"), "bq. quoted");
+        assert_eq!(from_markdown("ping @jhale"), "ping [~jhale]");
+        assert_eq!(from_markdown("thanks @jhale."), "thanks [~jhale].");
+        assert_eq!(from_markdown("List\\<String>"), "List<String>");
+    }
+
+    #[test]
+    fn wiki_reads_back_the_same_through_markdown() {
+        for wiki in [
+            "h2. Steps",
+            "*Bold* and _it_ with {{code}}",
+            "* one\n** two",
+            "!shot.png|thumbnail!",
+            "ping [~accountid:5b10ac8d] and [~jhale].",
+        ] {
+            assert_eq!(from_markdown(&to_markdown(wiki)).trim(), wiki, "{wiki}");
+        }
+    }
+
+    #[test]
+    fn a_mention_is_named_and_back() {
+        let named = |n: &str| (n == "accountid:5b10").then(|| "Juniper.Hale".to_owned());
+        let md = mentions_as("@accountid:5b10 see (@accountid:5b10). mail@x.io", named);
+        assert_eq!(md, "@Juniper.Hale see (@Juniper.Hale). mail@x.io");
+        let back = |n: &str| (n == "Juniper.Hale").then(|| "accountid:5b10".to_owned());
+        assert_eq!(
+            mentions_as(&md, back),
+            "@accountid:5b10 see (@accountid:5b10). mail@x.io"
+        );
     }
 }
