@@ -14,9 +14,9 @@ wins).
   [debug|release] [<artoo-version>] [<target>]` (the version defaults to the first line of `artoo-versions.txt`; the
   SDK is fetched into `.artoo-sdk/`, or `ARTOO_SDK=<folder>` names one). A plain `cargo build`, `cargo test` or
   `cargo clippy` fails without those flags. The flags reach the contract crate too.
-- **Before a commit:** `cargo fmt --all`; clippy (`--workspace --all-targets -- -D warnings`) and the tests of both
-  crates clean, built with the same flags (`README.md` → Tests: the test binary needs the SDK and Rust's `std` on the
-  library path). The example plugin is checked the same way in its own folder.
+- **Before a commit:** `sh scripts/check.sh` passes — rustfmt, clippy with warnings as errors and the tests of the
+  plugin, its contract and the example plugin, built with the same flags (a test needs the SDK and Rust's `std` on the
+  library path, which it sets). CI runs it on every push to `main` (`.github/workflows/check.yml`).
 - **A release** is `sh scripts/package.sh <artoo-version> <target>`: `dist/<id>-<artoo-version>-<target>.zip`, the
   name Artoo's Settings → Plugins looks for. Only a build for the Artoo version it was built against is installable.
 - **Real trackers are read, never written, while developing.** Writes are tried on the fixture alone

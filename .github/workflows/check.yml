@@ -1,0 +1,29 @@
+# Every push to main and every pull request: rustfmt, clippy and the tests of the plugin, its contract and the example
+# tracker plugin, against the SDK of each Artoo release in artoo-versions.txt (scripts/check.sh).
+name: Check
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  check:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: macos-latest, target: aarch64-apple-darwin }
+          - { os: ubuntu-22.04, target: x86_64-unknown-linux-gnu }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Linux's libraries
+        if: runner.os == 'Linux'
+        run: sudo apt-get update -q && sudo apt-get install -y -q libxkbcommon-dev libxkbcommon-x11-dev libxcb1-dev libfontconfig1-dev libfreetype-dev
+      - name: Check
+        shell: bash
+        run: |
+          for version in $(cat artoo-versions.txt); do
+            sh scripts/check.sh "$version" "${{ matrix.target }}"
+          done

@@ -98,10 +98,8 @@ is recorded in its `writes.log` and answered from `POST_rest_api_2_issue.json` w
 
 ## Tests
 
-`cargo test` builds the tests against the SDK like the plugin; the test binary then needs the SDK and Rust's own `std`
-on the library path, which Cargo does not give it on macOS:
-
-```sh
-DYLD_LIBRARY_PATH="path/to/artoo/target/debug/deps:$(rustc --print sysroot)/lib/rustlib/$(rustc -vV | sed -n 's/^host: //p')/lib" \
-  target/debug/deps/artoo_tasks-<hash>
-```
+`sh scripts/check.sh` runs rustfmt, clippy with warnings as errors and the tests — of the plugin, its contract
+(`api/`) and `examples/sample-tracker` — against the SDK of the first Artoo release in `artoo-versions.txt` (or
+`ARTOO_SDK=<folder>`). A test binary needs the SDK and Rust's own `std` on the library path, which Cargo does not give
+it; the script sets it. CI runs the same on every push (`.github/workflows/check.yml`), and a `v*` tag builds the
+release for each Artoo release listed (`.github/workflows/release.yml`).
