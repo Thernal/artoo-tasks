@@ -1,7 +1,8 @@
 # Tasks — task management for Artoo
 
 An [Artoo](https://github.com/Thernal/artoo) plugin: your tracker's boards and issues as the Tasks space, beside
-Inbox, Code, Branches and Merge requests. It reads and writes Jira (Cloud, Server and Data Center) and Trello.
+Inbox, Code, Branches and Merge requests. It reads and writes Jira (Cloud, Server and Data Center) and Trello, and any tracker another plugin adds (A tracker of
+your own).
 
 - **A board** (`⌃⌘5`): the side panel's boards under each site's host, Drafts at its foot; a board's issues as a
   list beside a preview, or as columns (List · Board, `V`), grouped by state, story or epic (`G`), `Mine · All` with
@@ -43,6 +44,39 @@ https://trello.com <your API key>
 A site alone is Jira Server or Data Center, read with a personal access token; a site with an email is Jira Cloud,
 read with that email and an API token; `trello.com` is Trello, read with your API key and a token made for it
 (trello.com/power-ups/admin). The token is the file `~/.config/tokens/<host>` (mode 600).
+
+## A tracker of your own
+
+A company's tracker is added by a plugin of its own, in Rust, beside Tasks: it depends on the SDK and on this
+repository's `api/` crate (`artoo-tasks-api`) alone, and in its `install` offers its kind — its name, the hosts its
+sites are on, what its sign-in asks, what it has (priority, types, sprints, sub-tasks, labels, project keys) — and how a
+site of it is opened as a `Tracker`:
+
+```rust
+fn install(cx: &mut App) {
+    let kind = TrackerKind {
+        id: "acme".into(),
+        name: "Acme Desk".into(),
+        hosts: vec!["desk.acme.example".into()],
+        unit: "project".into(),
+        caps: Caps { priority: true, project_keys: true, ..Caps::NONE },
+        ..Default::default()
+    };
+    artoo_tasks_api::offer(cx, kind, |site| Box::new(Acme { site }) as Box<dyn Tracker>);
+}
+```
+
+A site on one of its hosts (Settings → Accounts, or `trackers.txt`) is then read and written through it: its boards,
+an issue's page, a move, an assignee, an edit, a comment, New task, the Inbox's news, ⌘K and the agents' tools, as
+Jira's. What it has not is not drawn. The model speaks Jira's words — field ids and values as Jira's REST takes them,
+text in Jira's wiki markup (`artoo_tasks_api::wiki` turns markdown into it and back) — and a write comes as an intent
+(`Write::Move`, `Write::Comment`, …) the tracker refuses with a sentence when it has no place for it.
+
+The plugin is built as Tasks is (`scripts/build.sh` in its own folder, the same SDK) and added the same way (Settings →
+Plugins → Local, or `ARTOO_PLUGIN_DEV`, several apart by `:`). It needs nothing of Tasks at build time but the crate:
+the kind crosses to Tasks as JSON through the app's services (`tasks.tracker.<id>@1`), so the two plugins' builds of
+the crate need not be the same build. `examples/sample-tracker` is one: Sample Desk, its tickets in memory, on
+`desk.example.org`.
 
 ## Build and run
 

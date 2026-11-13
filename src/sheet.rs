@@ -5,10 +5,11 @@
 
 use crate::keep::Draft;
 use crate::look;
-use crate::model::{Field, Kind, Person, Write};
+use crate::model::{self, Caps, Field, Kind, Person, Write};
 use crate::page::{Anchor, Page, PopKind, compose};
 use crate::pop::{Act, Lead, PopRow};
 use crate::store::{Read, Store, now};
+use crate::trackers::SiteExt;
 use crate::wiki;
 use artoo_plugin_sdk::core::textedit::TextEdit;
 use artoo_plugin_sdk::gpui::{
@@ -687,7 +688,7 @@ impl Page {
             sheet.draft,
         );
         let made = cx.background_spawn(async move {
-            let made = Write::created(fields).send(&site)?;
+            let made = model::write(&site, &Write::created(fields))?;
             let key = made["key"]
                 .as_str()
                 .ok_or("The tracker gave no key")?
@@ -695,12 +696,12 @@ impl Page {
             // Its epic and sprint: their own calls, as a board moves an issue into them.
             let mut after = Vec::new();
             if let Some(epic) = &epic
-                && let Err(why) = Write::in_epic(&key, Some(epic)).send(&site)
+                && let Err(why) = model::write(&site, &Write::in_epic(&key, Some(epic)))
             {
                 after.push(format!("Not put in {epic}: {why}"));
             }
             if let Some(sprint) = sprint
-                && let Err(why) = Write::in_sprint(&key, Some(sprint)).send(&site)
+                && let Err(why) = model::write(&site, &Write::in_sprint(&key, Some(sprint)))
             {
                 after.push(format!("Not put in the sprint: {why}"));
             }
@@ -935,8 +936,9 @@ impl Page {
         });
         let host = sheet.host.clone();
         let me_name = s.me.get(&host).map(|m| m.name.clone());
-        // A Trello board is its project, its short link no key to read; its labels are set on Trello.
-        let trello = s.site_of(&host).is_some_and(|x| x.trello());
+        // What the tracker has: a Trello board is its project, its short link no key to read; its labels are set on
+        // Trello.
+        let caps = s.site_of(&host).map(|x| x.caps()).unwrap_or(Caps::ALL);
         let project = sheet.project.clone();
         let kind = sheet.kind.clone();
         let parent = sheet.parent.clone();
@@ -1071,10 +1073,10 @@ impl Page {
         let project_sel = self.select(
             "project",
             None,
-            Some(if trello {
-                project.1.clone()
-            } else {
+            Some(if caps.project_keys {
                 format!("{} {}", project.1, project.0)
+            } else {
+                project.1.clone()
             }),
             "Project",
             false,
@@ -1187,7 +1189,7 @@ impl Page {
         if let Some(p) = pri_sel {
             form = form.child(line(label("Priority", false), p.into_any_element()));
         }
-        if !trello {
+        if caps.labels {
             form = form.child(line(label("Labels", false), labels_sel.into_any_element()));
         }
         if let Some(sp) = sprint_sel {

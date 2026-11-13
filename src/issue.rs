@@ -6,11 +6,12 @@
 
 use crate::keep::Pending;
 use crate::look;
-use crate::model::{self, Attachment, Comment, Field, Issue, Link, Person, Row, Write};
+use crate::model::{self, Attachment, Caps, Comment, Field, Issue, Link, Person, Row, Write};
 use crate::page::{
     Anchor, INPUT_COMMENT, INPUT_DESC, INPUT_SUB, INPUT_TITLE, Page, PopKind, Spot, compose,
 };
 use crate::store::Read;
+use crate::trackers::SiteExt;
 use crate::wiki::{self, handle};
 use artoo_plugin_sdk::core::textedit::TextEdit;
 use artoo_plugin_sdk::gpui::{
@@ -249,8 +250,10 @@ impl Page {
         };
         let changed = self.changed_line(&issue, cx);
         let head = self.issue_head(&issue, cx);
-        // A Trello card has no sub-tasks.
-        let trello = (self.store.read(cx).site_of(&issue.site)).is_some_and(|x| x.trello());
+        // A tracker without sub-tasks (Trello) shows none.
+        let caps = (self.store.read(cx).site_of(&issue.site))
+            .map(|x| x.caps())
+            .unwrap_or(Caps::ALL);
         let main = div()
             .flex_1()
             .min_w_0()
@@ -258,7 +261,7 @@ impl Page {
             .flex_col()
             .gap(px(16.))
             .child(self.description(&issue, cx))
-            .when(!trello, |d| d.child(self.subtasks(&issue, cx)))
+            .when(caps.subtasks, |d| d.child(self.subtasks(&issue, cx)))
             .when(!issue.links.is_empty() || self.issue.link.is_some(), |d| {
                 d.child(self.links(&issue, cx))
             })
@@ -368,8 +371,11 @@ impl Page {
         let me = s.is_me(&issue.site, r.assignee.as_ref());
         let epic = r.epic.as_ref().map(|e| s.epic(e));
         let has_epics = epic.is_some() || s.board_info().is_some_and(|i| !i.epics.is_empty());
-        // A Trello card has no priority, type or sprint.
-        let trello = s.site_of(&issue.site).is_some_and(|x| x.trello());
+        // What the tracker has: a Trello card no priority, type or sprint.
+        let caps = s
+            .site_of(&issue.site)
+            .map(|x| x.caps())
+            .unwrap_or(Caps::ALL);
         let key = r.key.clone();
         let title_editing = self.issue.title.is_some();
         let typing = self.frame.typing(cx) == Some(INPUT_TITLE);
@@ -543,15 +549,16 @@ impl Page {
             .gap(px(28.))
             .child(fact("State", state))
             .child(fact("Assignee", assignee));
-        if !trello {
-            facts = facts
-                .child(fact("Priority", priority))
-                .child(fact("Type", kind));
+        if caps.priority {
+            facts = facts.child(fact("Priority", priority));
+        }
+        if caps.kinds {
+            facts = facts.child(fact("Type", kind));
         }
         if let Some(e) = epic_ctl {
             facts = facts.child(fact("Epic", e));
         }
-        if !trello {
+        if caps.sprints {
             facts = facts.child(fact("Sprint", sprint));
         }
         div()
@@ -1727,17 +1734,8 @@ impl Page {
         else {
             return;
         };
-        let jql = if words.contains('-')
-            && words.chars().all(|c| c.is_ascii_alphanumeric() || c == '-')
-        {
-            format!("key = \"{}\"", words.to_uppercase())
-        } else {
-            format!(
-                "text ~ \"{}\" ORDER BY updated DESC",
-                words.replace('"', "")
-            )
-        };
-        let task = cx.background_spawn(async move { model::search_for(&site, &jql, 8, "find") });
+        let asked = words.to_owned();
+        let task = cx.background_spawn(async move { model::find(&site, &asked, 8) });
         cx.spawn(async move |this, cx| {
             let found = task.await;
             this.update(cx, |p, cx| {
@@ -2029,7 +2027,7 @@ impl Page {
                         .child(
                             look::small_button(
                                 "viewer-jira",
-                                format!("Open in {}", crate::jira::tracker_of(&url)),
+                                format!("Open in {}", crate::trackers::tracker_of(&url)),
                             )
                             .on_click(move |_, _, cx| cx.open_url(&url)),
                         )
@@ -3044,7 +3042,7 @@ impl Page {
                             .children(url.map(|u| {
                                 look::small_button(
                                     "wf-jira",
-                                    format!("Open in {}", crate::jira::tracker_of(&u)),
+                                    format!("Open in {}", crate::trackers::tracker_of(&u)),
                                 )
                                 .on_click(move |_, _, cx| cx.open_url(&u))
                             }))

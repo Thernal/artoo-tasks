@@ -1,4 +1,4 @@
-# Task management for Artoo: Jira's boards and issues as a space, read from the tracker (the first stage).
+# Task management for Artoo: a tracker's boards and issues as a space — Jira, Trello, or one another plugin adds.
 [package]
 name = "artoo-tasks"
 version = "0.1.0"
@@ -9,4 +9,9 @@ repository = "https://github.com/Thernal/artoo-tasks"
 [lib]
 crate-type = ["dylib"]
 
+[dependencies]
+# What a tracker is, shared with the plugins that add one (`api/`).
+artoo-tasks-api = { path = "api" }
+
 [workspace]
+members = ["api"]

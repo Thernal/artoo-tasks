@@ -1,76 +1,19 @@
-//! Jira, read and written: its boards, a board's issues, an issue whole, a search; a move, an edit, a comment, an
-//! issue made. Through `curl`, as Artoo reads its hosts, so the VPN's routes and the Mac's proxies apply; the token
-//! goes on curl's standard input, never on its command line, and so does what is sent.
+//! The trackers' sites and how they are reached: the sites Settings names (`trackers.txt`), each with its token, and
+//! a request to one through `curl`, as Artoo reads its hosts, so the VPN's routes and the Mac's proxies apply; the
+//! token goes on curl's standard input, never on its command line, and so does what is sent. Jira's reads and writes
+//! are `tracker`'s; Trello's go through here too.
 //!
 //! Jira Server and Data Center take a personal access token (`Authorization: Bearer`); Jira Cloud an email and an
-//! API token (Basic). Nothing is written but on the person's act.
+//! API token (Basic); Trello an API key and a token. Nothing is written but on the person's act.
 
+pub mod tracker;
+
+pub use crate::model::Site;
+use crate::trackers::{self, SiteExt};
 use artoo_plugin_sdk::serde_json::{self, Value};
 use std::io::Write;
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
-
-/// A tracker the plugin reads: its site, and how it signs in.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct Site {
-    /// `https://jira.example.com`, no slash at the end.
-    pub url: String,
-    /// Jira Cloud's sign-in: the email the API token is of. None: a personal access token (Server, Data Center).
-    pub email: Option<String>,
-    pub token: String,
-}
-
-impl Site {
-    /// Its host: `jira.example.com`.
-    pub fn host(&self) -> &str {
-        let rest = self
-            .url
-            .split_once("://")
-            .map_or(self.url.as_str(), |(_, r)| r);
-        rest.split('/').next().unwrap_or(rest)
-    }
-
-    /// Trello, not Jira: `https://trello.com` with its API key where Jira Cloud has the email.
-    pub fn trello(&self) -> bool {
-        self.host() == "trello.com"
-    }
-
-    /// Jira Cloud: signed in with an email and an API token, people by account id.
-    pub fn cloud(&self) -> bool {
-        self.email.is_some() && !self.trello()
-    }
-
-    /// What its tracker is called: `Jira`, `Trello`.
-    pub fn tracker(&self) -> &'static str {
-        if self.trello() { "Trello" } else { "Jira" }
-    }
-}
-
-/// The tracker an address is on, as a button names it: `Open in Trello`.
-pub fn tracker_of(url: &str) -> &'static str {
-    if url.starts_with("https://trello.com/") {
-        "Trello"
-    } else {
-        "Jira"
-    }
-}
-
-/// What the news are listed under: the trackers' name — `Jira`, `Trello`, or `Tasks` when there are both.
-pub fn trackers_named() -> &'static str {
-    let text = match fixture() {
-        Some(dir) => std::fs::read_to_string(dir.join("trackers.txt")).unwrap_or_default(),
-        None => (settings_file().and_then(|f| std::fs::read_to_string(f).ok())).unwrap_or_default(),
-    };
-    let (sites, _) = named(&text, |_| Some(String::new()));
-    match (
-        sites.iter().any(Site::trello),
-        sites.iter().any(|s| !s.trello()),
-    ) {
-        (true, true) => "Tasks",
-        (true, false) => "Trello",
-        _ => "Jira",
-    }
-}
 
 /// The plugin's settings file: `<data>/plugins/artoo-tasks/trackers.txt`, a line per site, `url [email]`.
 pub fn settings_file() -> Option<PathBuf> {
@@ -101,6 +44,24 @@ pub fn sites() -> (Vec<Site>, Vec<String>) {
     }
 }
 
+/// What the news are listed under: the trackers' name — `Jira`, `Trello`, or `Tasks` when there are both. Read as
+/// the plugin installs, before other plugins offer their kinds: a site of theirs counts as Jira's here.
+pub fn trackers_named() -> &'static str {
+    let text = match fixture() {
+        Some(dir) => std::fs::read_to_string(dir.join("trackers.txt")).unwrap_or_default(),
+        None => (settings_file().and_then(|f| std::fs::read_to_string(f).ok())).unwrap_or_default(),
+    };
+    let (sites, _) = named(&text, |_| Some(String::new()));
+    match (
+        sites.iter().any(SiteExt::trello),
+        sites.iter().any(|s| !s.trello()),
+    ) {
+        (true, true) => "Tasks",
+        (true, false) => "Trello",
+        _ => "Jira",
+    }
+}
+
 /// The sites `text` names, a line each (`url [email]`, `#` a comment), each with the token `token` gives its host; a
 /// host named again is read once.
 fn named(text: &str, token: impl Fn(&str) -> Option<String>) -> (Vec<Site>, Vec<String>) {
@@ -116,12 +77,13 @@ fn named(text: &str, token: impl Fn(&str) -> Option<String>) -> (Vec<Site>, Vec<
             .unwrap_or_default()
             .trim_end_matches('/')
             .to_owned();
-        let email = words.next().map(str::to_owned);
+        let user = words.next().map(str::to_owned);
         let mut site = Site {
             url,
-            email,
-            token: String::new(),
+            user,
+            ..Default::default()
         };
+        site.kind = trackers::kind_of(site.host());
         if sites.iter().any(|s| s.host() == site.host()) {
             continue;
         }
@@ -306,13 +268,13 @@ fn bare(path: &str) -> &str {
 
 fn auth(site: &Site) -> String {
     if site.trello() {
-        let key = site.email.as_deref().unwrap_or_default();
+        let key = site.user.as_deref().unwrap_or_default();
         return format!(
             "OAuth oauth_consumer_key=\"{key}\", oauth_token=\"{}\"",
             site.token
         );
     }
-    match &site.email {
+    match &site.user {
         Some(email) => {
             let pair = format!("{email}:{}", site.token);
             format!("Basic {}", base64(pair.as_bytes()))
@@ -460,7 +422,7 @@ mod tests {
         });
         let read: Vec<_> = sites
             .iter()
-            .map(|s| (s.host(), s.email.as_deref(), s.token.as_str()))
+            .map(|s| (s.host(), s.user.as_deref(), s.token.as_str()))
             .collect();
         assert_eq!(
             read,
@@ -477,15 +439,5 @@ mod tests {
             why,
             ["https://old.example.net has no token in ~/.config/tokens/old.example.net"]
         );
-    }
-
-    #[test]
-    fn a_site_is_its_host() {
-        let site = Site {
-            url: "https://jira.example.com/jira".into(),
-            email: None,
-            token: String::new(),
-        };
-        assert_eq!(site.host(), "jira.example.com");
     }
 }

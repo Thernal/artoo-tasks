@@ -128,6 +128,7 @@ pub fn get(cx: &mut App) -> Entity<Store> {
     if let Some(shared) = cx.try_global::<Shared>() {
         return shared.0.clone();
     }
+    crate::trackers::read_offered(cx);
     let (sites, missing) = jira::sites();
     let kept = keep::Kept::read();
     let store = cx.new(|_| Store::blank(sites, missing, kept));
@@ -351,6 +352,7 @@ impl Store {
 
     /// The trackers named again (Settings → Accounts saved): every site's boards read anew.
     pub fn sites_again(&mut self, cx: &mut Context<Self>) {
+        crate::trackers::read_offered(cx);
         let (sites, missing) = jira::sites();
         self.sites = sites;
         self.missing = missing;
@@ -705,7 +707,7 @@ impl Store {
         let host = site.host().to_owned();
         spawn_read(
             cx,
-            move || write.send(&site),
+            move || model::write(&site, &write),
             move |this, read, cx| {
                 this.saving.remove(&at);
                 if let Err(why) = &read {

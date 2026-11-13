@@ -1378,7 +1378,7 @@ impl Page {
                 ),
             )
             .children(url.map(|url| {
-                let words = format!("Open in {}", crate::jira::tracker_of(&url));
+                let words = format!("Open in {}", crate::trackers::tracker_of(&url));
                 look::small_button("tasks-pv-jira", words.clone())
                     .h(px(28.))
                     .child(

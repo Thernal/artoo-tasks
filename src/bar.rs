@@ -15,7 +15,7 @@ use artoo_plugin_sdk::shell::{BarParts, MenuItem, PagePath, PathUp};
 /// Open in Jira (or Trello): `url` in the browser, ⌥⌘J.
 fn in_jira(url: String) -> BarAction {
     let fold = url.clone();
-    let words = format!("Open in {}", crate::jira::tracker_of(&url));
+    let words = format!("Open in {}", crate::trackers::tracker_of(&url));
     BarAction::new(
         "tasks-jira",
         controls::bar_button("tasks-jira", &words, "", false)

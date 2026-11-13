@@ -3,6 +3,7 @@
 
 use crate::page::{Page, SPACE};
 use crate::store::Read;
+use crate::trackers::SiteExt;
 use artoo_plugin_sdk::gpui::{AnyElement, App, Entity, FontWeight, SharedString, div, prelude::*};
 use artoo_plugin_sdk::kit::hover::Hover;
 use artoo_plugin_sdk::kit::{controls, icons, px, theme};
@@ -48,6 +49,7 @@ pub fn side(page: &Entity<Page>, width: f32, cx: &mut App) -> AnyElement {
         Some(Read::Done(boards)) => {
             for site in &s.sites {
                 let host = site.host().to_owned();
+                let keys = site.caps().project_keys;
                 let bad = s
                     .unread
                     .iter()
@@ -80,7 +82,7 @@ pub fn side(page: &Entity<Page>, width: f32, cx: &mut App) -> AnyElement {
                                 if site.cloud() {
                                     "Jira Cloud".to_owned()
                                 } else {
-                                    site.tracker().to_owned()
+                                    site.tracker()
                                 }
                             }
                         }),
@@ -121,8 +123,8 @@ pub fn side(page: &Entity<Page>, width: f32, cx: &mut App) -> AnyElement {
                                     .truncate()
                                     .child(b.name.clone()),
                             )
-                            // A Trello board's project is its own short link: not shown.
-                            .children(b.project.clone().filter(|_| !site.trello()).map(|k| {
+                            // A tracker without project keys (Trello: the board's own short link) shows none.
+                            .children(b.project.clone().filter(|_| keys).map(|k| {
                                 div().text_size(px(11.)).text_color(theme::faint()).child(k)
                             }))
                             .tip(format!(
@@ -130,7 +132,7 @@ pub fn side(page: &Entity<Page>, width: f32, cx: &mut App) -> AnyElement {
                                 b.name,
                                 b.project
                                     .as_ref()
-                                    .filter(|_| !site.trello())
+                                    .filter(|_| keys)
                                     .map(|k| format!(" · {k}"))
                                     .unwrap_or_default()
                             ))

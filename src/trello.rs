@@ -1,18 +1,19 @@
 //! Trello behind the plugin's model: a board's lists are its columns and its states, a card an issue (its key the
 //! card's short link, `kZ3fG9aB`), a card's first member its assignee, its comments and attachments the issue's; a
-//! member's notifications the news. What the model writes in Jira's shape is sent as Trello takes it; what Trello has
-//! no place for (an epic, a sprint, a link, a priority) is refused, and why is said.
+//! member's notifications the news. Each change is sent as Trello takes it; what Trello has no place for (an epic, a
+//! sprint, a link, a priority) is refused, and why is said.
 //!
-//! Signed in with an API key (the site's `email`) and a token. A person is their user name, as a mention writes them
+//! Signed in with an API key (the site's `user`) and a token. A person is their user name, as a mention writes them
 //! (`@jhale`); descriptions and comments are markdown on Trello and Jira's wiki text in the model.
 
 use crate::jira::{self, Site};
 use crate::model::{
     Attachment, Board, BoardInfo, Column, Comment, Field, Issue, Kind, Move, News, Person, Row,
-    State, Told, Write, day, stamp,
+    State, Told, Tracker, Write, day, stamp,
 };
 use crate::wiki;
 use artoo_plugin_sdk::serde_json::{Map, Value, json};
+use artoo_tasks_api::words_of;
 
 /// A card's fields as every read asks them.
 const CARD: &str =
@@ -126,17 +127,17 @@ fn board_of(site: &Site, key: &str) -> Result<String, String> {
     Ok(text(&c["board"]["shortLink"]))
 }
 
-pub fn board_url(id: &str) -> String {
+fn board_url(id: &str) -> String {
     format!("https://trello.com/b/{id}")
 }
 
-pub fn myself(site: &Site) -> Result<Person, String> {
+fn myself(site: &Site) -> Result<Person, String> {
     let v = jira::get(site, "/1/members/me?fields=fullName,username")?;
     member(&v).ok_or_else(|| format!("{} did not say who the token is", site.host()))
 }
 
 /// The open boards the token's member is on, each its own project.
-pub fn boards(site: &Site) -> Result<Vec<Board>, String> {
+fn boards(site: &Site) -> Result<Vec<Board>, String> {
     let v = jira::get(
         site,
         "/1/members/me/boards?filter=open&fields=name,shortLink",
@@ -152,7 +153,7 @@ pub fn boards(site: &Site) -> Result<Vec<Board>, String> {
 }
 
 /// A board's lists as its columns, a state each; Trello has no epics or sprints.
-pub fn board_info(site: &Site, id: &str) -> Result<BoardInfo, String> {
+fn board_info(site: &Site, id: &str) -> Result<BoardInfo, String> {
     let b = board(site, id)?;
     Ok(BoardInfo {
         columns: states(&b)
@@ -167,7 +168,7 @@ pub fn board_info(site: &Site, id: &str) -> Result<BoardInfo, String> {
 }
 
 /// A board's open cards, the latest touched first.
-pub fn board_issues(site: &Site, id: &str) -> Result<Vec<Row>, String> {
+fn board_issues(site: &Site, id: &str) -> Result<Vec<Row>, String> {
     let b = board(site, id)?;
     let states = states(&b);
     let people: Vec<(String, Person)> = (b["members"].as_array().into_iter().flatten())
@@ -219,7 +220,7 @@ fn iso(secs: i64) -> String {
 }
 
 /// Card `key` whole: its list among its board's, its members, its comments and attachments.
-pub fn read_issue(site: &Site, key: &str) -> Result<Issue, String> {
+fn read_issue(site: &Site, key: &str) -> Result<Issue, String> {
     if !card_like(key) {
         return Err(format!("{} has no {key}", site.host()));
     }
@@ -292,14 +293,14 @@ pub fn read_issue(site: &Site, key: &str) -> Result<Issue, String> {
     })
 }
 
-/// The cards `jql`'s words find (Trello has no JQL: what is quoted in it, else the words before `ORDER BY`).
-pub fn search(site: &Site, jql: &str, max: usize, purpose: &str) -> Result<Vec<Row>, String> {
+/// The cards `words` find, for `purpose` (`find`) as `jira::get_for` reads it.
+fn find(site: &Site, words: &str, max: usize, purpose: &str) -> Result<Vec<Row>, String> {
     let v = jira::get_for(
         site,
         &format!(
             "/1/search?query={}&modelTypes=cards&cards_limit={}&card_fields={CARD}&card_list=true\
              &card_members=true&card_board=true&board_fields=shortLink",
-            jira::encode(&words_of(jql)),
+            jira::encode(words),
             max.clamp(1, 1000)
         ),
         purpose,
@@ -309,20 +310,8 @@ pub fn search(site: &Site, jql: &str, max: usize, purpose: &str) -> Result<Vec<R
         .collect())
 }
 
-/// A JQL's words: `text ~ "rounding"`'s `rounding`, `key = "kZ3fG9aB"`'s key, else the query before `ORDER BY`.
-fn words_of(jql: &str) -> String {
-    if let Some((_, rest)) = jql.split_once('"')
-        && let Some((words, _)) = rest.split_once('"')
-    {
-        return words.to_owned();
-    }
-    let upper = jql.to_uppercase();
-    let end = upper.find("ORDER BY").unwrap_or(jql.len());
-    jql[..end].trim().to_owned()
-}
-
 /// Every list of the card's board but the one it is in: a move each, asking nothing.
-pub fn moves(site: &Site, key: &str) -> Result<Vec<Move>, String> {
+fn moves(site: &Site, key: &str) -> Result<Vec<Move>, String> {
     let c = jira::get(
         site,
         &format!("/1/cards/{key}?fields=idList&board=true&board_fields=shortLink"),
@@ -342,7 +331,7 @@ pub fn moves(site: &Site, key: &str) -> Result<Vec<Move>, String> {
 }
 
 /// What Details edits of a card: its due date.
-pub fn edit_screen() -> Vec<Field> {
+fn edit_screen() -> Vec<Field> {
     vec![Field {
         id: "duedate".into(),
         name: "Due date".into(),
@@ -352,7 +341,7 @@ pub fn edit_screen() -> Vec<Field> {
 }
 
 /// The members of the card's board, those whose name or user name has `query`.
-pub fn assignable(site: &Site, key: &str, query: &str) -> Result<Vec<Person>, String> {
+fn assignable(site: &Site, key: &str, query: &str) -> Result<Vec<Person>, String> {
     let board = board_of(site, key)?;
     let v = jira::get(
         site,
@@ -366,7 +355,7 @@ pub fn assignable(site: &Site, key: &str, query: &str) -> Result<Vec<Person>, St
 }
 
 /// A card is all Trello makes.
-pub fn kinds() -> Vec<Kind> {
+fn kinds() -> Vec<Kind> {
     vec![Kind {
         id: "card".into(),
         name: "Card".into(),
@@ -375,7 +364,7 @@ pub fn kinds() -> Vec<Kind> {
 }
 
 /// What making a card on board `board` asks: its list, the first one unless picked.
-pub fn create_screen(site: &Site, board: &str) -> Result<Vec<Field>, String> {
+fn create_screen(site: &Site, board: &str) -> Result<Vec<Field>, String> {
     let lists: Vec<(String, String)> = states(&self::board(site, board)?)
         .into_iter()
         .map(|s| (s.id, s.name))
@@ -392,13 +381,13 @@ pub fn create_screen(site: &Site, board: &str) -> Result<Vec<Field>, String> {
 }
 
 /// The boards, as the projects a card is made in: `(short link, name)`.
-pub fn projects(site: &Site) -> Result<Vec<(String, String)>, String> {
+fn projects(site: &Site) -> Result<Vec<(String, String)>, String> {
     Ok(boards(site)?.into_iter().map(|b| (b.id, b.name)).collect())
 }
 
 /// What others did lately on your cards: added you, mentioned you, commented, moved it. The newest first; one news a
 /// card and a kind, the latest.
-pub fn news(site: &Site, me: &Person) -> Result<Vec<News>, String> {
+fn news(site: &Site, me: &Person) -> Result<Vec<News>, String> {
     let v = jira::get_for(
         site,
         "/1/members/me/notifications?filter=addedToCard,mentionedOnCard,commentCard,changeCard&limit=30\
@@ -493,42 +482,27 @@ fn card(site: &Site, key: &str, body: Value) -> Result<Value, String> {
 
 /// A change the model wrote as Jira takes it, sent as Trello does: a move sets the card's list, an assignee its
 /// members, the summary and the description its name and text; comments are its comment actions; an issue made a
-/// card in the list picked. The rest is refused with why.
-pub fn send(site: &Site, w: &Write) -> Result<Value, String> {
-    let body = w.body.clone().unwrap_or(Value::Null);
-    if w.path.starts_with("/rest/agile/1.0/epic") {
-        return Err("Trello has no epics".into());
-    }
-    if w.path.starts_with("/rest/agile/") {
-        return Err("Trello has no sprints".into());
-    }
-    if w.path == "/rest/api/2/issueLink" {
-        return Err("Trello's cards are not linked".into());
-    }
-    if w.path == "/rest/api/2/issue" && w.method == "POST" {
-        return create(site, &body["fields"]);
-    }
-    let rest = w
-        .path
-        .strip_prefix("/rest/api/2/issue/")
-        .unwrap_or_default();
-    match (w.method, rest.split('/').collect::<Vec<_>>().as_slice()) {
-        ("POST", [key, "transitions"]) => {
-            card(site, key, json!({ "idList": body["transition"]["id"] }))
-        }
-        ("PUT", [key, "assignee"]) => {
-            let ids = match body["name"].as_str().or(body["accountId"].as_str()) {
+/// A change as Trello takes it: a move is the card's list, the assignee its one member, an edit its name, description
+/// or due date, a comment an action; what Trello has no place for is refused.
+fn send(site: &Site, w: &Write) -> Result<Value, String> {
+    let text = |body: &str| json!({ "text": wiki::to_markdown(body) });
+    match w {
+        Write::Epic { .. } => Err("Trello has no epics".into()),
+        Write::Sprint { .. } => Err("Trello has no sprints".into()),
+        Write::Link { .. } => Err("Trello's cards are not linked".into()),
+        Write::Change { .. } => Err("A card's labels are changed on Trello".into()),
+        Write::Create { fields } => create(site, fields),
+        Write::Move { key, step, .. } => card(site, key, json!({ "idList": step })),
+        Write::Assign { key, who } => {
+            let ids = match who {
                 Some(who) => member_id(site, who)?,
                 None => String::new(),
             };
             card(site, key, json!({ "idMembers": ids }))
         }
-        ("PUT", [key]) => {
-            if body["update"].is_object() {
-                return Err("A card's labels are changed on Trello".into());
-            }
+        Write::Edit { key, fields } => {
             let mut out = Map::new();
-            for (field, v) in body["fields"].as_object().into_iter().flatten() {
+            for (field, v) in fields.as_object().into_iter().flatten() {
                 let (to, v) = match field.as_str() {
                     "summary" => ("name", v.clone()),
                     "description" => ("desc", json!(markdown(v))),
@@ -541,22 +515,79 @@ pub fn send(site: &Site, w: &Write) -> Result<Value, String> {
             }
             card(site, key, Value::Object(out))
         }
-        ("POST", [key, "comment"]) => jira::send(
+        Write::Comment { key, body } => jira::send(
             site,
             "POST",
             &format!("/1/cards/{key}/actions/comments"),
-            Some(&json!({ "text": markdown(&body["body"]) })),
+            Some(&text(body)),
         ),
-        ("PUT", [_, "comment", id]) => jira::send(
-            site,
-            "PUT",
-            &format!("/1/actions/{id}"),
-            Some(&json!({ "text": markdown(&body["body"]) })),
-        ),
-        ("DELETE", [_, "comment", id]) => {
+        Write::EditComment { id, body, .. } => {
+            jira::send(site, "PUT", &format!("/1/actions/{id}"), Some(&text(body)))
+        }
+        Write::DeleteComment { id, .. } => {
             jira::send(site, "DELETE", &format!("/1/actions/{id}"), None)
         }
-        _ => Err(format!("Trello can't take {} {}", w.method, w.path)),
+    }
+}
+
+/// Trello opened on a site.
+pub struct Trello(pub Site);
+
+impl Tracker for Trello {
+    fn myself(&self) -> Result<Person, String> {
+        myself(&self.0)
+    }
+    fn boards(&self) -> Result<Vec<Board>, String> {
+        boards(&self.0)
+    }
+    fn board_info(&self, board: &str) -> Result<BoardInfo, String> {
+        board_info(&self.0, board)
+    }
+    fn board_issues(&self, board: &str) -> Result<Vec<Row>, String> {
+        board_issues(&self.0, board)
+    }
+    fn board_url(&self, board: &str) -> String {
+        board_url(board)
+    }
+    fn issue(&self, key: &str) -> Result<Issue, String> {
+        read_issue(&self.0, key)
+    }
+    fn find(&self, words: &str, max: usize) -> Result<Vec<Row>, String> {
+        find(&self.0, words, max, "find")
+    }
+    /// Trello has no JQL: the query's words.
+    fn search(&self, query: &str, max: usize) -> Result<Vec<Row>, String> {
+        find(&self.0, &words_of(query), max, "")
+    }
+    fn news(&self, me: &Person) -> Result<Vec<News>, String> {
+        news(&self.0, me)
+    }
+    fn moves(&self, key: &str) -> Result<Vec<Move>, String> {
+        moves(&self.0, key)
+    }
+    fn edit_screen(&self, _: &str) -> Result<Vec<Field>, String> {
+        Ok(edit_screen())
+    }
+    fn assignable(&self, key: &str, query: &str) -> Result<Vec<Person>, String> {
+        assignable(&self.0, key, query)
+    }
+    fn projects(&self) -> Result<Vec<(String, String)>, String> {
+        projects(&self.0)
+    }
+    fn kinds(&self, _: &str) -> Result<Vec<Kind>, String> {
+        Ok(kinds())
+    }
+    fn create_screen(&self, project: &str, _: &str) -> Result<Vec<Field>, String> {
+        create_screen(&self.0, project)
+    }
+    fn file(&self, url: &str) -> Result<Vec<u8>, String> {
+        jira::bytes(&self.0, url)
+    }
+    fn attach(&self, key: &str, file: &std::path::Path) -> Result<Value, String> {
+        jira::attach(&self.0, &format!("/1/cards/{key}/attachments"), file)
+    }
+    fn write(&self, w: &Write) -> Result<Value, String> {
+        send(&self.0, w)
     }
 }
 
@@ -609,12 +640,7 @@ mod tests {
     }
 
     #[test]
-    fn a_jql_gives_its_words() {
-        assert_eq!(
-            words_of("text ~ \"rounding\" ORDER BY updated DESC"),
-            "rounding"
-        );
-        assert_eq!(words_of("refund ORDER BY updated"), "refund");
+    fn a_card_is_known_by_its_short_link() {
         assert!(card_like("kZ3fG9aB") && !card_like("PAY-412"));
     }
 
@@ -654,7 +680,8 @@ mod tests {
     fn what_trello_has_no_place_for_is_refused() {
         let site = Site {
             url: "https://trello.com".into(),
-            email: Some("key".into()),
+            user: Some("key".into()),
+            kind: "trello".into(),
             token: "token".into(),
         };
         let epic = Write::in_epic("c1aaaaaa", Some("PAY-1"));

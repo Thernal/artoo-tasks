@@ -1,4 +1,5 @@
-//! Task management for Artoo, its first stage: a tracker's boards and issues as the Tasks space, read from Jira; a
+//! Task management for Artoo, its first stage: a tracker's boards and issues as the Tasks space, read from Jira,
+//! Trello, or a tracker another plugin adds through the contract (`api/`, `trackers`); a
 //! note for your agent on a paragraph of an issue or on a board as it is filtered; tools agents call for an issue or
 //! a search; issues moved, assigned, edited, commented on, linked and made, a write at a time, on your act.
 //!
@@ -21,8 +22,11 @@ mod search;
 mod sheet;
 mod side;
 mod store;
+mod trackers;
 mod trello;
-mod wiki;
+
+/// The model's text: Jira's wiki markup, and markdown.
+use artoo_tasks_api::wiki;
 
 use artoo_plugin_sdk::core::route::Route;
 use artoo_plugin_sdk::gpui::{self, App, AppContext, ClipboardItem, Context, Entity, prelude::*};

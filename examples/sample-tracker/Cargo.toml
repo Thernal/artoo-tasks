@@ -1,0 +1,19 @@
+# A tracker of its own, added to Tasks by a plugin of its own: the shape a company's plugin takes. Its desk is in
+# memory, so it shows the path with no server behind it.
+[package]
+name = "artoo-sample-tracker"
+version = "0.1.0"
+edition = "2024"
+repository = "https://github.com/Thernal/artoo-tasks"
+
+# A shared library Artoo loads, beside Tasks. The SDK is no dependency here: the build gives it to rustc, as Tasks'
+# `scripts/build.sh` does.
+[lib]
+crate-type = ["dylib"]
+
+[dependencies]
+# What a tracker is to Tasks: the only thing this plugin knows of it.
+artoo-tasks-api = { path = "../../api" }
+
+# Built on its own, as a company's plugin is.
+[workspace]

@@ -1,0 +1,12 @@
+# What a tracker is to the Tasks plugin, and what another plugin builds against to add one: the model's plain types,
+# the `Tracker` trait, a tracker kind, and how a kind is offered to Tasks and read back by it.
+[package]
+name = "artoo-tasks-api"
+version = "0.1.0"
+edition = "2024"
+repository = "https://github.com/Thernal/artoo-tasks"
+
+# Compiled into each plugin that uses it. The SDK is no dependency here either: the build gives it to rustc
+# (`scripts/build.sh`), as it does to the plugin.
+[lib]
+crate-type = ["rlib"]

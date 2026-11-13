@@ -6,6 +6,7 @@
 use crate::jira::{self, Site};
 use crate::model;
 use crate::store::{Read, Store};
+use crate::trackers::{self, SiteExt};
 use artoo_plugin_sdk::core::textedit::TextEdit;
 use artoo_plugin_sdk::gpui::{
     AnyElement, App, ClickEvent, Context, Entity, FontWeight, KeyDownEvent, SharedString, Window,
@@ -14,6 +15,7 @@ use artoo_plugin_sdk::gpui::{
 use artoo_plugin_sdk::kit::hover::Hover;
 use artoo_plugin_sdk::kit::{controls, icons, input, px, theme};
 use artoo_plugin_sdk::shell::{Frame, Typed};
+use artoo_tasks_api::TrackerKind;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
@@ -45,7 +47,12 @@ struct Form {
 impl Form {
     fn new(site: Option<&Site>) -> Self {
         let url = site.map(|s| s.url.clone()).unwrap_or_default();
-        let email = site.and_then(|s| s.email.clone()).unwrap_or_default();
+        Self::filled(site, url)
+    }
+
+    /// A new site's form with `url` typed: a kind's own host, its first run's Connect… asked for it.
+    fn filled(site: Option<&Site>, url: String) -> Self {
+        let email = site.and_then(|s| s.user.clone()).unwrap_or_default();
         Form {
             host: site.map(|s| s.host().to_owned()),
             edits: [
@@ -57,6 +64,20 @@ impl Form {
             at: 0,
             why: None,
         }
+    }
+
+    /// The kind of tracker the site typed is: Trello's on `trello.com`, a plugin's on its hosts, else Jira.
+    fn kind(&self) -> TrackerKind {
+        let url = self.fields[0].trim();
+        let site = Site {
+            url: if url.contains("://") {
+                url.to_owned()
+            } else {
+                format!("https://{url}")
+            },
+            ..Default::default()
+        };
+        trackers::kind(&trackers::kind_of(site.host()))
     }
 }
 
@@ -144,10 +165,17 @@ impl Accounts {
         };
         let email = form.fields[1].trim().to_owned();
         let token = form.fields[2].trim().to_owned();
-        let site = Site {
+        let mut site = Site {
             url: url.clone(),
-            email: (!email.is_empty()).then_some(email.clone()),
-            token: String::new(),
+            user: (!email.is_empty()).then_some(email.clone()),
+            ..Default::default()
+        };
+        site.kind = trackers::kind_of(site.host());
+        // A kind whose token alone signs in keeps no user.
+        let email = if trackers::kind(&site.kind).user.is_some() {
+            email
+        } else {
+            String::new()
         };
         let host = site.host().to_owned();
         if host.is_empty() {
@@ -203,11 +231,12 @@ impl Accounts {
             return Typed::Leave;
         };
         if key.key == "tab" {
-            form.at = if key.modifiers.shift {
-                (form.at + 2) % 3
-            } else {
-                (form.at + 1) % 3
-            };
+            let step = if key.modifiers.shift { 2 } else { 1 };
+            form.at = (form.at + step) % 3;
+            // A kind whose token alone signs in asks no user.
+            if form.at == 1 && form.kind().user.is_none() {
+                form.at = (form.at + step) % 3;
+            }
             cx.notify();
             return Typed::Kept;
         }
@@ -235,7 +264,7 @@ impl Accounts {
         Typed::Kept
     }
 
-    fn field(&self, ix: usize, placeholder: &'static str, cx: &mut Context<Self>) -> AnyElement {
+    fn field(&self, ix: usize, placeholder: &str, cx: &mut Context<Self>) -> AnyElement {
         let Some(form) = self.form.as_ref() else {
             return div().into_any_element();
         };
@@ -288,9 +317,10 @@ impl Accounts {
         };
         let host = form.host.clone();
         let why = form.why.clone();
-        let trello = form.fields[0].contains("trello.com");
-        let cloud = !trello
-            && (form.fields[0].contains("atlassian.net") || !form.fields[1].trim().is_empty());
+        let kind = form.kind();
+        let jira = kind.id == trackers::JIRA;
+        let cloud =
+            jira && (form.fields[0].contains("atlassian.net") || !form.fields[1].trim().is_empty());
         let reaches = host
             .as_ref()
             .map(|h| match self.store.read(cx).projects.get(h) {
@@ -319,33 +349,21 @@ impl Accounts {
                 .child(t.to_owned())
         };
         let line = |l, v: AnyElement| div().flex().items_center().gap(px(10.)).child(l).child(v);
-        let (make, make_url) = if trello {
-            (
-                "Make them in Trello's Power-Up admin",
-                "https://trello.com/power-ups/admin",
-            )
-        } else if cloud {
-            (
-                "Make one on id.atlassian.com",
-                "https://id.atlassian.com/manage-profile/security/api-tokens",
-            )
-        } else {
-            ("Make one in your Jira profile", "")
+        let (make, make_url) = match (&kind.token_page, cloud) {
+            (Some((words, url)), _) => (words.clone(), url.clone()),
+            (None, true) => (
+                "Make one on id.atlassian.com".into(),
+                "https://id.atlassian.com/manage-profile/security/api-tokens".into(),
+            ),
+            (None, false) if jira => ("Make one in your Jira profile".into(), String::new()),
+            (None, false) => (String::new(), String::new()),
         };
         let site = self.field(
             0,
             "your-team.atlassian.net, jira.example.com or trello.com",
             cx,
         );
-        let email = self.field(
-            1,
-            if trello {
-                "Your Trello API key"
-            } else {
-                "For Jira Cloud: the email the token is of"
-            },
-            cx,
-        );
+        let user = (kind.user.clone()).map(|(label, hint)| (label, self.field(1, &hint, cx)));
         let token = self.field(
             2,
             if host.is_some() {
@@ -365,7 +383,7 @@ impl Accounts {
             .border_t_1()
             .border_color(theme::island_border())
             .child(line(label("Site"), site))
-            .child(line(label(if trello { "API key" } else { "Email" }), email))
+            .children(user.map(|(name, field)| line(label(&name), field)))
             .child(line(
                 label("API token"),
                 div()
@@ -390,7 +408,7 @@ impl Accounts {
                                         .size(px(11.))
                                         .text_color(theme::accent()),
                                 )
-                                .on_click(move |_, _, cx| cx.open_url(make_url)),
+                                .on_click(move |_, _, cx| cx.open_url(&make_url)),
                         )
                     })
                     .into_any_element(),
@@ -463,20 +481,22 @@ impl Accounts {
             Some(Read::Done(p)) => Some(p.len()),
             _ => None,
         };
-        let tracker = site.tracker();
+        let kind = trackers::kind(&site.kind);
+        let tracker = kind.name.clone();
         // Trello's projects are its boards.
-        let unit = if site.trello() { "board" } else { "project" };
+        let unit = kind.unit.as_str();
         let what = match projects {
             Some(n) => format!(
                 "{tracker} · {}",
                 artoo_plugin_sdk::kit::format::plural(n, unit)
             ),
-            None => tracker.to_owned(),
+            None => tracker.clone(),
         };
-        let how = match &site.email {
-            Some(_) if site.trello() => "API key and token".to_owned(),
-            Some(email) => format!("API token · {email}"),
-            None => "Personal access token".to_owned(),
+        let how = match (&site.user, &kind.user) {
+            (Some(email), _) if site.cloud() => format!("API token · {email}"),
+            (Some(_), Some((label, _))) => format!("{label} and token"),
+            _ if kind.id == trackers::JIRA => "Personal access token".to_owned(),
+            _ => "Token".to_owned(),
         };
         let tested = self.tested.get(&host).cloned();
         let open = self
@@ -505,7 +525,7 @@ impl Accounts {
                     .gap(px(10.))
                     .min_h(px(52.))
                     .py(px(6.))
-                    .child(mark("J", 2))
+                    .child(mark(&kind))
                     .child(
                         div()
                             .flex_1()
@@ -575,7 +595,14 @@ impl Accounts {
                 .map(|s| s.host().to_owned());
             if self.form.is_none() {
                 let site = host.as_ref().and_then(|h| self.store.read(cx).site_of(h));
-                self.form = Some(Form::new(site.as_ref()));
+                // A kind asked for by its id (the first run's Connect…) starts on its host.
+                let own = (trackers::kinds().into_iter())
+                    .find(|k| k.id == want)
+                    .and_then(|k| k.hosts.iter().find(|h| !h.starts_with('*')).cloned());
+                self.form = Some(match (&site, own) {
+                    (None, Some(host)) => Form::filled(None, format!("https://{host}")),
+                    _ => Form::new(site.as_ref()),
+                });
                 self.frame.take_keyboard(INPUT, cx);
             }
         }
@@ -601,6 +628,7 @@ impl Accounts {
             );
         }
         let adding = self.form.as_ref().is_some_and(|f| f.host.is_none());
+        let adding_kind = (self.form.as_ref()).map_or_else(trackers::jira, Form::kind);
         if adding {
             out = out.child(
                 div()
@@ -614,13 +642,13 @@ impl Accounts {
                             .items_center()
                             .gap(px(10.))
                             .h(px(44.))
-                            .child(mark("J", 2))
+                            .child(mark(&adding_kind))
                             .child(
                                 div()
                                     .text_size(px(13.))
                                     .font_weight(FontWeight::MEDIUM)
                                     .text_color(theme::text())
-                                    .child("A Jira site"),
+                                    .child(format!("A {} site", adding_kind.name)),
                             ),
                     )
                     .child(self.form(cx)),
@@ -630,7 +658,7 @@ impl Accounts {
                 div().pt(px(10.)).child(
                     crate::look::small_button("tracker-add", "Add a tracker")
                         .child(icons::icon("plus").size(px(12.)).text_color(theme::muted()))
-                        .tip("Jira Cloud, Server or Data Center, or Trello")
+                        .tip(adds())
                         .on_click(cx.listener(|this, _: &ClickEvent, _, cx| this.open(None, cx))),
                 ),
             );
@@ -646,7 +674,30 @@ impl Render for Accounts {
 }
 
 /// A tracker's mark: its letter on a tint of code colour `hue`.
-fn mark(letter: &'static str, hue: u32) -> impl IntoElement {
+/// The trackers Add takes, in words: `Jira Cloud, Server or Data Center, or Trello`.
+fn adds() -> String {
+    let others: Vec<String> = (trackers::kinds().into_iter())
+        .filter(|k| k.id != trackers::JIRA)
+        .map(|k| k.name)
+        .collect();
+    match others.split_last() {
+        None => "Jira Cloud, Server or Data Center".into(),
+        Some((last, [])) => format!("Jira Cloud, Server or Data Center, or {last}"),
+        Some((last, rest)) => format!(
+            "Jira Cloud, Server or Data Center, {}, or {last}",
+            rest.join(", ")
+        ),
+    }
+}
+
+/// A tracker kind's mark: its name's first letter, on Jira's blue, Trello's or another's own hue.
+fn mark(kind: &TrackerKind) -> impl IntoElement {
+    let letter: String = kind.name.chars().take(1).collect();
+    let hue = match kind.id.as_str() {
+        trackers::JIRA => 2,
+        trackers::TRELLO => 4,
+        _ => 6,
+    };
     div()
         .flex_none()
         .size(px(28.))
@@ -675,8 +726,7 @@ fn keep_site(
     for l in text.lines() {
         let named = l.split_whitespace().next().map(|u| Site {
             url: u.trim_end_matches('/').to_owned(),
-            email: None,
-            token: String::new(),
+            ..Default::default()
         });
         let same = named.is_some_and(|s| Some(s.host()) == old || s.host() == host);
         if same && !l.trim_start().starts_with('#') {
