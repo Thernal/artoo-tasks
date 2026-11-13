@@ -21,6 +21,7 @@ mod search;
 mod sheet;
 mod side;
 mod store;
+mod trello;
 mod wiki;
 
 use artoo_plugin_sdk::core::route::Route;
@@ -462,7 +463,7 @@ fn install(cx: &mut App) {
                         let board = s.picked().ok_or("No board is open")?;
                         let site = s.site_of(&board.site).ok_or("No tracker is connected")?;
                         return Ok(Link {
-                            url: model::board_url(&site, board.id),
+                            url: model::board_url(&site, &board.id),
                             what: board.name.clone(),
                         });
                     };
@@ -603,7 +604,7 @@ impl Page {
             },
             None => s
                 .picked()
-                .and_then(|b| Some(model::board_url(&s.site_of(&b.site)?, b.id))),
+                .and_then(|b| Some(model::board_url(&s.site_of(&b.site)?, &b.id))),
         };
         if let Some(url) = url {
             cx.open_url(&url);

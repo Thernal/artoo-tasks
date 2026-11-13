@@ -1,0 +1,49 @@
+{
+ "id": "6ae9beb00000000000000065",
+ "shortLink": "mR2cX9qD",
+ "shortUrl": "https://trello.com/c/mR2cX9qD",
+ "name": "Move the blog to the static build",
+ "desc": "Posts as markdown in the repository, built with the site.",
+ "idList": "6a969410000000000000000b",
+ "idBoard": "6a9694100000000000000001",
+ "idMembers": [
+  "677485800000000000000385"
+ ],
+ "labels": [],
+ "dateLastActivity": "2026-11-12T15:20:00.000Z",
+ "due": null,
+ "badges": {
+  "comments": 0,
+  "attachments": 0
+ },
+ "list": {
+  "id": "6a969410000000000000000b",
+  "name": "Doing"
+ },
+ "board": {
+  "id": "6a9694100000000000000001",
+  "name": "Website relaunch",
+  "shortLink": "kZ3fG9aB"
+ },
+ "members": [
+  {
+   "id": "677485800000000000000385",
+   "username": "jhale",
+   "fullName": "Juniper Hale"
+  }
+ ],
+ "actions": [
+  {
+   "id": "6ae9beb00000000000000190",
+   "type": "createCard",
+   "date": "2026-11-03T11:00:00.000Z",
+   "memberCreator": {
+    "id": "677485800000000000000385",
+    "username": "jhale",
+    "fullName": "Juniper Hale"
+   },
+   "data": {}
+  }
+ ],
+ "attachments": []
+}

@@ -29,6 +29,47 @@ impl Site {
             .map_or(self.url.as_str(), |(_, r)| r);
         rest.split('/').next().unwrap_or(rest)
     }
+
+    /// Trello, not Jira: `https://trello.com` with its API key where Jira Cloud has the email.
+    pub fn trello(&self) -> bool {
+        self.host() == "trello.com"
+    }
+
+    /// Jira Cloud: signed in with an email and an API token, people by account id.
+    pub fn cloud(&self) -> bool {
+        self.email.is_some() && !self.trello()
+    }
+
+    /// What its tracker is called: `Jira`, `Trello`.
+    pub fn tracker(&self) -> &'static str {
+        if self.trello() { "Trello" } else { "Jira" }
+    }
+}
+
+/// The tracker an address is on, as a button names it: `Open in Trello`.
+pub fn tracker_of(url: &str) -> &'static str {
+    if url.starts_with("https://trello.com/") {
+        "Trello"
+    } else {
+        "Jira"
+    }
+}
+
+/// What the news are listed under: the trackers' name — `Jira`, `Trello`, or `Tasks` when there are both.
+pub fn trackers_named() -> &'static str {
+    let text = match fixture() {
+        Some(dir) => std::fs::read_to_string(dir.join("trackers.txt")).unwrap_or_default(),
+        None => (settings_file().and_then(|f| std::fs::read_to_string(f).ok())).unwrap_or_default(),
+    };
+    let (sites, _) = named(&text, |_| Some(String::new()));
+    match (
+        sites.iter().any(Site::trello),
+        sites.iter().any(|s| !s.trello()),
+    ) {
+        (true, true) => "Tasks",
+        (true, false) => "Trello",
+        _ => "Jira",
+    }
 }
 
 /// The plugin's settings file: `<data>/plugins/artoo-tasks/trackers.txt`, a line per site, `url [email]`.
@@ -207,7 +248,12 @@ pub fn attach(site: &Site, path: &str, file: &std::path::Path) -> Result<Value, 
     }
     let config = format!(
         "url = \"{}{}\"\nheader = \"Authorization: {}\"\nheader = \"Accept: application/json\"\nheader = \"X-Atlassian-Token: no-check\"\nform = \"file=@{}\"\n",
-        quoted(&site.url),
+        // Trello's API is its own host.
+        quoted(if site.trello() {
+            "https://api.trello.com"
+        } else {
+            &site.url
+        }),
         quoted(path),
         quoted(&auth(site)),
         quoted(&file.to_string_lossy())
@@ -259,6 +305,13 @@ fn bare(path: &str) -> &str {
 }
 
 fn auth(site: &Site) -> String {
+    if site.trello() {
+        let key = site.email.as_deref().unwrap_or_default();
+        return format!(
+            "OAuth oauth_consumer_key=\"{key}\", oauth_token=\"{}\"",
+            site.token
+        );
+    }
     match &site.email {
         Some(email) => {
             let pair = format!("{email}:{}", site.token);
@@ -272,7 +325,12 @@ fn auth(site: &Site) -> String {
 fn call(site: &Site, method: &str, path: &str, body: Option<&Value>) -> Result<Value, String> {
     let mut config = format!(
         "url = \"{}{}\"\nrequest = \"{method}\"\nheader = \"Authorization: {}\"\nheader = \"Accept: application/json\"\n",
-        quoted(&site.url),
+        // Trello's API is its own host.
+        quoted(if site.trello() {
+            "https://api.trello.com"
+        } else {
+            &site.url
+        }),
         quoted(path),
         quoted(&auth(site))
     );

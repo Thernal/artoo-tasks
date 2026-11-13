@@ -12,21 +12,22 @@ use artoo_plugin_sdk::kit::{controls, icons, px, theme};
 use artoo_plugin_sdk::shell::bar::BarAction;
 use artoo_plugin_sdk::shell::{BarParts, MenuItem, PagePath, PathUp};
 
-/// Open in Jira: `url` in the browser, ⌥⌘J.
+/// Open in Jira (or Trello): `url` in the browser, ⌥⌘J.
 fn in_jira(url: String) -> BarAction {
     let fold = url.clone();
+    let words = format!("Open in {}", crate::jira::tracker_of(&url));
     BarAction::new(
         "tasks-jira",
-        controls::bar_button("tasks-jira", "Open in Jira", "", false)
+        controls::bar_button("tasks-jira", &words, "", false)
             .child(
                 icons::icon("external")
                     .size(px(12.))
                     .text_color(theme::muted()),
             )
-            .tip("Open in Jira  ⌥⌘J")
+            .tip(format!("{words}  ⌥⌘J"))
             .on_click(move |_, _, cx| cx.open_url(&url)),
     )
-    .folds(MenuItem::new("Open in Jira", move |_, cx| cx.open_url(&fold)).key("⌥⌘J"))
+    .folds(MenuItem::new(words, move |_, cx| cx.open_url(&fold)).key("⌥⌘J"))
     .fold_order(2)
 }
 
@@ -116,7 +117,7 @@ pub fn bar(page: &Entity<Page>, route: Option<&Route>, cx: &mut App) -> Option<B
     let columns = s.kept.view(&board.key()).board;
     let url = s
         .site_of(&board.site)
-        .map(|site| model::board_url(&site, board.id));
+        .map(|site| model::board_url(&site, &board.id));
     let count = |n: Option<usize>| n.map(|n| format!(" {n}")).unwrap_or_default();
     let (m1, m2) = (page.clone(), page.clone());
     let tabs = controls::group()

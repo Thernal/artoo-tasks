@@ -1,2 +1,3 @@
 # The fixture's sites, as the plugin's trackers.txt names them.
 https://acme.atlassian.net you@acme.example
+https://trello.com fixture-api-key

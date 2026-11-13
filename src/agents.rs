@@ -237,7 +237,12 @@ pub fn add_places(cx: &mut App) {
             let v: Value = serde_json::from_str(data).unwrap_or_default();
             let site = v["site"].as_str().unwrap_or_default().to_owned();
             let (board, mine) = (
-                (site, v["board"].as_u64().unwrap_or_default()),
+                (
+                    site,
+                    (v["board"].as_str().map(str::to_owned))
+                        .or_else(|| v["board"].as_u64().map(|n| n.to_string()))
+                        .unwrap_or_default(),
+                ),
                 v["mine"].as_bool() == Some(true),
             );
             let store = store::peek(cx);
@@ -292,7 +297,7 @@ mod tests {
         );
         assert_eq!(board_words("Payments", false, None), "Payments · All");
         let place: Value = serde_json::from_str(&board_place(
-            &("jira.example.com".into(), 7),
+            &("jira.example.com".into(), "7".into()),
             "Payments",
             true,
             Some(3),
@@ -300,7 +305,7 @@ mod tests {
         .unwrap();
         assert_eq!(
             place,
-            json!({"site": "jira.example.com", "board": 7, "name": "Payments", "mine": true, "count": 3})
+            json!({"site": "jira.example.com", "board": "7", "name": "Payments", "mine": true, "count": 3})
         );
     }
 }

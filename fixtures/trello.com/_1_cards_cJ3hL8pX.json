@@ -1,0 +1,49 @@
+{
+ "id": "6ae1c7a0000000000000006a",
+ "shortLink": "cJ3hL8pX",
+ "shortUrl": "https://trello.com/c/cJ3hL8pX",
+ "name": "Contact form sends to the CRM",
+ "desc": "",
+ "idList": "6a969410000000000000000d",
+ "idBoard": "6a9694100000000000000001",
+ "idMembers": [
+  "677485800000000000000386"
+ ],
+ "labels": [],
+ "dateLastActivity": "2026-11-07T12:00:00.000Z",
+ "due": null,
+ "badges": {
+  "comments": 0,
+  "attachments": 0
+ },
+ "list": {
+  "id": "6a969410000000000000000d",
+  "name": "Done"
+ },
+ "board": {
+  "id": "6a9694100000000000000001",
+  "name": "Website relaunch",
+  "shortLink": "kZ3fG9aB"
+ },
+ "members": [
+  {
+   "id": "677485800000000000000386",
+   "username": "kokafor",
+   "fullName": "Kestrel Okafor"
+  }
+ ],
+ "actions": [
+  {
+   "id": "6ae1c7a00000000000000190",
+   "type": "createCard",
+   "date": "2026-10-28T10:00:00.000Z",
+   "memberCreator": {
+    "id": "677485800000000000000385",
+    "username": "jhale",
+    "fullName": "Juniper Hale"
+   },
+   "data": {}
+  }
+ ],
+ "attachments": []
+}

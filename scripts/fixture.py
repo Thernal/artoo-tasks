@@ -331,13 +331,106 @@ def files(folder):
     with open(os.path.join(folder, '54121'), 'w') as f:
         f.write('refund 10.00 in 3 parts: 3.34 3.33 3.33\nrefunded 9.99\n')
 
+# Trello: a board of the same people, read as Trello's REST API answers (api.trello.com/1/…).
+TRELLO = 'trello.com'
+MEMBERS = {'you': 'aquinn', 'juniper': 'jhale', 'kestrel': 'kokafor', 'ember': 'elind'}
+def tid(at, n):
+    """A Trello id: its first four bytes the time it was made."""
+    import calendar, time
+    secs = calendar.timegm(time.strptime(at[:19], '%Y-%m-%dT%H:%M:%S'))
+    return '%08x%016x' % (secs, n)
+def member(who):
+    return {'id': tid('2025-01-01T00:00:00', 900 + list(MEMBERS).index(who)), 'username': MEMBERS[who],
+            'fullName': PEOPLE[who][1]}
+BOARD = {'id': tid('2026-09-01T09:00:00', 1), 'name': 'Website relaunch', 'shortLink': 'kZ3fG9aB'}
+LISTS = [{'id': tid('2026-09-01T09:00:00', 10 + i), 'name': n, 'pos': 1024 * (i + 1)}
+         for i, n in enumerate(['Next up', 'Doing', 'Review', 'Done'])]
+LIST = {l['name']: l for l in LISTS}
+LABELS = {'design': {'id': 'lb1', 'name': 'design', 'color': 'blue'}, 'seo': {'id': 'lb2', 'name': 'seo', 'color': 'green'},
+          'copy': {'id': 'lb3', 'name': 'copy', 'color': 'yellow'}, '': {'id': 'lb4', 'name': '', 'color': 'red'}}
+# short link, name, list, members, labels, made, last touched, due, description
+CARDS = [
+    ('hP4sK7vL', 'Pricing page in the new layout', 'Doing', ['you'], ['design'], '2026-11-02T10:00:00', '2026-11-13T08:05:00', '2026-11-18',
+     'The pricing page moves to the new grid.\n\n- Three plans side by side, the middle one marked\n- Yearly and monthly prices under one toggle\n- The FAQ below, folded\n\nThe **Pricing** frame in the relaunch file has the layout.'),
+    ('mR2cX9qD', 'Move the blog to the static build', 'Doing', ['juniper'], [], '2026-11-03T11:00:00', '2026-11-12T15:20:00', None,
+     'Posts as markdown in the repository, built with the site.'),
+    ('tY6bN3wE', 'Redirects for the old URLs', 'Next up', [], ['seo'], '2026-11-04T09:30:00', '2026-11-11T10:00:00', None,
+     'Every old address answers 301 to its new page; the list is in the sheet.'),
+    ('vB5nM4kS', 'Hero image for the home page', 'Next up', ['kestrel'], ['design'], '2026-11-05T14:00:00', '2026-11-12T09:40:00', '2026-11-20',
+     'Under 200 KB on mobile, in two crops.'),
+    ('gW7eR2tY', 'Lighthouse score over 90 on mobile', 'Review', ['you'], [''], '2026-11-06T08:00:00', '2026-11-13T07:55:00', None,
+     'Measured on the staging build, a mid-range phone profile.'),
+    ('qF8jZ1uA', 'Cookie banner copy', 'Review', ['ember'], ['copy'], '2026-11-06T16:00:00', '2026-11-12T17:10:00', None,
+     'Short, one button to accept and one to choose.'),
+    ('cJ3hL8pX', 'Contact form sends to the CRM', 'Done', ['kestrel'], [], '2026-10-28T10:00:00', '2026-11-07T12:00:00', None, ''),
+    ('dK9mV6bQ', 'Footer links checked', 'Done', ['juniper'], [], '2026-10-30T10:00:00', '2026-11-05T12:00:00', None, ''),
+]
+CARD_COMMENTS = {
+    'hP4sK7vL': [('juniper', '2026-11-12T16:20:00', 'The toggle for yearly prices could sit above the table. @aquinn what do you think?'),
+                 ('ember', '2026-11-13T08:05:00', 'The plans\' copy is in the doc, ready for the page.')],
+    'gW7eR2tY': [('ember', '2026-11-13T07:55:00', 'Mobile is at 84; the hero image is most of what is left.')],
+}
+CARD_ATTACH = {'hP4sK7vL': [('pricing-sketch.png', 'image/png', 21480, '2026-11-12T16:18:00')]}
+
+def card(c, whole):
+    short, name, lst, who, labels, made, touched, due, desc = c
+    out = {'id': tid(made, 100 + CARDS.index(c)), 'shortLink': short, 'shortUrl': 'https://trello.com/c/' + short,
+           'name': name, 'desc': desc, 'idList': LIST[lst]['id'], 'idBoard': BOARD['id'],
+           'idMembers': [member(w)['id'] for w in who], 'labels': [LABELS[l] for l in labels],
+           'dateLastActivity': touched + '.000Z', 'due': due + 'T17:00:00.000Z' if due else None,
+           'badges': {'comments': len(CARD_COMMENTS.get(short, [])), 'attachments': len(CARD_ATTACH.get(short, []))}}
+    if whole:
+        out['list'] = {'id': LIST[lst]['id'], 'name': lst}
+        out['board'] = {'id': BOARD['id'], 'name': BOARD['name'], 'shortLink': BOARD['shortLink']}
+        out['members'] = [member(w) for w in who]
+        actions = [{'id': tid(at, 500 + i), 'type': 'commentCard', 'date': at + '.000Z',
+                    'memberCreator': member(w), 'data': {'text': text}}
+                   for i, (w, at, text) in enumerate(CARD_COMMENTS.get(short, []))]
+        actions.append({'id': tid(made, 400), 'type': 'createCard', 'date': made + '.000Z',
+                        'memberCreator': member('juniper'), 'data': {}})
+        out['actions'] = sorted(actions, key=lambda a: a['date'], reverse=True)
+        out['attachments'] = [{'id': tid(at, 600 + i), 'name': n, 'mimeType': mime, 'bytes': size, 'date': at + '.000Z',
+                               'url': 'https://trello.com/1/cards/%s/attachments/%s/download/%s' % (out['id'], tid(at, 600 + i), n)}
+                              for i, (n, mime, size, at) in enumerate(CARD_ATTACH.get(short, []))]
+    return out
+
+def trello(folder):
+    os.makedirs(folder)
+    write(folder, '/1/members/me', member('you'))
+    for who in MEMBERS:
+        write(folder, '/1/members/' + MEMBERS[who], {'id': member(who)['id']})
+    write(folder, '/1/members/me/boards', [BOARD])
+    write(folder, '/1/boards/' + BOARD['shortLink'], dict(BOARD, lists=LISTS, cards=[card(c, False) for c in CARDS],
+                                                          members=[member(w) for w in MEMBERS]))
+    write(folder, '/1/boards/%s/members' % BOARD['shortLink'], [member(w) for w in MEMBERS])
+    for c in CARDS:
+        write(folder, '/1/cards/' + c[0], card(c, True))
+    by = {c[0]: c for c in CARDS}
+    def told(n, kind, who, short, at, **data):
+        return {'id': tid(at, 700 + n), 'type': kind, 'date': at + '.000Z', 'unread': True, 'memberCreator': member(who),
+                'data': dict(data, card={'id': card(by[short], False)['id'], 'name': by[short][1], 'shortLink': short},
+                             board={'id': BOARD['id'], 'name': BOARD['name'], 'shortLink': BOARD['shortLink']})}
+    write(folder, '/1/members/me/notifications@news', [
+        told(1, 'commentCard', 'ember', 'gW7eR2tY', '2026-11-13T07:55:00', text=CARD_COMMENTS['gW7eR2tY'][0][2]),
+        told(2, 'addedToCard', 'juniper', 'gW7eR2tY', '2026-11-13T07:30:00'),
+        told(3, 'mentionedOnCard', 'juniper', 'hP4sK7vL', '2026-11-12T16:20:00', text=CARD_COMMENTS['hP4sK7vL'][0][2]),
+        told(4, 'changeCard', 'kestrel', 'hP4sK7vL', '2026-11-12T11:00:00', listBefore=LIST['Next up'], listAfter=LIST['Doing']),
+    ])
+    write(folder, '/1/search', {'cards': [card(by[k], True) for k in ('hP4sK7vL', 'vB5nM4kS')]})
+    write(folder, 'POST/1/cards', {'id': tid('2026-11-13T09:00:00', 199), 'shortLink': 'nW8pQ2rT'})
+    os.makedirs(os.path.join(folder, 'files'))
+    png(os.path.join(folder, 'files', 'pricing-sketch.png'), 320, 200,
+        [(30 + 90 * i, 50, 70, 120, [(97, 175, 239), (229, 192, 123), (152, 195, 121)][i]) for i in range(3)])
+
 def main():
     if os.path.isdir(OUT):
         shutil.rmtree(OUT)
     os.makedirs(OUT)
     with open(os.path.join(OUT, 'trackers.txt'), 'w') as f:
         f.write('# The fixture\'s sites, as the plugin\'s trackers.txt names them.\n%s you@acme.example\n' % SITE)
+        f.write('https://%s fixture-api-key\n' % TRELLO)
     jira(os.path.join(OUT, JIRA))
     files(os.path.join(OUT, JIRA, 'files'))
+    trello(os.path.join(OUT, TRELLO))
 
 main()

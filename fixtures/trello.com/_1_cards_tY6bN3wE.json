@@ -1,0 +1,47 @@
+{
+ "id": "6aeafb180000000000000066",
+ "shortLink": "tY6bN3wE",
+ "shortUrl": "https://trello.com/c/tY6bN3wE",
+ "name": "Redirects for the old URLs",
+ "desc": "Every old address answers 301 to its new page; the list is in the sheet.",
+ "idList": "6a969410000000000000000a",
+ "idBoard": "6a9694100000000000000001",
+ "idMembers": [],
+ "labels": [
+  {
+   "id": "lb2",
+   "name": "seo",
+   "color": "green"
+  }
+ ],
+ "dateLastActivity": "2026-11-11T10:00:00.000Z",
+ "due": null,
+ "badges": {
+  "comments": 0,
+  "attachments": 0
+ },
+ "list": {
+  "id": "6a969410000000000000000a",
+  "name": "Next up"
+ },
+ "board": {
+  "id": "6a9694100000000000000001",
+  "name": "Website relaunch",
+  "shortLink": "kZ3fG9aB"
+ },
+ "members": [],
+ "actions": [
+  {
+   "id": "6aeafb180000000000000190",
+   "type": "createCard",
+   "date": "2026-11-04T09:30:00.000Z",
+   "memberCreator": {
+    "id": "677485800000000000000385",
+    "username": "jhale",
+    "fullName": "Juniper Hale"
+   },
+   "data": {}
+  }
+ ],
+ "attachments": []
+}

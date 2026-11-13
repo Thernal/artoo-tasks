@@ -288,7 +288,9 @@ impl Accounts {
         };
         let host = form.host.clone();
         let why = form.why.clone();
-        let cloud = form.fields[0].contains("atlassian.net") || !form.fields[1].trim().is_empty();
+        let trello = form.fields[0].contains("trello.com");
+        let cloud = !trello
+            && (form.fields[0].contains("atlassian.net") || !form.fields[1].trim().is_empty());
         let reaches = host
             .as_ref()
             .map(|h| match self.store.read(cx).projects.get(h) {
@@ -317,18 +319,33 @@ impl Accounts {
                 .child(t.to_owned())
         };
         let line = |l, v: AnyElement| div().flex().items_center().gap(px(10.)).child(l).child(v);
-        let make = if cloud {
-            "Make one on id.atlassian.com"
+        let (make, make_url) = if trello {
+            (
+                "Make them in Trello's Power-Up admin",
+                "https://trello.com/power-ups/admin",
+            )
+        } else if cloud {
+            (
+                "Make one on id.atlassian.com",
+                "https://id.atlassian.com/manage-profile/security/api-tokens",
+            )
         } else {
-            "Make one in your Jira profile"
+            ("Make one in your Jira profile", "")
         };
-        let make_url = if cloud {
-            "https://id.atlassian.com/manage-profile/security/api-tokens"
-        } else {
-            ""
-        };
-        let site = self.field(0, "your-team.atlassian.net or jira.example.com", cx);
-        let email = self.field(1, "For Jira Cloud: the email the token is of", cx);
+        let site = self.field(
+            0,
+            "your-team.atlassian.net, jira.example.com or trello.com",
+            cx,
+        );
+        let email = self.field(
+            1,
+            if trello {
+                "Your Trello API key"
+            } else {
+                "For Jira Cloud: the email the token is of"
+            },
+            cx,
+        );
         let token = self.field(
             2,
             if host.is_some() {
@@ -348,7 +365,7 @@ impl Accounts {
             .border_t_1()
             .border_color(theme::island_border())
             .child(line(label("Site"), site))
-            .child(line(label("Email"), email))
+            .child(line(label(if trello { "API key" } else { "Email" }), email))
             .child(line(
                 label("API token"),
                 div()
@@ -446,14 +463,18 @@ impl Accounts {
             Some(Read::Done(p)) => Some(p.len()),
             _ => None,
         };
+        let tracker = site.tracker();
+        // Trello's projects are its boards.
+        let unit = if site.trello() { "board" } else { "project" };
         let what = match projects {
             Some(n) => format!(
-                "Jira · {}",
-                artoo_plugin_sdk::kit::format::plural(n, "project")
+                "{tracker} · {}",
+                artoo_plugin_sdk::kit::format::plural(n, unit)
             ),
-            None => "Jira".to_owned(),
+            None => tracker.to_owned(),
         };
         let how = match &site.email {
+            Some(_) if site.trello() => "API key and token".to_owned(),
             Some(email) => format!("API token · {email}"),
             None => "Personal access token".to_owned(),
         };
@@ -609,7 +630,7 @@ impl Accounts {
                 div().pt(px(10.)).child(
                     crate::look::small_button("tracker-add", "Add a tracker")
                         .child(icons::icon("plus").size(px(12.)).text_color(theme::muted()))
-                        .tip("Jira Cloud, Server or Data Center")
+                        .tip("Jira Cloud, Server or Data Center, or Trello")
                         .on_click(cx.listener(|this, _: &ClickEvent, _, cx| this.open(None, cx))),
                 ),
             );

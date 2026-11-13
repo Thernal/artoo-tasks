@@ -146,7 +146,7 @@ impl Page {
             .or_else(|| board.as_ref().and_then(|b| b.project.clone()))
             .unwrap_or_default();
         let me = s.me.get(&host).cloned();
-        let cloud = s.site_of(&host).is_some_and(|x| x.email.is_some());
+        let cloud = s.site_of(&host).is_some_and(|x| x.cloud());
         let sprint = s.board_info().and_then(|i| i.active().cloned());
         let name = match s.projects.get(&host) {
             Some(Read::Done(list)) => list
@@ -421,7 +421,7 @@ impl Page {
                 ("Epic".into(), rows, false)
             }
             "assignee" => {
-                let cloud = s.site_of(&sheet.host).is_some_and(|x| x.email.is_some());
+                let cloud = s.site_of(&sheet.host).is_some_and(|x| x.cloud());
                 let me = s.me.get(&sheet.host).cloned();
                 let mut people: Vec<Person> = Vec::new();
                 for r in s.board_rows().cloned().unwrap_or_default() {
@@ -935,6 +935,8 @@ impl Page {
         });
         let host = sheet.host.clone();
         let me_name = s.me.get(&host).map(|m| m.name.clone());
+        // A Trello board is its project, its short link no key to read; its labels are set on Trello.
+        let trello = s.site_of(&host).is_some_and(|x| x.trello());
         let project = sheet.project.clone();
         let kind = sheet.kind.clone();
         let parent = sheet.parent.clone();
@@ -1069,7 +1071,11 @@ impl Page {
         let project_sel = self.select(
             "project",
             None,
-            Some(format!("{} {}", project.1, project.0)),
+            Some(if trello {
+                project.1.clone()
+            } else {
+                format!("{} {}", project.1, project.0)
+            }),
             "Project",
             false,
             cx,
@@ -1181,7 +1187,9 @@ impl Page {
         if let Some(p) = pri_sel {
             form = form.child(line(label("Priority", false), p.into_any_element()));
         }
-        form = form.child(line(label("Labels", false), labels_sel.into_any_element()));
+        if !trello {
+            form = form.child(line(label("Labels", false), labels_sel.into_any_element()));
+        }
         if let Some(sp) = sprint_sel {
             form = form.child(line(label("Sprint", false), sp.into_any_element()));
         }

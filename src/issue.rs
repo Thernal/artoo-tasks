@@ -249,6 +249,8 @@ impl Page {
         };
         let changed = self.changed_line(&issue, cx);
         let head = self.issue_head(&issue, cx);
+        // A Trello card has no sub-tasks.
+        let trello = (self.store.read(cx).site_of(&issue.site)).is_some_and(|x| x.trello());
         let main = div()
             .flex_1()
             .min_w_0()
@@ -256,7 +258,7 @@ impl Page {
             .flex_col()
             .gap(px(16.))
             .child(self.description(&issue, cx))
-            .child(self.subtasks(&issue, cx))
+            .when(!trello, |d| d.child(self.subtasks(&issue, cx)))
             .when(!issue.links.is_empty() || self.issue.link.is_some(), |d| {
                 d.child(self.links(&issue, cx))
             })
@@ -366,6 +368,8 @@ impl Page {
         let me = s.is_me(&issue.site, r.assignee.as_ref());
         let epic = r.epic.as_ref().map(|e| s.epic(e));
         let has_epics = epic.is_some() || s.board_info().is_some_and(|i| !i.epics.is_empty());
+        // A Trello card has no priority, type or sprint.
+        let trello = s.site_of(&issue.site).is_some_and(|x| x.trello());
         let key = r.key.clone();
         let title_editing = self.issue.title.is_some();
         let typing = self.frame.typing(cx) == Some(INPUT_TITLE);
@@ -538,13 +542,18 @@ impl Page {
             .flex_wrap()
             .gap(px(28.))
             .child(fact("State", state))
-            .child(fact("Assignee", assignee))
-            .child(fact("Priority", priority))
-            .child(fact("Type", kind));
+            .child(fact("Assignee", assignee));
+        if !trello {
+            facts = facts
+                .child(fact("Priority", priority))
+                .child(fact("Type", kind));
+        }
         if let Some(e) = epic_ctl {
             facts = facts.child(fact("Epic", e));
         }
-        facts = facts.child(fact("Sprint", sprint));
+        if !trello {
+            facts = facts.child(fact("Sprint", sprint));
+        }
         div()
             .flex()
             .flex_col()
@@ -622,7 +631,7 @@ impl Page {
         let Some(issue) = s.issue(key) else {
             return Vec::new();
         };
-        let cloud = s.site_of(&issue.site).is_some_and(|x| x.email.is_some());
+        let cloud = s.site_of(&issue.site).is_some_and(|x| x.cloud());
         let rows = s.board_rows().into_iter().flatten();
         let people = (issue.reporter.iter())
             .chain(issue.row.assignee.iter())
@@ -1928,9 +1937,8 @@ impl Page {
             let Some(file) = paths.into_iter().next() else {
                 return;
             };
-            let path = format!("/rest/api/2/issue/{key}/attachments");
             let sent = cx
-                .background_spawn(async move { crate::jira::attach(&site, &path, &file) })
+                .background_spawn(async move { model::attach(&site, &key, &file) })
                 .await;
             this.update(cx, |p, cx| {
                 match sent {
@@ -2019,8 +2027,11 @@ impl Page {
                                 })),
                         )
                         .child(
-                            look::small_button("viewer-jira", "Open in Jira")
-                                .on_click(move |_, _, cx| cx.open_url(&url)),
+                            look::small_button(
+                                "viewer-jira",
+                                format!("Open in {}", crate::jira::tracker_of(&url)),
+                            )
+                            .on_click(move |_, _, cx| cx.open_url(&url)),
                         )
                         .child(
                             look::small_button("viewer-close", "Close")
@@ -3031,8 +3042,11 @@ impl Page {
                             .items_center()
                             .gap(px(8.))
                             .children(url.map(|u| {
-                                look::small_button("wf-jira", "Open in Jira")
-                                    .on_click(move |_, _, cx| cx.open_url(&u))
+                                look::small_button(
+                                    "wf-jira",
+                                    format!("Open in {}", crate::jira::tracker_of(&u)),
+                                )
+                                .on_click(move |_, _, cx| cx.open_url(&u))
                             }))
                             .child(div().flex_1())
                             .child(

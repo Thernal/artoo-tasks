@@ -1,0 +1,55 @@
+{
+ "id": "6aedf9800000000000000069",
+ "shortLink": "qF8jZ1uA",
+ "shortUrl": "https://trello.com/c/qF8jZ1uA",
+ "name": "Cookie banner copy",
+ "desc": "Short, one button to accept and one to choose.",
+ "idList": "6a969410000000000000000c",
+ "idBoard": "6a9694100000000000000001",
+ "idMembers": [
+  "677485800000000000000387"
+ ],
+ "labels": [
+  {
+   "id": "lb3",
+   "name": "copy",
+   "color": "yellow"
+  }
+ ],
+ "dateLastActivity": "2026-11-12T17:10:00.000Z",
+ "due": null,
+ "badges": {
+  "comments": 0,
+  "attachments": 0
+ },
+ "list": {
+  "id": "6a969410000000000000000c",
+  "name": "Review"
+ },
+ "board": {
+  "id": "6a9694100000000000000001",
+  "name": "Website relaunch",
+  "shortLink": "kZ3fG9aB"
+ },
+ "members": [
+  {
+   "id": "677485800000000000000387",
+   "username": "elind",
+   "fullName": "Ember Lind"
+  }
+ ],
+ "actions": [
+  {
+   "id": "6aedf9800000000000000190",
+   "type": "createCard",
+   "date": "2026-11-06T16:00:00.000Z",
+   "memberCreator": {
+    "id": "677485800000000000000385",
+    "username": "jhale",
+    "fullName": "Juniper Hale"
+   },
+   "data": {}
+  }
+ ],
+ "attachments": []
+}

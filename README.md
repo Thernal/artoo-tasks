@@ -1,7 +1,7 @@
 # Tasks — task management for Artoo
 
 An [Artoo](https://github.com/Thernal/artoo) plugin: your tracker's boards and issues as the Tasks space, beside
-Inbox, Code, Branches and Merge requests. It reads and writes Jira (Cloud, Server and Data Center).
+Inbox, Code, Branches and Merge requests. It reads and writes Jira (Cloud, Server and Data Center) and Trello.
 
 - **A board** (`⌃⌘5`): the side panel's boards under each site's host, Drafts at its foot; a board's issues as a
   list beside a preview, or as columns (List · Board, `V`), grouped by state, story or epic (`G`), `Mine · All` with
@@ -22,21 +22,27 @@ Inbox, Code, Branches and Merge requests. It reads and writes Jira (Cloud, Serve
 - **⌘K**: the Tasks tab finds the issues read by key or words; Here offers what the page on screen does.
 - **Notes for your agent**: `+` on a paragraph of the description (`C`), or on a board (`⋯`, Note for an agent);
   the agent reads it with its place, `PAY-412 · description · ¶4`, or the board's issues as filtered.
+- **Trello**, behind the same pages: a board's lists are its columns and states, a card an issue (its key the card's
+  short link), its first member the assignee; comments with `@user` mentions, attachments, the due date; New task makes
+  a card in the list picked; the Inbox has your notifications. What Trello has no place for — epics, sprints,
+  priorities, links, sub-tasks — is not shown, and a write of it is refused with why.
 - **Tools for agents**, through Artoo's MCP server while Artoo runs: `jira_issue`, `jira_search`, and
   `jira_comment` — a comment an agent writes waits on the issue's page for you to post, edit or discard.
 
 ## Connect
 
-Settings → Accounts → Trackers: Add a tracker, its site, your email (Jira Cloud) and a token, Test, Save. The sites
-are kept in `~/Library/Application Support/Artoo/plugins/artoo-tasks/trackers.txt`, one a line:
+Settings → Accounts → Trackers: Add a tracker, its site, your email (Jira Cloud) or API key (Trello) and a token,
+Test, Save. The sites are kept in `~/Library/Application Support/Artoo/plugins/artoo-tasks/trackers.txt`, one a line:
 
 ```text
 https://jira.example.com
 https://example.atlassian.net you@example.com
+https://trello.com <your API key>
 ```
 
 A site alone is Jira Server or Data Center, read with a personal access token; a site with an email is Jira Cloud,
-read with that email and an API token. The token is the file `~/.config/tokens/<host>` (mode 600).
+read with that email and an API token; `trello.com` is Trello, read with your API key and a token made for it
+(trello.com/power-ups/admin). The token is the file `~/.config/tokens/<host>` (mode 600).
 
 ## Build and run
 
@@ -48,7 +54,8 @@ ARTOO_PLUGIN_DEV="$PWD/target/debug/libartoo_tasks.dylib" path/to/artoo/target/d
 ```
 
 `ARTOO_TASKS_FIXTURE=<folder>` reads the API's answers from files there instead of the tracker, for pictures that show
-no one's real work: `python3 scripts/fixture.py` writes `fixtures/` (the Payments board). Its own `trackers.txt` names
+no one's real work: `python3 scripts/fixture.py` writes `fixtures/` (Jira's Payments board, Trello's Website
+relaunch). Its own `trackers.txt` names
 its sites, a folder named for a site's host holds that site's answers (`_rest_api_2_issue_PAY-412.json`), and a write
 is recorded in its `writes.log` and answered from `POST_rest_api_2_issue.json` when there is one.
 

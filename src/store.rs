@@ -382,10 +382,10 @@ impl Store {
             if !self.info.contains_key(&board) {
                 self.info.insert(board.clone(), Read::Reading);
             }
-            let (s, id, key) = (site.clone(), board.1, board.clone());
+            let (s, id, key) = (site.clone(), board.1.clone(), board.clone());
             spawn_read(
                 cx,
-                move || model::board_info(&s, id),
+                move || model::board_info(&s, &id),
                 move |this, read, _| {
                     if read.is_ok() || !matches!(this.info.get(&key), Some(Read::Done(_))) {
                         this.info.insert(key, read_of(read));
@@ -399,10 +399,10 @@ impl Store {
         if !self.rows.contains_key(&board) {
             self.rows.insert(board.clone(), Read::Reading);
         }
-        let id = board.1;
+        let id = board.1.clone();
         spawn_read(
             cx,
-            move || model::board_issues(&site, id),
+            move || model::board_issues(&site, &id),
             move |this, read, _| match read {
                 Ok(rows) => {
                     this.rows.insert(board.clone(), Read::Done(rows));

@@ -1378,14 +1378,15 @@ impl Page {
                 ),
             )
             .children(url.map(|url| {
-                look::small_button("tasks-pv-jira", "Open in Jira")
+                let words = format!("Open in {}", crate::jira::tracker_of(&url));
+                look::small_button("tasks-pv-jira", words.clone())
                     .h(px(28.))
                     .child(
                         icons::icon("external")
                             .size(px(12.))
                             .text_color(theme::muted()),
                     )
-                    .tip("Open in Jira  ⌥⌘J")
+                    .tip(format!("{words}  ⌥⌘J"))
                     .on_click(move |_, _, cx| cx.open_url(&url))
             }));
         frame()

@@ -972,7 +972,7 @@ impl Page {
     /// Issue `key` given to `who`, or to no one.
     pub fn assign(&mut self, key: &str, who: Option<Person>, cx: &mut Context<Self>) {
         let s = self.store.read(cx);
-        let cloud = s.site_for(key).is_some_and(|site| site.email.is_some());
+        let cloud = s.site_for(key).is_some_and(|site| site.cloud());
         let write = Write::assigned(key, who.as_ref(), cloud);
         let k = key.to_owned();
         self.store.update(cx, |s, cx| {

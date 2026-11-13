@@ -60,9 +60,11 @@ fn find(ask: Ask, s: &Store) -> Vec<Find> {
         .into_iter()
         .filter_map(|(site, row)| {
             let hay = format!("{} {}", row.key, row.summary).to_lowercase();
-            let rank = if row.key == key {
+            // A Jira key is upper case; Trello's short link mixed, found either way.
+            let upper = row.key.to_uppercase();
+            let rank = if upper == key {
                 0
-            } else if row.key.starts_with(&key) && !key.is_empty() {
+            } else if upper.starts_with(&key) && !key.is_empty() {
                 1
             } else if words.iter().all(|w| hay.contains(w.as_str())) {
                 2
@@ -114,7 +116,7 @@ mod tests {
             ..Default::default()
         };
         s.rows.insert(
-            ("acme.atlassian.net".into(), 7),
+            ("acme.atlassian.net".into(), "7".into()),
             Read::Done(vec![
                 row("PAY-4120", "Refunds in bulk", "2026-11-12"),
                 row("PAY-412", "Refund rounds down", "2026-11-10"),

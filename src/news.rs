@@ -19,7 +19,7 @@ pub fn offer(cx: &mut App) {
         cx,
         Source::new(
             env!("CARGO_PKG_NAME"),
-            "Jira",
+            crate::jira::trackers_named(),
             vec![
                 Kind::listed(ASSIGNED, "Assigned to you").toast(),
                 Kind::listed(MENTIONED, "Mentions you").why(Why::Mentions),

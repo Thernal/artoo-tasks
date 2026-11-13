@@ -101,7 +101,10 @@ fn file() -> Option<PathBuf> {
 }
 
 fn board_id(v: &Value) -> Option<BoardId> {
-    Some((v["site"].as_str()?.to_owned(), v["board"].as_u64()?))
+    // A number as it was kept before ids were text.
+    let id = (v["board"].as_str().map(str::to_owned))
+        .or_else(|| v["board"].as_u64().map(|n| n.to_string()))?;
+    Some((v["site"].as_str()?.to_owned(), id))
 }
 
 fn board_json(b: &BoardId) -> Value {
@@ -235,12 +238,12 @@ mod tests {
     #[test]
     fn what_is_kept_reads_back_the_same() {
         let mut kept = Kept {
-            recent: vec![("acme.atlassian.net".into(), 7)],
-            last_board: Some(("acme.atlassian.net".into(), 7)),
+            recent: vec![("acme.atlassian.net".into(), "7".into())],
+            last_board: Some(("acme.atlassian.net".into(), "7".into())),
             ..Default::default()
         };
         kept.views.insert(
-            ("acme.atlassian.net".into(), 7),
+            ("acme.atlassian.net".into(), "7".into()),
             View {
                 board: true,
                 group: Group::Epic,
@@ -267,7 +270,7 @@ mod tests {
         assert_eq!(back.recent, kept.recent);
         assert_eq!(back.last_board, kept.last_board);
         assert_eq!(
-            back.view(&("acme.atlassian.net".into(), 7)),
+            back.view(&("acme.atlassian.net".into(), "7".into())),
             View {
                 board: true,
                 group: Group::Epic

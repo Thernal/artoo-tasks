@@ -1,0 +1,68 @@
+{
+ "id": "6aed89000000000000000068",
+ "shortLink": "gW7eR2tY",
+ "shortUrl": "https://trello.com/c/gW7eR2tY",
+ "name": "Lighthouse score over 90 on mobile",
+ "desc": "Measured on the staging build, a mid-range phone profile.",
+ "idList": "6a969410000000000000000c",
+ "idBoard": "6a9694100000000000000001",
+ "idMembers": [
+  "677485800000000000000384"
+ ],
+ "labels": [
+  {
+   "id": "lb4",
+   "name": "",
+   "color": "red"
+  }
+ ],
+ "dateLastActivity": "2026-11-13T07:55:00.000Z",
+ "due": null,
+ "badges": {
+  "comments": 1,
+  "attachments": 0
+ },
+ "list": {
+  "id": "6a969410000000000000000c",
+  "name": "Review"
+ },
+ "board": {
+  "id": "6a9694100000000000000001",
+  "name": "Website relaunch",
+  "shortLink": "kZ3fG9aB"
+ },
+ "members": [
+  {
+   "id": "677485800000000000000384",
+   "username": "aquinn",
+   "fullName": "Avery Quinn"
+  }
+ ],
+ "actions": [
+  {
+   "id": "6af6c25400000000000001f4",
+   "type": "commentCard",
+   "date": "2026-11-13T07:55:00.000Z",
+   "memberCreator": {
+    "id": "677485800000000000000387",
+    "username": "elind",
+    "fullName": "Ember Lind"
+   },
+   "data": {
+    "text": "Mobile is at 84; the hero image is most of what is left."
+   }
+  },
+  {
+   "id": "6aed89000000000000000190",
+   "type": "createCard",
+   "date": "2026-11-06T08:00:00.000Z",
+   "memberCreator": {
+    "id": "677485800000000000000385",
+    "username": "jhale",
+    "fullName": "Juniper Hale"
+   },
+   "data": {}
+  }
+ ],
+ "attachments": []
+}

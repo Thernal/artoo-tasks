@@ -1,0 +1,55 @@
+{
+ "id": "6aec8be00000000000000067",
+ "shortLink": "vB5nM4kS",
+ "shortUrl": "https://trello.com/c/vB5nM4kS",
+ "name": "Hero image for the home page",
+ "desc": "Under 200 KB on mobile, in two crops.",
+ "idList": "6a969410000000000000000a",
+ "idBoard": "6a9694100000000000000001",
+ "idMembers": [
+  "677485800000000000000386"
+ ],
+ "labels": [
+  {
+   "id": "lb1",
+   "name": "design",
+   "color": "blue"
+  }
+ ],
+ "dateLastActivity": "2026-11-12T09:40:00.000Z",
+ "due": "2026-11-20T17:00:00.000Z",
+ "badges": {
+  "comments": 0,
+  "attachments": 0
+ },
+ "list": {
+  "id": "6a969410000000000000000a",
+  "name": "Next up"
+ },
+ "board": {
+  "id": "6a9694100000000000000001",
+  "name": "Website relaunch",
+  "shortLink": "kZ3fG9aB"
+ },
+ "members": [
+  {
+   "id": "677485800000000000000386",
+   "username": "kokafor",
+   "fullName": "Kestrel Okafor"
+  }
+ ],
+ "actions": [
+  {
+   "id": "6aec8be00000000000000190",
+   "type": "createCard",
+   "date": "2026-11-05T14:00:00.000Z",
+   "memberCreator": {
+    "id": "677485800000000000000385",
+    "username": "jhale",
+    "fullName": "Juniper Hale"
+   },
+   "data": {}
+  }
+ ],
+ "attachments": []
+}

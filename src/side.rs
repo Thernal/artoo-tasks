@@ -23,6 +23,10 @@ pub fn side(page: &Entity<Page>, width: f32, cx: &mut App) -> AnyElement {
         .gap(px(2.))
         .px(px(8.))
         .py(px(8.));
+    // No tracker yet: the page says how to connect one, the panel nothing.
+    if s.sites.is_empty() {
+        return list.into_any_element();
+    }
     list = list.child(
         div()
             .flex()
@@ -73,10 +77,10 @@ pub fn side(page: &Entity<Page>, width: f32, cx: &mut App) -> AnyElement {
                         .tip(match &bad {
                             Some(why) => format!("Can’t reach {host} · {why}"),
                             None => {
-                                if site.email.is_some() {
+                                if site.cloud() {
                                     "Jira Cloud".to_owned()
                                 } else {
-                                    "Jira".to_owned()
+                                    site.tracker().to_owned()
                                 }
                             }
                         }),
@@ -117,7 +121,8 @@ pub fn side(page: &Entity<Page>, width: f32, cx: &mut App) -> AnyElement {
                                     .truncate()
                                     .child(b.name.clone()),
                             )
-                            .children(b.project.clone().map(|k| {
+                            // A Trello board's project is its own short link: not shown.
+                            .children(b.project.clone().filter(|_| !site.trello()).map(|k| {
                                 div().text_size(px(11.)).text_color(theme::faint()).child(k)
                             }))
                             .tip(format!(
@@ -125,6 +130,7 @@ pub fn side(page: &Entity<Page>, width: f32, cx: &mut App) -> AnyElement {
                                 b.name,
                                 b.project
                                     .as_ref()
+                                    .filter(|_| !site.trello())
                                     .map(|k| format!(" · {k}"))
                                     .unwrap_or_default()
                             ))

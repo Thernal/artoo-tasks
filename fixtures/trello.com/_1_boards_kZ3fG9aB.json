@@ -1,0 +1,231 @@
+{
+ "id": "6a9694100000000000000001",
+ "name": "Website relaunch",
+ "shortLink": "kZ3fG9aB",
+ "lists": [
+  {
+   "id": "6a969410000000000000000a",
+   "name": "Next up",
+   "pos": 1024
+  },
+  {
+   "id": "6a969410000000000000000b",
+   "name": "Doing",
+   "pos": 2048
+  },
+  {
+   "id": "6a969410000000000000000c",
+   "name": "Review",
+   "pos": 3072
+  },
+  {
+   "id": "6a969410000000000000000d",
+   "name": "Done",
+   "pos": 4096
+  }
+ ],
+ "cards": [
+  {
+   "id": "6ae85f200000000000000064",
+   "shortLink": "hP4sK7vL",
+   "shortUrl": "https://trello.com/c/hP4sK7vL",
+   "name": "Pricing page in the new layout",
+   "desc": "The pricing page moves to the new grid.\n\n- Three plans side by side, the middle one marked\n- Yearly and monthly prices under one toggle\n- The FAQ below, folded\n\nThe **Pricing** frame in the relaunch file has the layout.",
+   "idList": "6a969410000000000000000b",
+   "idBoard": "6a9694100000000000000001",
+   "idMembers": [
+    "677485800000000000000384"
+   ],
+   "labels": [
+    {
+     "id": "lb1",
+     "name": "design",
+     "color": "blue"
+    }
+   ],
+   "dateLastActivity": "2026-11-13T08:05:00.000Z",
+   "due": "2026-11-18T17:00:00.000Z",
+   "badges": {
+    "comments": 2,
+    "attachments": 1
+   }
+  },
+  {
+   "id": "6ae9beb00000000000000065",
+   "shortLink": "mR2cX9qD",
+   "shortUrl": "https://trello.com/c/mR2cX9qD",
+   "name": "Move the blog to the static build",
+   "desc": "Posts as markdown in the repository, built with the site.",
+   "idList": "6a969410000000000000000b",
+   "idBoard": "6a9694100000000000000001",
+   "idMembers": [
+    "677485800000000000000385"
+   ],
+   "labels": [],
+   "dateLastActivity": "2026-11-12T15:20:00.000Z",
+   "due": null,
+   "badges": {
+    "comments": 0,
+    "attachments": 0
+   }
+  },
+  {
+   "id": "6aeafb180000000000000066",
+   "shortLink": "tY6bN3wE",
+   "shortUrl": "https://trello.com/c/tY6bN3wE",
+   "name": "Redirects for the old URLs",
+   "desc": "Every old address answers 301 to its new page; the list is in the sheet.",
+   "idList": "6a969410000000000000000a",
+   "idBoard": "6a9694100000000000000001",
+   "idMembers": [],
+   "labels": [
+    {
+     "id": "lb2",
+     "name": "seo",
+     "color": "green"
+    }
+   ],
+   "dateLastActivity": "2026-11-11T10:00:00.000Z",
+   "due": null,
+   "badges": {
+    "comments": 0,
+    "attachments": 0
+   }
+  },
+  {
+   "id": "6aec8be00000000000000067",
+   "shortLink": "vB5nM4kS",
+   "shortUrl": "https://trello.com/c/vB5nM4kS",
+   "name": "Hero image for the home page",
+   "desc": "Under 200 KB on mobile, in two crops.",
+   "idList": "6a969410000000000000000a",
+   "idBoard": "6a9694100000000000000001",
+   "idMembers": [
+    "677485800000000000000386"
+   ],
+   "labels": [
+    {
+     "id": "lb1",
+     "name": "design",
+     "color": "blue"
+    }
+   ],
+   "dateLastActivity": "2026-11-12T09:40:00.000Z",
+   "due": "2026-11-20T17:00:00.000Z",
+   "badges": {
+    "comments": 0,
+    "attachments": 0
+   }
+  },
+  {
+   "id": "6aed89000000000000000068",
+   "shortLink": "gW7eR2tY",
+   "shortUrl": "https://trello.com/c/gW7eR2tY",
+   "name": "Lighthouse score over 90 on mobile",
+   "desc": "Measured on the staging build, a mid-range phone profile.",
+   "idList": "6a969410000000000000000c",
+   "idBoard": "6a9694100000000000000001",
+   "idMembers": [
+    "677485800000000000000384"
+   ],
+   "labels": [
+    {
+     "id": "lb4",
+     "name": "",
+     "color": "red"
+    }
+   ],
+   "dateLastActivity": "2026-11-13T07:55:00.000Z",
+   "due": null,
+   "badges": {
+    "comments": 1,
+    "attachments": 0
+   }
+  },
+  {
+   "id": "6aedf9800000000000000069",
+   "shortLink": "qF8jZ1uA",
+   "shortUrl": "https://trello.com/c/qF8jZ1uA",
+   "name": "Cookie banner copy",
+   "desc": "Short, one button to accept and one to choose.",
+   "idList": "6a969410000000000000000c",
+   "idBoard": "6a9694100000000000000001",
+   "idMembers": [
+    "677485800000000000000387"
+   ],
+   "labels": [
+    {
+     "id": "lb3",
+     "name": "copy",
+     "color": "yellow"
+    }
+   ],
+   "dateLastActivity": "2026-11-12T17:10:00.000Z",
+   "due": null,
+   "badges": {
+    "comments": 0,
+    "attachments": 0
+   }
+  },
+  {
+   "id": "6ae1c7a0000000000000006a",
+   "shortLink": "cJ3hL8pX",
+   "shortUrl": "https://trello.com/c/cJ3hL8pX",
+   "name": "Contact form sends to the CRM",
+   "desc": "",
+   "idList": "6a969410000000000000000d",
+   "idBoard": "6a9694100000000000000001",
+   "idMembers": [
+    "677485800000000000000386"
+   ],
+   "labels": [],
+   "dateLastActivity": "2026-11-07T12:00:00.000Z",
+   "due": null,
+   "badges": {
+    "comments": 0,
+    "attachments": 0
+   }
+  },
+  {
+   "id": "6ae46aa0000000000000006b",
+   "shortLink": "dK9mV6bQ",
+   "shortUrl": "https://trello.com/c/dK9mV6bQ",
+   "name": "Footer links checked",
+   "desc": "",
+   "idList": "6a969410000000000000000d",
+   "idBoard": "6a9694100000000000000001",
+   "idMembers": [
+    "677485800000000000000385"
+   ],
+   "labels": [],
+   "dateLastActivity": "2026-11-05T12:00:00.000Z",
+   "due": null,
+   "badges": {
+    "comments": 0,
+    "attachments": 0
+   }
+  }
+ ],
+ "members": [
+  {
+   "id": "677485800000000000000384",
+   "username": "aquinn",
+   "fullName": "Avery Quinn"
+  },
+  {
+   "id": "677485800000000000000385",
+   "username": "jhale",
+   "fullName": "Juniper Hale"
+  },
+  {
+   "id": "677485800000000000000386",
+   "username": "kokafor",
+   "fullName": "Kestrel Okafor"
+  },
+  {
+   "id": "677485800000000000000387",
+   "username": "elind",
+   "fullName": "Ember Lind"
+  }
+ ]
+}

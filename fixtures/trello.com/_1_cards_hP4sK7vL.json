@@ -1,0 +1,90 @@
+{
+ "id": "6ae85f200000000000000064",
+ "shortLink": "hP4sK7vL",
+ "shortUrl": "https://trello.com/c/hP4sK7vL",
+ "name": "Pricing page in the new layout",
+ "desc": "The pricing page moves to the new grid.\n\n- Three plans side by side, the middle one marked\n- Yearly and monthly prices under one toggle\n- The FAQ below, folded\n\nThe **Pricing** frame in the relaunch file has the layout.",
+ "idList": "6a969410000000000000000b",
+ "idBoard": "6a9694100000000000000001",
+ "idMembers": [
+  "677485800000000000000384"
+ ],
+ "labels": [
+  {
+   "id": "lb1",
+   "name": "design",
+   "color": "blue"
+  }
+ ],
+ "dateLastActivity": "2026-11-13T08:05:00.000Z",
+ "due": "2026-11-18T17:00:00.000Z",
+ "badges": {
+  "comments": 2,
+  "attachments": 1
+ },
+ "list": {
+  "id": "6a969410000000000000000b",
+  "name": "Doing"
+ },
+ "board": {
+  "id": "6a9694100000000000000001",
+  "name": "Website relaunch",
+  "shortLink": "kZ3fG9aB"
+ },
+ "members": [
+  {
+   "id": "677485800000000000000384",
+   "username": "aquinn",
+   "fullName": "Avery Quinn"
+  }
+ ],
+ "actions": [
+  {
+   "id": "6af6c4ac00000000000001f5",
+   "type": "commentCard",
+   "date": "2026-11-13T08:05:00.000Z",
+   "memberCreator": {
+    "id": "677485800000000000000387",
+    "username": "elind",
+    "fullName": "Ember Lind"
+   },
+   "data": {
+    "text": "The plans' copy is in the doc, ready for the page."
+   }
+  },
+  {
+   "id": "6af5e73000000000000001f4",
+   "type": "commentCard",
+   "date": "2026-11-12T16:20:00.000Z",
+   "memberCreator": {
+    "id": "677485800000000000000385",
+    "username": "jhale",
+    "fullName": "Juniper Hale"
+   },
+   "data": {
+    "text": "The toggle for yearly prices could sit above the table. @aquinn what do you think?"
+   }
+  },
+  {
+   "id": "6ae85f200000000000000190",
+   "type": "createCard",
+   "date": "2026-11-02T10:00:00.000Z",
+   "memberCreator": {
+    "id": "677485800000000000000385",
+    "username": "jhale",
+    "fullName": "Juniper Hale"
+   },
+   "data": {}
+  }
+ ],
+ "attachments": [
+  {
+   "id": "6af5e6b80000000000000258",
+   "name": "pricing-sketch.png",
+   "mimeType": "image/png",
+   "bytes": 21480,
+   "date": "2026-11-12T16:18:00.000Z",
+   "url": "https://trello.com/1/cards/6ae85f200000000000000064/attachments/6af5e6b80000000000000258/download/pricing-sketch.png"
+  }
+ ]
+}

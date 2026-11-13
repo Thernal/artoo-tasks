@@ -3,16 +3,17 @@
 //! (`Write`) a test reads.
 
 use crate::jira::{self, Site};
-use crate::wiki;
+use crate::{trello, wiki};
 use artoo_plugin_sdk::core::markdown;
 use artoo_plugin_sdk::serde_json::{Value, json};
 
 /// A board as the plugin keys it: its site's host and its id there — two sites may each have a board 7.
-pub type BoardId = (String, u64);
+/// A board by its site's host and its id: Jira's number written out, Trello's own id.
+pub type BoardId = (String, String);
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct Board {
-    pub id: u64,
+    pub id: String,
     pub name: String,
     /// The site it is on (its host).
     pub site: String,
@@ -22,7 +23,7 @@ pub struct Board {
 
 impl Board {
     pub fn key(&self) -> BoardId {
-        (self.site.clone(), self.id)
+        (self.site.clone(), self.id.clone())
     }
 }
 
@@ -428,7 +429,10 @@ pub fn comment(c: &Value) -> Comment {
 }
 
 /// Board `id`'s page on `site`: Jira Server's address, which Jira Cloud sends on to its own.
-pub fn board_url(site: &Site, id: u64) -> String {
+pub fn board_url(site: &Site, id: &str) -> String {
+    if site.trello() {
+        return trello::board_url(id);
+    }
     format!("{}/secure/RapidBoard.jspa?rapidView={id}", site.url)
 }
 
@@ -436,16 +440,23 @@ const ROW_FIELDS: &str = "summary,issuetype,status,assignee,priority,updated,par
 
 /// Who the token is.
 pub fn myself(site: &Site) -> Result<Person, String> {
+    if site.trello() {
+        return trello::myself(site);
+    }
     let v = jira::get(site, "/rest/api/2/myself")?;
     person(&v).ok_or_else(|| format!("{} did not say who the token is", site.host()))
 }
 
 /// The boards of `site`.
 pub fn boards(site: &Site) -> Result<Vec<Board>, String> {
+    if site.trello() {
+        return trello::boards(site);
+    }
     let v = jira::get(site, "/rest/agile/1.0/board?maxResults=100")?;
     Ok((v["values"].as_array().into_iter().flatten())
         .map(|b| Board {
-            id: b["id"].as_u64().unwrap_or_default(),
+            // Jira's board id is a number.
+            id: (b["id"].as_u64()).map_or_else(|| text(&b["id"]), |n| n.to_string()),
             name: text(&b["name"]),
             site: site.host().to_owned(),
             project: b["location"]["projectKey"].as_str().map(str::to_owned),
@@ -454,7 +465,10 @@ pub fn boards(site: &Site) -> Result<Vec<Board>, String> {
 }
 
 /// Board `id`'s columns, epics and sprints; a board without epics or sprints (kanban) has none, not a failure.
-pub fn board_info(site: &Site, id: u64) -> Result<BoardInfo, String> {
+pub fn board_info(site: &Site, id: &str) -> Result<BoardInfo, String> {
+    if site.trello() {
+        return trello::board_info(site, id);
+    }
     let config = jira::get(site, &format!("/rest/agile/1.0/board/{id}/configuration"))?;
     let columns = (config["columnConfig"]["columns"]
         .as_array()
@@ -494,7 +508,10 @@ pub fn board_info(site: &Site, id: u64) -> Result<BoardInfo, String> {
 }
 
 /// Board `id`'s issues, newest change first.
-pub fn board_issues(site: &Site, id: u64) -> Result<Vec<Row>, String> {
+pub fn board_issues(site: &Site, id: &str) -> Result<Vec<Row>, String> {
+    if site.trello() {
+        return trello::board_issues(site, id);
+    }
     let v = jira::get(
         site,
         &format!(
@@ -512,6 +529,9 @@ pub fn board_issues(site: &Site, id: u64) -> Result<Vec<Row>, String> {
 
 /// Issue `key` whole, through the Agile API, which adds its epic and sprint on Server and Cloud alike.
 pub fn read_issue(site: &Site, key: &str) -> Result<Issue, String> {
+    if site.trello() {
+        return trello::read_issue(site, key);
+    }
     let v = jira::get(
         site,
         &format!("/rest/agile/1.0/issue/{}", jira::encode(key)),
@@ -542,6 +562,9 @@ pub fn search(site: &Site, jql: &str, max: usize) -> Result<Vec<Row>, String> {
 
 /// `search` for `purpose` (`find`), as `jira::get_for` reads it.
 pub fn search_for(site: &Site, jql: &str, max: usize, purpose: &str) -> Result<Vec<Row>, String> {
+    if site.trello() {
+        return trello::search(site, jql, max, purpose);
+    }
     let v = jira::get_for(
         site,
         &format!(
@@ -588,6 +611,9 @@ pub struct News {
 /// What others did lately on the issues `me` is on: assigned, mentioned, commented, moved. The newest first; one
 /// news an issue and a kind, the latest.
 pub fn news(site: &Site, me: &Person) -> Result<Vec<News>, String> {
+    if site.trello() {
+        return trello::news(site, me);
+    }
     let jql = "(assignee = currentUser() OR reporter = currentUser() OR watcher = currentUser() \
                OR comment ~ currentUser()) AND updated >= -7d ORDER BY updated DESC";
     let v = jira::get_for(
@@ -598,7 +624,7 @@ pub fn news(site: &Site, me: &Person) -> Result<Vec<News>, String> {
         ),
         "news",
     )?;
-    Ok(news_of(&v, me, site.email.is_some()))
+    Ok(news_of(&v, me, site.cloud()))
 }
 
 /// The news a search with changelogs (`v`) holds for `me`, on Jira Cloud (`cloud`) or Server.
@@ -728,6 +754,9 @@ fn news_of(v: &Value, me: &Person, cloud: bool) -> Vec<News> {
 
 /// The moves issue `key`'s workflow allows from its state, each with the fields it asks.
 pub fn moves(site: &Site, key: &str) -> Result<Vec<Move>, String> {
+    if site.trello() {
+        return trello::moves(site, key);
+    }
     let v = jira::get(
         site,
         &format!(
@@ -784,6 +813,9 @@ fn field(id: &str, f: &Value) -> Field {
 
 /// The fields issue `key`'s edit screen holds, in the tracker's order.
 pub fn edit_screen(site: &Site, key: &str) -> Result<Vec<Field>, String> {
+    if site.trello() {
+        return Ok(trello::edit_screen());
+    }
     let v = jira::get(
         site,
         &format!("/rest/api/2/issue/{}/editmeta", jira::encode(key)),
@@ -793,11 +825,10 @@ pub fn edit_screen(site: &Site, key: &str) -> Result<Vec<Field>, String> {
 
 /// The people issue `key` may be assigned to, those `query` finds; the fixture's and the tracker's order.
 pub fn assignable(site: &Site, key: &str, query: &str) -> Result<Vec<Person>, String> {
-    let by = if site.email.is_some() {
-        "query"
-    } else {
-        "username"
-    };
+    if site.trello() {
+        return trello::assignable(site, key, query);
+    }
+    let by = if site.cloud() { "query" } else { "username" };
     let v = jira::get(
         site,
         &format!(
@@ -815,6 +846,9 @@ pub fn assignable(site: &Site, key: &str, query: &str) -> Result<Vec<Person>, St
 
 /// The kinds of issue project `project` makes.
 pub fn kinds(site: &Site, project: &str) -> Result<Vec<Kind>, String> {
+    if site.trello() {
+        return Ok(trello::kinds());
+    }
     let v = jira::get(
         site,
         &format!(
@@ -834,6 +868,9 @@ pub fn kinds(site: &Site, project: &str) -> Result<Vec<Kind>, String> {
 
 /// The fields project `project`'s create screen asks for issues of kind `kind`.
 pub fn create_screen(site: &Site, project: &str, kind: &str) -> Result<Vec<Field>, String> {
+    if site.trello() {
+        return trello::create_screen(site, project);
+    }
     let v = jira::get(
         site,
         &format!(
@@ -857,6 +894,9 @@ pub fn create_screen(site: &Site, project: &str, kind: &str) -> Result<Vec<Field
 
 /// The projects the token reaches.
 pub fn projects(site: &Site) -> Result<Vec<(String, String)>, String> {
+    if site.trello() {
+        return trello::projects(site);
+    }
     let v = jira::get(site, "/rest/api/2/project")?;
     Ok((v.as_array().into_iter().flatten())
         .map(|p| (text(&p["key"]), text(&p["name"])))
@@ -865,6 +905,9 @@ pub fn projects(site: &Site) -> Result<Vec<(String, String)>, String> {
 
 /// The kinds of link: `(name, inward, outward)`, `("Blocks", "is blocked by", "blocks")`.
 pub fn link_kinds(site: &Site) -> Result<Vec<(String, String, String)>, String> {
+    if site.trello() {
+        return Ok(Vec::new());
+    }
     let v = jira::get(site, "/rest/api/2/issueLinkType")?;
     Ok((v["issueLinkTypes"].as_array().into_iter().flatten())
         .map(|t| (text(&t["name"]), text(&t["inward"]), text(&t["outward"])))
@@ -874,6 +917,16 @@ pub fn link_kinds(site: &Site) -> Result<Vec<(String, String, String)>, String> 
 /// An attachment's bytes, read with the site's token: for an image drawn where it stands.
 pub fn attachment_bytes(site: &Site, url: &str) -> Result<Vec<u8>, String> {
     jira::bytes(site, url)
+}
+
+/// A file attached to issue `key`.
+pub fn attach(site: &Site, key: &str, file: &std::path::Path) -> Result<Value, String> {
+    let path = if site.trello() {
+        format!("/1/cards/{key}/attachments")
+    } else {
+        format!("/rest/api/2/issue/{key}/attachments")
+    };
+    jira::attach(site, &path, file)
 }
 
 /// A change to the tracker as a request: its method, its path and what it sends.
@@ -895,6 +948,9 @@ impl Write {
 
     /// Sent to `site`: the tracker's answer, or why it refused.
     pub fn send(&self, site: &Site) -> Result<Value, String> {
+        if site.trello() {
+            return trello::send(site, self);
+        }
         jira::send(site, self.method, &self.path, self.body.as_ref())
     }
 

@@ -530,7 +530,7 @@ impl Page {
             }
             None => {
                 let link = (s.picked())
-                    .and_then(|b| Some(crate::model::board_url(&s.site_of(&b.site)?, b.id)));
+                    .and_then(|b| Some(crate::model::board_url(&s.site_of(&b.site)?, &b.id)));
                 vec![
                     MenuItem::new("Note for an agent…", move |_, cx| {
                         weak.update(cx, |p, cx| p.open_board_note(cx)).ok();
