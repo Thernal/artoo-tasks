@@ -29,6 +29,9 @@ pub enum At {
     Description,
 }
 
+/// The sheet's description composer (`Page::compose_tool`).
+const DESCRIPTION: crate::page::ComposeOf = |p| p.sheet.as_mut().map(|s| &mut s.description);
+
 /// The fields the sheet draws itself; the create screen's others follow under "… asks for".
 const OWN: [&str; 12] = [
     "project",
@@ -331,6 +334,12 @@ impl Page {
                 }
             }
             At::Description => {
+                if self.compose_short(DESCRIPTION, key, cx) {
+                    return;
+                }
+                let Some(sheet) = self.sheet.as_mut() else {
+                    return;
+                };
                 if let Written::Cancel = sheet.description.edit_key(key, cx) {
                     self.close_sheet(cx);
                     return;
@@ -1033,16 +1042,22 @@ impl Page {
             page.update(cx, |this, cx| {
                 if let Some(s) = this.sheet.as_mut() {
                     s.at = At::Description;
-                    if let ComposeAct::Place {
+                }
+                if this.compose_tool(DESCRIPTION, &act, cx) {
+                    return;
+                }
+                if let (
+                    Some(s),
+                    ComposeAct::Place {
                         at,
                         shift,
                         clicks,
                         drag,
                         lower,
-                    } = act
-                    {
-                        s.description.place(at, shift, clicks, drag, lower);
-                    }
+                    },
+                ) = (this.sheet.as_mut(), act)
+                {
+                    s.description.place(at, shift, clicks, drag, lower);
                 }
                 cx.notify();
             });
@@ -1057,7 +1072,7 @@ impl Page {
             placeholder: "What it is about, how it is done".into(),
             head: None,
             lead: None,
-            tools: Vec::new(),
+            tools: crate::page::tools(),
             tail: Vec::new(),
             folded: false,
             focused: at == At::Description,

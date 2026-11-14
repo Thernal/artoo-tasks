@@ -32,6 +32,10 @@ use std::rc::Rc;
 const KEY_TEXT: &str = "tasks-key-text";
 const TITLE_TEXT: &str = "tasks-title-text";
 
+/// The description's composer while it is edited, and the comment's (`Page::compose_tool`).
+const DESC: crate::page::ComposeOf = |p| p.issue.desc.as_mut().map(|(c, _)| c);
+const COMMENT: crate::page::ComposeOf = |p| p.issue.comment.as_mut();
+
 /// The issue page's own state: what is being written or edited on it.
 #[derive(Default)]
 pub struct IssueState {
@@ -706,12 +710,14 @@ impl Page {
             .get(&issue.row.key)
             .is_some_and(|c| c.unseen.contains("Description"));
         let head = div()
-            .group("desc-head")
             .child(div().font_weight(FontWeight::SEMIBOLD).child("Description"))
             .children(dot(unseen))
             .child(div().flex_1())
             .child(
+                // Shown while the pointer is on the description; `E` and a double-click edit it all the same.
                 look::small_button("tasks-desc-edit", "Edit")
+                    .invisible()
+                    .group_hover("desc", |s| s.visible())
                     .child(
                         icons::icon("pencil")
                             .size(px(12.))
@@ -823,7 +829,10 @@ impl Page {
                 body = body.child(div().pl(px(28.)).child(self.composer(cx)));
             }
         }
-        section_with(head).child(body).into_any_element()
+        section_with(head)
+            .group("desc")
+            .child(body)
+            .into_any_element()
     }
 
     /// E: the description in the composer's editor; kept on this Mac while it is open.
@@ -851,6 +860,9 @@ impl Page {
         let page = cx.entity();
         let acts: artoo_plugin_sdk::kit::composer::ComposeActs = Rc::new(move |act, cx| {
             page.update(cx, |this, cx| {
+                if this.compose_tool(DESC, &act, cx) {
+                    return this.keep_description(cx);
+                }
                 if let (
                     Some((c, _)),
                     ComposeAct::Place {
@@ -895,7 +907,7 @@ impl Page {
             placeholder: "What this issue is about".into(),
             head: None,
             lead: None,
-            tools: Vec::new(),
+            tools: crate::page::tools(),
             tail,
             folded: false,
             focused: true,
@@ -1025,6 +1037,18 @@ impl Page {
         cx.notify();
     }
 
+    /// The description as it is being written, kept on this Mac until it is saved.
+    fn keep_description(&mut self, cx: &mut Context<Self>) {
+        let (Some((desc, _)), Some(k)) = (self.issue.desc.as_ref(), self.issue_key()) else {
+            return;
+        };
+        let text = desc.edit.text().to_owned();
+        self.store.update(cx, |s, _| {
+            s.kept.edits.insert(k, text);
+            s.kept.write();
+        });
+    }
+
     pub fn desc_key(&mut self, event: &KeyDownEvent, cx: &mut Context<Self>) -> Typed {
         let key = &event.keystroke;
         if key.modifiers.platform && key.key == "enter" {
@@ -1035,17 +1059,15 @@ impl Page {
                 Typed::Leave
             };
         }
+        if self.compose_short(DESC, key, cx) {
+            self.keep_description(cx);
+            return Typed::Kept;
+        }
         let Some((desc, _)) = self.issue.desc.as_mut() else {
             return Typed::Leave;
         };
         let typed = desc.edit_key(key, cx);
-        let text = desc.edit.text().to_owned();
-        if let Some(k) = self.issue_key() {
-            self.store.update(cx, |s, _| {
-                s.kept.edits.insert(k, text);
-                s.kept.write();
-            });
-        }
+        self.keep_description(cx);
         cx.notify();
         match typed {
             Written::Cancel => {
@@ -2531,6 +2553,9 @@ impl Page {
         let page = cx.entity();
         let acts: artoo_plugin_sdk::kit::composer::ComposeActs = Rc::new(move |act, cx| {
             page.update(cx, |this, cx| match act {
+                ComposeAct::Helper(_) | ComposeAct::Preview | ComposeAct::Format { .. } => {
+                    this.compose_tool(COMMENT, &act, cx);
+                }
                 ComposeAct::Place {
                     at,
                     shift,
@@ -2556,7 +2581,6 @@ impl Page {
                         this.upload_comment_file(id, path, cx);
                     }
                 }
-                _ => {}
             });
         });
         let waits = self.issue.comment.as_ref().is_some_and(|c| c.waiting());
@@ -2589,7 +2613,7 @@ impl Page {
             },
             head: Some(to.into_any_element()),
             lead: None,
-            tools: Vec::new(),
+            tools: crate::page::tools(),
             tail: vec![cancel.into_any_element(), send.into_any_element()],
             folded: false,
             focused: true,
@@ -2797,6 +2821,9 @@ impl Page {
         {
             self.issue.to_agent = !self.issue.to_agent;
             cx.notify();
+            return Typed::Kept;
+        }
+        if self.compose_short(COMMENT, key, cx) {
             return Typed::Kept;
         }
         let Some(c) = self.issue.comment.as_mut() else {

@@ -8,14 +8,15 @@ use crate::keep::{Group, View};
 use crate::model::BoardId;
 use crate::store::{Read, Store};
 use artoo_plugin_sdk::agents::places;
+use artoo_plugin_sdk::core::markdown::Helper;
 use artoo_plugin_sdk::core::route::Route;
 use artoo_plugin_sdk::core::textedit::TextEdit;
 use artoo_plugin_sdk::gpui::{
-    self, AnyElement, App, ClipboardItem, Context, Entity, KeyDownEvent, Pixels, Point,
+    self, AnyElement, App, ClipboardItem, Context, Entity, KeyDownEvent, Keystroke, Pixels, Point,
     ScrollHandle, Window, div, prelude::*,
 };
-use artoo_plugin_sdk::kit::composer::{Compose, ComposeAct, Look, Target, Typed as Written};
-use artoo_plugin_sdk::kit::{controls, icons, motion, px, room, theme};
+use artoo_plugin_sdk::kit::composer::{Compose, ComposeAct, Look, Short, Target, Typed as Written};
+use artoo_plugin_sdk::kit::{controls, icons, markdown, motion, px, room, theme};
 use artoo_plugin_sdk::shell::{Frame, MenuItem, Typed};
 use std::collections::HashSet;
 use std::rc::Rc;
@@ -129,6 +130,14 @@ pub struct Note {
     pub spot: Spot,
     pub compose: Compose,
 }
+
+/// The tools a composer of the page shows, as the app's own boxes: bold, code, link, list; Preview after them.
+pub fn tools() -> Vec<Helper> {
+    vec![Helper::Bold, Helper::Code, Helper::Link, Helper::Bullet]
+}
+
+/// Where a composer of the page is: the note's, a comment's, the description's, the sheet's.
+pub type ComposeOf = for<'a> fn(&'a mut Page) -> Option<&'a mut Compose>;
 
 /// A composer of the kit's, empty, for `target`.
 pub fn compose(target: Target, text: &str) -> Compose {
@@ -627,12 +636,77 @@ impl Page {
         cx.notify();
     }
 
+    /// A composer's toolbar pressed: a helper on its text, Preview, or the folded tools' menu; false for any other
+    /// act.
+    pub fn compose_tool(
+        &mut self,
+        of: ComposeOf,
+        act: &ComposeAct,
+        cx: &mut Context<Self>,
+    ) -> bool {
+        match act {
+            ComposeAct::Helper(helper) => {
+                if let Some(c) = of(self) {
+                    c.apply(*helper);
+                }
+            }
+            ComposeAct::Preview => {
+                if let Some(c) = of(self) {
+                    c.toggle_preview();
+                }
+            }
+            ComposeAct::Format { at, tools } => {
+                let preview = of(self).is_some_and(|c| c.preview);
+                let page = cx.entity().downgrade();
+                let press = move |act: ComposeAct| {
+                    let page = page.clone();
+                    move |_: &mut Window, cx: &mut App| {
+                        page.update(cx, |p, cx| p.compose_tool(of, &act, cx)).ok();
+                    }
+                };
+                let helpers = (tools.iter())
+                    .map(|&h| {
+                        // The tip's name and keys: `Link — text, then …  ⌘⇧K` as `Link` and `⌘⇧K`.
+                        let (_, tip) = markdown::helper_look(h);
+                        let (name, key) = tip.split_once("  ").unwrap_or((tip, ""));
+                        let name = name.split(" — ").next().unwrap_or(name);
+                        MenuItem::new(name, press(ComposeAct::Helper(h))).key(key)
+                    })
+                    .collect();
+                let preview = MenuItem::new("Preview", press(ComposeAct::Preview))
+                    .key("⌘⇧P")
+                    .checked(preview);
+                self.frame.menu(*at, vec![helpers, vec![preview]], cx);
+            }
+            _ => return false,
+        }
+        cx.notify();
+        true
+    }
+
+    /// ⌘B ⌘I ⇧⌘X ⇧⌘E ⇧⌘K or ⇧⌘P on a composer, done: whether the key was one of them.
+    pub fn compose_short(
+        &mut self,
+        of: ComposeOf,
+        key: &Keystroke,
+        cx: &mut Context<Self>,
+    ) -> bool {
+        match Compose::shortcut(key) {
+            Some(Short::Helper(helper)) => self.compose_tool(of, &ComposeAct::Helper(helper), cx),
+            Some(Short::Preview) => self.compose_tool(of, &ComposeAct::Preview, cx),
+            None => false,
+        }
+    }
+
     /// A key while the note has the keyboard.
     pub fn note_key(&mut self, event: &KeyDownEvent, cx: &mut Context<Self>) -> Typed {
         let key = &event.keystroke;
         if key.modifiers.platform && key.key == "enter" {
             self.add_note(cx);
             return Typed::Leave;
+        }
+        if self.compose_short(|p| p.note.as_mut().map(|n| &mut n.compose), key, cx) {
+            return Typed::Kept;
         }
         let Some(note) = self.note.as_mut() else {
             return Typed::Leave;
@@ -731,6 +805,9 @@ impl Page {
         let page = cx.entity();
         let acts: artoo_plugin_sdk::kit::composer::ComposeActs = Rc::new(move |act, cx| {
             page.update(cx, |this, cx| {
+                if this.compose_tool(|p| p.note.as_mut().map(|n| &mut n.compose), &act, cx) {
+                    return;
+                }
                 if let (
                     Some(note),
                     ComposeAct::Place {
@@ -764,7 +841,7 @@ impl Page {
             placeholder: "What should the agent do here?".into(),
             head: Some(head),
             lead: None,
-            tools: Vec::new(),
+            tools: tools(),
             tail: vec![cancel.into_any_element(), add.into_any_element()],
             folded: false,
             focused: true,
