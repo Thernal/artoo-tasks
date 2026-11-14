@@ -798,10 +798,12 @@ impl Page {
             .flex()
             .flex_col()
             .justify_center()
-            .gap(px(3.))
-            .h(px(52.))
-            .pl(px(if indent { 40. } else { 26. }))
-            .pr(px(12.))
+            // Design's 60 px: 10 above and below, lines of 20 and 18 with 2 between; the text 34 in, as its rows
+            // keep 16 and an 8 px dot's room and 10 before it.
+            .gap(px(2.))
+            .h(px(60.))
+            .pl(px(if indent { 48. } else { 34. }))
+            .pr(px(16.))
             .border_b_1()
             .border_color(theme::border())
             .when(picked, |d| d.bg(theme::selected()))
@@ -826,7 +828,7 @@ impl Page {
                     .child(who)
                     .child(chip),
             )
-            .child(facts)
+            .child(facts.h(px(18.)))
             .tip(format!("{} {}", r.key, r.summary))
             .on_click(cx.listener(move |this, e: &ClickEvent, _, cx| {
                 this.pick_row(&key, cx);
