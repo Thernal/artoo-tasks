@@ -381,6 +381,10 @@ impl Page {
             self.boards_folded = false;
             self.moved(BOARDS, cx);
         }
+        // Hidden with ⌘J or folded into the menu, the panel comes back for the filter it holds.
+        if !self.frame.side_shown(cx) {
+            self.frame.show_side(cx);
+        }
         self.frame.take_keyboard(INPUT_BOARDS, cx);
         cx.notify();
         true

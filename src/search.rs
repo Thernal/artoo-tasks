@@ -142,11 +142,7 @@ fn look_up(
                         if let Some(window) = window
                             && text.to_uppercase() == wanted
                         {
-                            cx.defer(move |cx| {
-                                if window.is_open(cx) {
-                                    window.type_text(&text, cx);
-                                }
-                            });
+                            cx.defer(move |cx| window.again(cx));
                         }
                     },
                     cx,
