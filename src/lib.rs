@@ -284,9 +284,15 @@ fn install(cx: &mut App) {
     agents::add_tools(cx);
     agents::add_places(cx);
     news::offer(cx);
-    add_parts(cx, |frame, _window, cx| {
+    add_parts(cx, |frame, window, cx| {
         let store = store::get(cx);
         let view = cx.new(|cx| Page::new(store.clone(), frame.clone(), cx));
+        view.update(cx, |_, cx| {
+            cx.observe_window_activation(window, |p, window, cx| {
+                p.window_front(window.is_window_active(), cx)
+            })
+            .detach()
+        });
         let goes = frame.clone();
         let (path_store, row_store, link_store) = (store.clone(), store.clone(), store.clone());
         let (side_view, shows, bar_view, here_view) =

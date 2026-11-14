@@ -206,6 +206,8 @@ pub struct Page {
     pub connecting: Option<usize>,
     /// The last reassignment, which its toast's Undo gives back.
     pub undo_assign: Option<crate::pop::Undo>,
+    /// Whether the tab's window is in front: what is on screen is read again each minute only while it is.
+    pub front: bool,
 }
 
 impl Page {
@@ -215,13 +217,18 @@ impl Page {
             cx.notify()
         })
         .detach();
-        // What is on screen is read again every minute: someone else's change shows (`Store::note_change`).
+        // What is on screen is read again every minute while the window is in front, and as it comes there
+        // (`Page::window_front`): someone else's change shows (`Store::note_change`).
         cx.spawn(async move |this, cx| {
             loop {
                 cx.background_executor()
                     .timer(Duration::from_secs(60))
                     .await;
-                let Ok(()) = this.update(cx, |p, cx| p.read_again(cx)) else {
+                let Ok(()) = this.update(cx, |p, cx| {
+                    if p.front {
+                        p.read_again(cx)
+                    }
+                }) else {
                     break;
                 };
             }
@@ -255,6 +262,7 @@ impl Page {
             here: String::new(),
             connecting: None,
             undo_assign: None,
+            front: true,
         }
     }
 
@@ -297,6 +305,16 @@ impl Page {
     }
 
     /// The issue or the board on screen read again, quietly.
+    /// The tab's window come to the front (`front`) or gone behind another: what is on screen is read again as it
+    /// comes.
+    pub fn window_front(&mut self, front: bool, cx: &mut Context<Self>) {
+        let came = front && !self.front;
+        self.front = front;
+        if came {
+            self.read_again(cx);
+        }
+    }
+
     pub fn read_again(&mut self, cx: &mut Context<Self>) {
         let key = self.issue_key();
         let site = self.route.as_ref().and_then(places_of::site_of);
