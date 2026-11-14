@@ -80,6 +80,9 @@ pub struct Pending {
 pub struct Kept {
     pub last_board: Option<BoardId>,
     pub recent: Vec<BoardId>,
+    /// The board each project's space was last on, by the project's folder: two projects reading one account
+    /// each keep their own.
+    pub boards: HashMap<String, BoardId>,
     pub views: HashMap<BoardId, View>,
     pub drafts: Vec<Draft>,
     pub pending: Vec<Pending>,
@@ -125,6 +128,9 @@ impl Kept {
         Kept {
             last_board: board_id(&v["last_board"]),
             recent: list("recent").iter().filter_map(board_id).collect(),
+            boards: (list("projects").iter())
+                .filter_map(|x| Some((x["project"].as_str()?.to_owned(), board_id(x)?)))
+                .collect(),
             views: (list("views").iter())
                 .filter_map(|x| {
                     let view = View {
@@ -171,6 +177,11 @@ impl Kept {
         json!({
             "last_board": self.last_board.as_ref().map(board_json),
             "recent": self.recent.iter().map(board_json).collect::<Vec<_>>(),
+            "projects": self.boards.iter().map(|(p, b)| {
+                let mut x = board_json(b);
+                x["project"] = json!(p);
+                x
+            }).collect::<Vec<_>>(),
             "views": self.views.iter().map(|(b, v)| {
                 let mut x = board_json(b);
                 x["board_view"] = json!(v.board);
@@ -202,8 +213,12 @@ impl Kept {
         );
     }
 
-    /// Board `id` opened: the last one, and first among those opened lately.
-    pub fn opened_board(&mut self, id: BoardId) {
+    /// Board `id` opened, in project `project`'s space when one is shown: the last one, first among those opened
+    /// lately, and that project's.
+    pub fn opened_board(&mut self, id: BoardId, project: Option<&str>) {
+        if let Some(project) = project {
+            self.boards.insert(project.to_owned(), id.clone());
+        }
         self.recent.retain(|b| *b != id);
         self.recent.insert(0, id.clone());
         self.recent.truncate(20);
@@ -242,6 +257,8 @@ mod tests {
             last_board: Some(("acme.atlassian.net".into(), "7".into())),
             ..Default::default()
         };
+        kept.boards
+            .insert("/w/pay".into(), ("acme.atlassian.net".into(), "7".into()));
         kept.views.insert(
             ("acme.atlassian.net".into(), "7".into()),
             View {
@@ -269,6 +286,7 @@ mod tests {
         let back = Kept::from_json(&kept.to_json());
         assert_eq!(back.recent, kept.recent);
         assert_eq!(back.last_board, kept.last_board);
+        assert_eq!(back.boards, kept.boards);
         assert_eq!(
             back.view(&("acme.atlassian.net".into(), "7".into())),
             View {

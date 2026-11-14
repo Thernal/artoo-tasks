@@ -368,16 +368,21 @@ impl Store {
         }
     }
 
-    /// The board to show among `boards`: the one picked when the project shown reads its account, else the board
-    /// opened lately there, else its first.
+    /// The board to show among `boards`: the project shown's own, the one its space was last on; else, no project
+    /// shown, the one picked; else the board opened lately among those it reads, else its first. A board picked in
+    /// one project never follows into another reading the same account.
     fn board_among(&self, boards: &[Board]) -> Option<BoardId> {
         let here: Vec<&Board> = (boards.iter())
             .filter(|b| self.reads_here(&b.site))
             .collect();
-        let picked = (self.board.clone()).filter(|b| here.iter().any(|x| x.key() == *b));
-        picked.or_else(|| {
+        let read = |b: &BoardId| here.iter().any(|x| x.key() == *b);
+        let own = match &self.here {
+            Some(project) => self.kept.boards.get(project).cloned(),
+            None => self.board.clone(),
+        };
+        own.filter(read).or_else(|| {
             (self.kept.recent.iter())
-                .find(|r| here.iter().any(|b| b.key() == **r))
+                .find(|r| read(r))
                 .cloned()
                 .or_else(|| here.first().map(|b| b.key()))
         })
@@ -481,7 +486,7 @@ impl Store {
     pub fn pick_board(&mut self, id: BoardId, cx: &mut Context<Self>) {
         self.board = Some(id.clone());
         self.faces.clear();
-        self.kept.opened_board(id);
+        self.kept.opened_board(id, self.here.as_deref());
         self.read_board(false, cx);
         cx.notify();
     }
@@ -927,5 +932,39 @@ impl Store {
             e.color = known.color;
         }
         e
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn board(id: &str) -> Board {
+        Board {
+            id: id.into(),
+            name: format!("Board {id}"),
+            site: "acme.atlassian.net".into(),
+            project: None,
+        }
+    }
+
+    #[test]
+    fn two_projects_on_one_account_keep_their_own_board() {
+        let mut store = test_store();
+        let boards = [board("1"), board("2")];
+        for p in ["/w/pay", "/w/web"] {
+            store
+                .links
+                .insert(p.into(), vec!["acme.atlassian.net".into()]);
+        }
+        // As `opened_board` keeps them, without writing the Mac's file.
+        store.kept.boards.insert("/w/pay".into(), board("2").key());
+        store.kept.boards.insert("/w/web".into(), board("1").key());
+        // Board 1 picked last, in the other project.
+        store.board = Some(board("1").key());
+        store.here = Some("/w/pay".into());
+        assert_eq!(store.board_among(&boards), Some(board("2").key()));
+        store.here = Some("/w/web".into());
+        assert_eq!(store.board_among(&boards), Some(board("1").key()));
     }
 }
