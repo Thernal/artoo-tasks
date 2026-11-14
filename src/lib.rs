@@ -67,6 +67,7 @@ gpui::actions!(
         SearchTasks,
         UndoAssign,
         UndoInTasks,
+        FilterBoards,
     ]
 );
 
@@ -223,6 +224,15 @@ fn commands() -> Vec<Action> {
         }
         .words("Copy a branch name for the issue")
         .order(52),
+        // ⌘P is the tab's Search files: in the Tasks space, its boards beside, it filters them; else it goes on to
+        // Search files.
+        Action {
+            act: Box::new(FilterBoards),
+            ..Action::new("tasks.filter-boards", GoToTasks)
+        }
+        .words("Filter boards")
+        .key("cmd-p", SPACE_KEYS)
+        .order(53),
         // ⌘Z presses the app's toasts' Undo alone, not a plugin's: in the Tasks space it undoes the reassignment
         // whose toast shows, else it goes on to the app's.
         Action {
@@ -366,6 +376,16 @@ fn install(cx: &mut App) {
             (Box::new(Reply), on(Page::key_reply)),
             (Box::new(CopyBranch), on(Page::copy_branch)),
             (Box::new(UndoAssign), on(Page::undo_assign)),
+            (Box::new(FilterBoards), {
+                let page = view.clone();
+                Rc::new(move |window, cx| {
+                    if !page.update(cx, |p, cx| p.filter_boards(cx))
+                        && let Ok(files) = cx.build_action("artoo::SearchFiles", None)
+                    {
+                        window.dispatch_action(files, cx);
+                    }
+                })
+            }),
             (Box::new(UndoInTasks), {
                 let page = view.clone();
                 Rc::new(move |window, cx| {
@@ -416,6 +436,7 @@ fn install(cx: &mut App) {
                 cx,
             ),
             input(page::INPUT_SUB, |_| true, Page::sub_key, false, cx),
+            input(page::INPUT_BOARDS, |_| true, Page::boards_key, false, cx),
             input(
                 page::INPUT_TITLE,
                 |p| p.issue.title.is_some(),

@@ -1,16 +1,18 @@
 //! The space's side panel: the boards of every account the project reads, under its host, the one picked marked, a
-//! site not reached saying so with when its boards were read; `+` connecting another, a host's menu leaving it;
-//! Drafts at the foot, with how many.
+//! site not reached saying so with when its boards were read; `+` connecting another, a host's menu leaving it; a
+//! filter over them (⌘P); Drafts at the foot, with how many.
 
-use crate::page::{Page, SPACE};
-use crate::store::Read;
+use crate::model::Board;
+use crate::page::{INPUT_BOARDS, Page, SPACE};
+use crate::store::{Read, Store};
 use crate::trackers::SiteExt;
+use artoo_plugin_sdk::core::textedit::TextEdit;
 use artoo_plugin_sdk::gpui::{
-    self, AnyElement, App, Entity, FontWeight, SharedString, div, prelude::*,
+    self, AnyElement, App, Context, Entity, FontWeight, KeyDownEvent, SharedString, div, prelude::*,
 };
 use artoo_plugin_sdk::kit::hover::Hover;
-use artoo_plugin_sdk::kit::{controls, icons, px, theme};
-use artoo_plugin_sdk::shell::MenuItem;
+use artoo_plugin_sdk::kit::{controls, icons, input, keys, px, theme};
+use artoo_plugin_sdk::shell::{MenuItem, Typed};
 
 /// The fold of the side panel's Boards.
 const BOARDS: &str = "side-boards";
@@ -19,6 +21,8 @@ const BOARDS: &str = "side-boards";
 pub fn side(page: &Entity<Page>, width: f32, cx: &mut App) -> Option<AnyElement> {
     let p = page.read(cx);
     let project = p.project().to_owned();
+    let filter = filter_field(p, p.boards_typing);
+    let typed = p.boards_filter.clone();
     let (store, frame, drafts_on) = (
         p.store.clone(),
         p.frame.clone(),
@@ -80,10 +84,23 @@ pub fn side(page: &Entity<Page>, width: f32, cx: &mut App) -> Option<AnyElement>
                     }),
             ),
     );
-    // What folds under Boards: each account's host and its boards.
-    let mut body = div().flex().flex_col().gap(px(2.));
+    // What folds under Boards: the filter, each account's host and its boards.
+    let mut body = div().flex().flex_col().gap(px(2.)).child(filter);
     match s.boards_in(&project) {
         Some(Read::Done(boards)) => {
+            let boards: Vec<Board> = (boards.into_iter())
+                .filter(|b| matches(b, &typed))
+                .collect();
+            if boards.is_empty() && !typed.trim().is_empty() {
+                body = body.child(
+                    div()
+                        .px(px(8.))
+                        .py(px(4.))
+                        .text_size(px(12.))
+                        .text_color(theme::faint())
+                        .child("No board matches"),
+                );
+            }
             for site in &sites {
                 let host = site.host().to_owned();
                 let keys = site.caps().project_keys;
@@ -99,6 +116,10 @@ pub fn side(page: &Entity<Page>, width: f32, cx: &mut App) -> Option<AnyElement>
                     .map(artoo_plugin_sdk::kit::format::clock);
                 let unreached = bad.is_some() || since.is_some();
                 let mine: Vec<_> = boards.iter().filter(|b| b.site == host).collect();
+                // Filtered, a site none of whose boards is left is left out.
+                if mine.is_empty() && !typed.trim().is_empty() {
+                    continue;
+                }
                 let (leave_store, leave_project, leave_host, leave_frame) =
                     (store.clone(), project.clone(), host.clone(), frame.clone());
                 body = body.child(
@@ -275,4 +296,144 @@ pub fn side(page: &Entity<Page>, width: f32, cx: &mut App) -> Option<AnyElement>
             );
     }
     Some(list.into_any_element())
+}
+
+/// The filter over the boards, as Design draws it at the head of Boards: `Filter boards ⌘P` until it is typed in.
+fn filter_field(p: &Page, typing: bool) -> AnyElement {
+    let shown = p.boards_filter.clone();
+    let row = div()
+        .id("tasks-boards-filter")
+        .flex()
+        .items_center()
+        .gap(px(6.))
+        .h(px(28.))
+        .mx(px(2.))
+        .mb(px(6.))
+        .px(px(8.))
+        .rounded(px(6.))
+        .bg(theme::base())
+        .text_size(px(13.))
+        .text_color(theme::faint())
+        .cursor_text()
+        .when(typing, |d| d.border_1().border_color(theme::focus()))
+        .child(
+            icons::icon("search")
+                .size(px(13.))
+                .text_color(theme::faint()),
+        );
+    let row = if !typing && shown.is_empty() {
+        row.child(div().flex_1().child("Filter boards"))
+            .child(keys::caps("⌘P", keys::On::Plain))
+            .tip("Filter boards  ⌘P")
+    } else {
+        let edit = &p.boards_filter_edit;
+        let field = input::field(
+            &shown,
+            typing,
+            "Filter boards",
+            &input::Look::default(),
+            || {
+                input::text_body(
+                    &shown,
+                    edit,
+                    input::Look::default(),
+                    Default::default(),
+                    None,
+                )
+                .into_any_element()
+            },
+        );
+        row.text_color(theme::text()).child(field.flex_1())
+    };
+    artoo_plugin_sdk::shell::input_box(row, INPUT_BOARDS, &p.frame).into_any_element()
+}
+
+/// Whether board `b` is one `typed` finds: every word of it in its name or its project's key, any case.
+fn matches(b: &Board, typed: &str) -> bool {
+    let hay = format!("{} {}", b.name, b.project.as_deref().unwrap_or_default()).to_lowercase();
+    typed
+        .split_whitespace()
+        .all(|w| hay.contains(&w.to_lowercase()))
+}
+
+/// The boards the side panel shows for project `project` with `typed` in its filter, in its order: by site, as the
+/// sites are kept.
+fn shown_boards(s: &Store, project: &str, typed: &str) -> Vec<Board> {
+    let Some(Read::Done(boards)) = s.boards_in(project) else {
+        return Vec::new();
+    };
+    (s.sites_in(project).iter())
+        .flat_map(|site| (boards.iter()).filter(move |b| b.site == site.host()))
+        .filter(|b| matches(b, typed))
+        .cloned()
+        .collect()
+}
+
+impl Page {
+    /// ⌘P: the side panel's filter of the boards given the keyboard, Boards opened when folded. False where no side
+    /// panel is beside the page (an issue's page, no tracker yet): ⌘P goes on to Search files.
+    pub fn filter_boards(&mut self, cx: &mut Context<Self>) -> bool {
+        let project = self.project().to_owned();
+        if self.issue_key().is_some() || self.store.read(cx).sites_in(&project).is_empty() {
+            return false;
+        }
+        if self.boards_folded {
+            self.boards_folded = false;
+            self.moved(BOARDS, cx);
+        }
+        self.frame.take_keyboard(INPUT_BOARDS, cx);
+        cx.notify();
+        true
+    }
+
+    /// A key in the boards' filter: ↵ opens the first board it leaves, esc empties it; either lets the keyboard go.
+    pub fn boards_key(&mut self, event: &KeyDownEvent, cx: &mut Context<Self>) -> Typed {
+        let edit = input::edit(
+            &mut self.boards_filter,
+            &mut self.boards_filter_edit,
+            &event.keystroke,
+            cx,
+        );
+        let left = match edit {
+            input::Edit::Escape => None,
+            input::Edit::Enter { .. } => {
+                let project = self.project().to_owned();
+                let first = shown_boards(self.store.read(cx), &project, &self.boards_filter);
+                first.into_iter().next()
+            }
+            _ => {
+                cx.notify();
+                return Typed::Kept;
+            }
+        };
+        self.boards_filter.clear();
+        self.boards_filter_edit = TextEdit::new(String::new());
+        if let Some(b) = left {
+            self.drafts = false;
+            self.store.update(cx, |s, cx| s.pick_board(b.key(), cx));
+            self.frame.go_space(SPACE, cx);
+        }
+        cx.notify();
+        Typed::Leave
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn a_board_is_found_by_every_word_in_its_name_or_its_key() {
+        let b = Board {
+            name: "Payments".into(),
+            project: Some("PAY".into()),
+            ..Default::default()
+        };
+        for typed in ["", "pay", "PAYM", "ments pay", "  "] {
+            assert!(matches(&b, typed), "{typed}");
+        }
+        for typed in ["ledger", "pay ledger"] {
+            assert!(!matches(&b, typed), "{typed}");
+        }
+    }
 }

@@ -36,6 +36,8 @@ pub const INPUT_DESC: &str = "tasks.description";
 pub const INPUT_SUB: &str = "tasks.subtask";
 /// The summary being edited.
 pub const INPUT_TITLE: &str = "tasks.title";
+/// The side panel's filter of the boards.
+pub const INPUT_BOARDS: &str = "tasks.boards";
 
 /// Where a popover hangs: a row of the board, the preview, the issue page's facts, a sub-task, a detail, the
 /// people beside Mine · All.
@@ -173,6 +175,12 @@ pub struct Page {
     pub unfolded: HashSet<String>,
     /// The side panel's Boards folded.
     pub boards_folded: bool,
+    /// What the side panel's filter of the boards has typed in it (⌘P).
+    pub boards_filter: String,
+    pub boards_filter_edit: TextEdit,
+    /// Whether the boards' filter has the keyboard, as the page last drew it: the side panel, drawn by the tab, may
+    /// not read the tab to ask.
+    pub boards_typing: bool,
     /// The kind whose form the connect card had open when last drawn: its folds move when it changes.
     pub connect_open: Option<String>,
     /// What last folded or opened, and how tall each fold was drawn: every fold moves, in size and alpha (#110).
@@ -245,6 +253,9 @@ impl Page {
             folded_ids: HashSet::new(),
             unfolded: HashSet::new(),
             boards_folded: false,
+            boards_filter: String::new(),
+            boards_filter_edit: TextEdit::new(String::new()),
+            boards_typing: false,
             connect_open: None,
             motion: motion::Marks::default(),
             folds: motion::Folds::default(),
@@ -1042,6 +1053,12 @@ impl Render for Page {
         let project = self.project_now(cx);
         if project != self.here {
             self.here = project.clone();
+            let frame = self.frame.clone();
+            cx.defer(move |cx| frame.redraw(cx));
+        }
+        let typing = self.frame.typing(cx) == Some(INPUT_BOARDS);
+        if typing != self.boards_typing {
+            self.boards_typing = typing;
             let frame = self.frame.clone();
             cx.defer(move |cx| frame.redraw(cx));
         }

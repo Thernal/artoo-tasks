@@ -4,7 +4,8 @@ An [Artoo](https://github.com/Thernal/artoo) plugin: your tracker's boards and i
 Inbox, Code, Branches and Merge requests. It reads and writes Jira (Cloud, Server and Data Center) and Trello, and any tracker another plugin adds (A tracker of
 your own).
 
-- **A board** (`⌃⌘5`): the side panel's boards under each site's host, Drafts at its foot; a board's issues as a
+- **A board** (`⌃⌘5`): the side panel's boards under each site's host, filtered by name or key (`⌘P` in the Tasks
+  space, its boards beside; Search files elsewhere, an issue's page too), Drafts at its foot; a board's issues as a
   list beside a preview, or as columns (List · Board, `V`), grouped by state, story or epic (`G`) — on the columns a
   lane across them for each story or epic, folding as the list's groups do —, `Mine · All` with
   the people's faces beside them, the filter (`⌘F`). Each row's state chip moves the issue (`⌥S`), its face assigns
