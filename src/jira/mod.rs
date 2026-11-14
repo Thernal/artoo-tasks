@@ -163,6 +163,13 @@ pub fn get(site: &Site, path: &str) -> Result<Value, String> {
 /// one address with other queries (JQL) can answer apart.
 pub fn get_for(site: &Site, path: &str, purpose: &str) -> Result<Value, String> {
     if let Some(dir) = fixture() {
+        // `ARTOO_TASKS_FIXTURE_SLOW=<ms>`: each read answers that late, for pictures of what draws while reading.
+        if let Some(ms) = std::env::var("ARTOO_TASKS_FIXTURE_SLOW")
+            .ok()
+            .and_then(|v| v.parse().ok())
+        {
+            std::thread::sleep(std::time::Duration::from_millis(ms));
+        }
         let own = (!purpose.is_empty())
             .then(|| fixture_file(&dir, site.host(), &format!("{}@{purpose}", bare(path))));
         let file = own

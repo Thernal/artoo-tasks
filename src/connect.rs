@@ -10,10 +10,13 @@ use artoo_plugin_sdk::gpui::{
     self, AnyElement, Context, FontWeight, SharedString, div, prelude::*,
 };
 use artoo_plugin_sdk::kit::hover::Hover;
-use artoo_plugin_sdk::kit::{controls, px, theme};
+use artoo_plugin_sdk::kit::{controls, motion, px, theme};
 
 /// The card's width, as the design system's cards are drawn in the middle of a page.
 const WIDTH: f32 = 480.;
+
+/// The mark set as a form opens or closes in the card.
+const MOVING: &str = "connect-form";
 
 /// What a kind asks for an account, in words: `A site, an email and an API token`, `An API key and a token`.
 fn asks(kind: &artoo_tasks_api::TrackerKind) -> String {
@@ -103,12 +106,19 @@ impl Page {
         let accounts = self.accounts.clone();
         let form = (accounts.as_ref()).and_then(|a| a.update(cx, |a, cx| a.space_form(cx)));
         let opened = (accounts.as_ref()).and_then(|a| a.read(cx).space_kind());
-        // While an account is being added, the card is its form alone, so Connect stays in sight.
-        let kept = match opened {
-            Some(_) => Vec::new(),
-            None => self.store.read(cx).sites_not_in(project),
+        // A form opened or closed: what goes folds out and what comes folds in, moving together (#110).
+        if self.connect_open != opened {
+            self.connect_open = opened.clone();
+            self.motion.mark(MOVING);
+            motion::redraw_after(cx);
+        }
+        let moving = self.motion.recent(MOVING);
+        let fold = |p: &Self, key: String, open: bool, content: AnyElement| {
+            motion::folding(&p.folds, &p.heights, moving, key, open, content)
         };
-        let ruled = !kept.is_empty();
+        // While an account is being added, the card is its form alone, so Connect stays in sight.
+        let kept = self.store.read(cx).sites_not_in(project);
+        let ruled = !kept.is_empty() && opened.is_none();
         let mut card = div()
             .w(px(WIDTH))
             .max_w_full()
@@ -120,7 +130,10 @@ impl Page {
             .bg(theme::panel())
             .overflow_hidden();
         if !kept.is_empty() {
-            card = card.child(heading("Your accounts", false));
+            let mut yours = div()
+                .flex()
+                .flex_col()
+                .child(heading("Your accounts", false));
             for site in kept {
                 let host = site.host().to_owned();
                 let kind = trackers::kind(&site.kind);
@@ -146,7 +159,7 @@ impl Page {
                         .ok();
                     })
                     .into_any_element();
-                card = card.child(row(
+                yours = yours.child(row(
                     format!("tasks-account-{host}").into(),
                     accounts::mark(&kind).into_any_element(),
                     host,
@@ -154,6 +167,8 @@ impl Page {
                     Some(end),
                 ));
             }
+            let yours = yours.into_any_element();
+            card = card.children(fold(self, "connect-yours".into(), opened.is_none(), yours));
         }
         card = card.child(heading("Add an account", ruled));
         let mut form = form;
@@ -162,9 +177,6 @@ impl Page {
         kinds.sort_by_key(|k| k.id != trackers::JIRA);
         for kind in kinds {
             let open = opened.as_deref() == Some(kind.id.as_str());
-            if opened.is_some() && !open {
-                continue;
-            }
             let end = (!open).then(|| {
                 let (accounts, id, project) =
                     (accounts.clone(), kind.id.clone(), project.to_owned());
@@ -177,15 +189,19 @@ impl Page {
                     })
                     .into_any_element()
             });
-            card = card.child(row(
+            let line = row(
                 format!("tasks-kind-{}", kind.id).into(),
                 accounts::mark(&kind).into_any_element(),
                 kind.name.clone(),
                 asks(&kind),
                 end,
-            ));
-            if open {
-                card = card.children(form.take());
+            )
+            .into_any_element();
+            // Another kind folds away while one's form is open.
+            let shown = opened.is_none() || open;
+            card = card.children(fold(self, format!("connect-kind-{}", kind.id), shown, line));
+            if open && let Some(form) = form.take() {
+                card = card.children(fold(self, format!("connect-form-{}", kind.id), true, form));
             }
         }
         let back = more.then(|| {

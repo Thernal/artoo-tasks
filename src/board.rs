@@ -326,7 +326,7 @@ impl Page {
         } else if !self.folded_ids.remove(id) {
             self.folded_ids.insert(id.to_owned());
         }
-        cx.notify();
+        self.moved(&format!("shelf-{id}"), cx);
     }
 
     /// The board's line of facts: its sprint and when it ends, how many issues; the people picked; Group ▾.
@@ -449,14 +449,14 @@ impl Page {
         let Some(board) = board else {
             return self
                 .page_frame()
-                .child(controls::skeleton("tasks-rows", 8))
+                .child(skeleton_in_page("tasks-rows", 8))
                 .into_any_element();
         };
         match rows_read {
             None | Some(Read::Reading) => {
                 return self
                     .page_frame()
-                    .child(controls::skeleton("tasks-rows", 8))
+                    .child(skeleton_in_page("tasks-rows", 8))
                     .into_any_element();
             }
             Some(Read::Failed(why)) => {
@@ -566,12 +566,16 @@ impl Page {
         for shelf in &shown.shelves {
             let folded = self.folded(&shelf.id);
             out = out.child(self.shelf_head(shelf, folded, cx));
-            if folded {
+            // Its rows fold in and out moving; folded and still, they are not drawn.
+            let key = format!("shelf-{}", shelf.id);
+            if folded && !self.motion.recent(&key) {
                 continue;
             }
+            let mut rows = div().flex().flex_col();
             for r in &shelf.rows {
-                out = out.child(self.row(r, shown, cx));
+                rows = rows.child(self.row(r, shown, cx));
             }
+            out = out.children(self.folding(&key, !folded, rows));
         }
         out
     }
@@ -609,9 +613,7 @@ impl Page {
                     this.open_sheet(epic.clone(), None, cx);
                 }))
         };
-        let chevron = icons::icon(if folded { "chevron-right" } else { "chevron" })
-            .size(px(12.))
-            .text_color(theme::muted());
+        let chevron = look::chevron(SharedString::from(format!("shelf-turn-{id}")), !folded, 12.);
         let head = match &shelf.head {
             Head::State { name, state } => head
                 .child(look::state_mark(state, 14.))
@@ -1562,6 +1564,14 @@ impl Page {
             .overflow_hidden()
             .bg(theme::editor())
     }
+}
+
+/// Rows being read, inside the page's padding as its rows' text is, never against its edges.
+pub fn skeleton_in_page(id: &'static str, rows: usize) -> Div {
+    div()
+        .px(px(16.))
+        .py(px(16.))
+        .child(controls::skeleton(id, rows))
 }
 
 #[cfg(test)]

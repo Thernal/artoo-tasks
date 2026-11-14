@@ -231,8 +231,10 @@ impl Page {
         let read = self.store.read(cx).issues.get(&key).cloned();
         let issue = match read {
             None | Some(Read::Reading) => {
+                // Inside the page's padding, as its text is.
                 return frame()
-                    .p(px(16.))
+                    .px(px(20.))
+                    .py(px(18.))
                     .child(controls::skeleton("tasks-issue", 10))
                     .into_any_element();
             }

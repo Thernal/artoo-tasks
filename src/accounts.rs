@@ -15,7 +15,7 @@ use artoo_plugin_sdk::gpui::{
     Window, div, prelude::*,
 };
 use artoo_plugin_sdk::kit::hover::Hover;
-use artoo_plugin_sdk::kit::{controls, icons, input, px, theme};
+use artoo_plugin_sdk::kit::{controls, icons, input, motion, px, room, theme};
 use artoo_plugin_sdk::shell::{Frame, Typed};
 use artoo_tasks_api::TrackerKind;
 use std::collections::HashMap;
@@ -23,6 +23,9 @@ use std::rc::Rc;
 
 /// The fields' input: the keys while one of them is typed into.
 pub const INPUT: &str = "tasks.accounts";
+
+/// The fold of a form's Email field.
+const EMAIL: &str = "tracker-email";
 
 /// A tracker's fields as Change shows them.
 struct Form {
@@ -128,6 +131,12 @@ pub struct Accounts {
     form: Option<Form>,
     /// Test's answer by host: who the token is, or why not.
     tested: HashMap<String, Read<String>>,
+    /// Its folds: a form opening under its row, Jira's Email coming as the site says Cloud (#110).
+    motion: motion::Marks,
+    folds: motion::Folds,
+    heights: room::Heights,
+    /// Whether the Email field was drawn last: its fold moves when that changes.
+    asked_user: bool,
 }
 
 impl Accounts {
@@ -138,6 +147,10 @@ impl Accounts {
             frame,
             form: None,
             tested: HashMap::new(),
+            motion: motion::Marks::default(),
+            folds: motion::Folds::default(),
+            heights: room::Heights::default(),
+            asked_user: false,
         }
     }
 
@@ -153,6 +166,7 @@ impl Accounts {
         }
         let site = host.as_ref().and_then(|h| self.store.read(cx).site_of(h));
         self.form = Some(Form::new(site.as_ref()));
+        self.moved(&Self::form_key(host.as_deref()), cx);
         if let Some(h) = host {
             self.store.update(cx, |s, cx| s.read_kinds(&h, "", cx));
         }
@@ -164,6 +178,47 @@ impl Accounts {
         self.form = None;
         self.frame.leave_keyboard(INPUT, cx);
         cx.notify();
+    }
+
+    /// The fold of the form under site `host`'s row, or of a new site's (`None`).
+    fn form_key(host: Option<&str>) -> String {
+        format!("tracker-form-{}", host.unwrap_or("new"))
+    }
+
+    /// Fold `key` set moving, and drawn still once it is over.
+    fn moved(&mut self, key: &str, cx: &mut Context<Self>) {
+        self.motion.mark(key);
+        motion::redraw_after(cx);
+    }
+
+    fn folding(
+        &self,
+        key: &str,
+        open: bool,
+        content: impl IntoElement + 'static,
+    ) -> Option<AnyElement> {
+        motion::folding(
+            &self.folds,
+            &self.heights,
+            self.motion.recent(key),
+            key,
+            open,
+            content,
+        )
+    }
+
+    /// The Email field, folding in as the site typed says Cloud and out as it says otherwise.
+    fn email_fold(
+        &mut self,
+        asks: bool,
+        field: Option<AnyElement>,
+        cx: &mut Context<Self>,
+    ) -> Option<AnyElement> {
+        if asks != self.asked_user {
+            self.asked_user = asks;
+            self.moved(EMAIL, cx);
+        }
+        self.folding(EMAIL, asks, field?)
     }
 
     /// A new account of kind `kind` (`jira`, `trello`, a plugin's) asked in project `project`'s space: its form, on
@@ -456,9 +511,11 @@ impl Accounts {
             false,
             cx,
         );
-        let user = (kind.user.clone())
-            .filter(|_| asks_user)
-            .map(|(label, hint)| (label, self.field(1, &hint, false, cx)));
+        let user = (kind.user.clone()).map(|(name, hint)| {
+            let field = self.field(1, &hint, false, cx);
+            line(label(&name), field).into_any_element()
+        });
+        let user = self.email_fold(asks_user, user, cx);
         let token = self.field(
             2,
             if host.is_some() {
@@ -479,7 +536,7 @@ impl Accounts {
             .border_t_1()
             .border_color(theme::island_border())
             .child(line(label("Site"), site))
-            .children(user.map(|(name, field)| line(label(&name), field)))
+            .children(user)
             .child(line(
                 label("API token"),
                 div()
@@ -615,12 +672,11 @@ impl Accounts {
             let field = self.field(0, "your-team.atlassian.net or jira.example.com", true, cx);
             labelled("Site".into(), None, field)
         });
-        let user = (kind.user.clone())
-            .filter(|_| asks_user)
-            .map(|(label, hint)| {
-                let field = self.field(1, &hint, true, cx);
-                labelled(label, None, field)
-            });
+        let user = (kind.user.clone()).map(|(label, hint)| {
+            let field = self.field(1, &hint, true, cx);
+            labelled(label, None, field).into_any_element()
+        });
+        let user = self.email_fold(asks_user, user, cx);
         let hint = match kind.id.as_str() {
             trackers::JIRA => "API token or personal access token".to_owned(),
             _ => format!("Your {} token", kind.name),
@@ -791,7 +847,10 @@ impl Accounts {
                         )),
                     ),
             )
-            .when(open, |d| d.child(self.form(cx)))
+            .when(open, |d| {
+                let form = self.form(cx);
+                d.children(self.folding(&Self::form_key(Some(&host)), true, form))
+            })
             .into_any_element()
     }
 
@@ -842,7 +901,10 @@ impl Accounts {
                                     .child(format!("A {} site", adding_kind.name)),
                             ),
                     )
-                    .child(self.form(cx)),
+                    .children({
+                        let form = self.form(cx);
+                        self.folding(&Self::form_key(None), true, form)
+                    }),
             );
         } else {
             out = out.child(

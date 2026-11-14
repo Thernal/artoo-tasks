@@ -60,10 +60,8 @@ pub fn bar(page: &Entity<Page>, route: Option<&Route>, cx: &mut App) -> Option<B
         });
     }
     let board = s.picked().cloned();
-    let board_name = board
-        .as_ref()
-        .map(|b| b.name.clone())
-        .unwrap_or_else(|| "Tasks".into());
+    // The board's name once its boards are read; before, the path is Tasks alone, never "Tasks › Tasks".
+    let board_name = board.as_ref().map(|b| b.name.clone());
     if let Some(route) = route {
         let key = crate::agents::key_of(route)?;
         let url = match s.issue(&key) {
@@ -77,7 +75,13 @@ pub fn bar(page: &Entity<Page>, route: Option<&Route>, cx: &mut App) -> Option<B
         let mut parts = BarParts {
             path: Some(PagePath {
                 title,
-                ..path(vec!["Tasks".into(), board_name], &key, None)
+                ..path(
+                    std::iter::once("Tasks".to_owned())
+                        .chain(board_name)
+                        .collect(),
+                    &key,
+                    None,
+                )
             }),
             ..Default::default()
         };

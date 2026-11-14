@@ -12,6 +12,9 @@ use artoo_plugin_sdk::kit::hover::Hover;
 use artoo_plugin_sdk::kit::{controls, icons, px, theme};
 use artoo_plugin_sdk::shell::MenuItem;
 
+/// The fold of the side panel's Boards.
+const BOARDS: &str = "side-boards";
+
 /// `None` while the project reads no tracker: the page alone, as wide as the window, says how to connect one.
 pub fn side(page: &Entity<Page>, width: f32, cx: &mut App) -> Option<AnyElement> {
     let p = page.read(cx);
@@ -36,9 +39,12 @@ pub fn side(page: &Entity<Page>, width: f32, cx: &mut App) -> Option<AnyElement>
     if sites.is_empty() {
         return None;
     }
-    let connects = page.clone();
+    let (connects, folds) = (page.clone(), page.clone());
+    let folded = p.boards_folded;
+    // Boards folds and opens, moving, as the app's sections do; `+` beside it connects another account.
     list = list.child(
         div()
+            .id("tasks-boards-head")
             .flex()
             .items_center()
             .gap(px(6.))
@@ -47,11 +53,14 @@ pub fn side(page: &Entity<Page>, width: f32, cx: &mut App) -> Option<AnyElement>
             .text_size(px(11.))
             .font_weight(FontWeight::SEMIBOLD)
             .text_color(theme::muted())
-            .child(
-                icons::icon("chevron")
-                    .size(px(11.))
-                    .text_color(theme::faint()),
-            )
+            .cursor_pointer()
+            .on_click(move |_, _, cx| {
+                folds.update(cx, |p, cx| {
+                    p.boards_folded = !p.boards_folded;
+                    p.moved(BOARDS, cx);
+                })
+            })
+            .child(crate::look::chevron("tasks-boards-turn", !folded, 11.))
             .child(div().flex_1().child("BOARDS"))
             .child(
                 div()
@@ -65,9 +74,14 @@ pub fn side(page: &Entity<Page>, width: f32, cx: &mut App) -> Option<AnyElement>
                     .hover(|d| d.bg(theme::hover()))
                     .child(icons::icon("plus").size(px(12.)).text_color(theme::muted()))
                     .tip("Connect a tracker")
-                    .on_click(move |_, _, cx| connects.update(cx, |p, cx| p.connect(cx))),
+                    .on_click(move |_, _, cx| {
+                        cx.stop_propagation();
+                        connects.update(cx, |p, cx| p.connect(cx))
+                    }),
             ),
     );
+    // What folds under Boards: each account's host and its boards.
+    let mut body = div().flex().flex_col().gap(px(2.));
     match s.boards_in(&project) {
         Some(Read::Done(boards)) => {
             for site in &sites {
@@ -80,7 +94,7 @@ pub fn side(page: &Entity<Page>, width: f32, cx: &mut App) -> Option<AnyElement>
                 let mine: Vec<_> = boards.iter().filter(|b| b.site == host).collect();
                 let (leave_store, leave_project, leave_host, leave_frame) =
                     (store.clone(), project.clone(), host.clone(), frame.clone());
-                list = list.child(
+                body = body.child(
                     div()
                         .id(SharedString::from(format!("site-{host}")))
                         .on_mouse_down(gpui::MouseButton::Right, move |e, _, cx| {
@@ -126,7 +140,7 @@ pub fn side(page: &Entity<Page>, width: f32, cx: &mut App) -> Option<AnyElement>
                         }),
                 );
                 if mine.is_empty() && bad.is_none() {
-                    list = list.child(
+                    body = body.child(
                         div()
                             .px(px(22.))
                             .py(px(4.))
@@ -139,8 +153,8 @@ pub fn side(page: &Entity<Page>, width: f32, cx: &mut App) -> Option<AnyElement>
                     let (id, store, frame, page) =
                         (b.key(), store.clone(), frame.clone(), page.clone());
                     let on = !drafts_on && s.board.as_ref() == Some(&id);
-                    list =
-                        list.child(
+                    body =
+                        body.child(
                             artoo_plugin_sdk::kit::row(
                                 SharedString::from(format!("board-{}-{}", b.site, b.id)),
                                 on,
@@ -187,7 +201,7 @@ pub fn side(page: &Entity<Page>, width: f32, cx: &mut App) -> Option<AnyElement>
             }
         }
         Some(Read::Failed(why)) => {
-            list = list.child(
+            body = body.child(
                 div()
                     .px(px(8.))
                     .text_size(px(12.))
@@ -196,8 +210,16 @@ pub fn side(page: &Entity<Page>, width: f32, cx: &mut App) -> Option<AnyElement>
             );
         }
         None if sites.is_empty() => {}
-        _ => list = list.child(controls::skeleton("tasks-boards", 3)),
+        _ => {
+            body = body.child(
+                div()
+                    .px(px(8.))
+                    .py(px(6.))
+                    .child(controls::skeleton("tasks-boards", 3)),
+            )
+        }
     }
+    list = list.children(page.read(cx).folding(BOARDS, !folded, body));
     let n = s.kept.drafts.len();
     if !sites.is_empty() {
         let (page, frame) = (page.clone(), frame.clone());

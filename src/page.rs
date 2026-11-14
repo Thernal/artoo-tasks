@@ -15,7 +15,7 @@ use artoo_plugin_sdk::gpui::{
     ScrollHandle, Window, div, prelude::*,
 };
 use artoo_plugin_sdk::kit::composer::{Compose, ComposeAct, Look, Target, Typed as Written};
-use artoo_plugin_sdk::kit::{controls, icons, px, theme};
+use artoo_plugin_sdk::kit::{controls, icons, motion, px, room, theme};
 use artoo_plugin_sdk::shell::{Frame, MenuItem, Typed};
 use std::collections::HashSet;
 use std::rc::Rc;
@@ -162,6 +162,14 @@ pub struct Page {
     /// The groups folded; Done's column is folded until it is in `unfolded`.
     pub folded_ids: HashSet<String>,
     pub unfolded: HashSet<String>,
+    /// The side panel's Boards folded.
+    pub boards_folded: bool,
+    /// The kind whose form the connect card had open when last drawn: its folds move when it changes.
+    pub connect_open: Option<String>,
+    /// What last folded or opened, and how tall each fold was drawn: every fold moves, in size and alpha (#110).
+    pub motion: motion::Marks,
+    pub folds: motion::Folds,
+    pub heights: room::Heights,
     pub pop: Option<Pop>,
     /// A move the tracker refused: where its reason shows, and to what it was.
     pub refusal: Option<(Anchor, String)>,
@@ -216,6 +224,11 @@ impl Page {
             pick: None,
             folded_ids: HashSet::new(),
             unfolded: HashSet::new(),
+            boards_folded: false,
+            connect_open: None,
+            motion: motion::Marks::default(),
+            folds: motion::Folds::default(),
+            heights: room::Heights::default(),
             pop: None,
             refusal: None,
             refused_to: None,
@@ -796,7 +809,7 @@ impl Page {
         }
         if elsewhere {
             return (self.page_frame_own())
-                .child(controls::skeleton("tasks-board-elsewhere", 6))
+                .child(crate::board::skeleton_in_page("tasks-board-elsewhere", 6))
                 .into_any_element();
         }
         if matches!(&boards, Some(Read::Done(b)) if b.is_empty()) {
@@ -846,6 +859,44 @@ impl Page {
             return self.drafts_page(cx);
         }
         self.board(cx)
+    }
+
+    /// Fold `key` set moving: drawn on its way, then still — the shell's side panel too, which this page's own
+    /// redraw does not reach.
+    pub(crate) fn moved(&mut self, key: &str, cx: &mut Context<Self>) {
+        self.motion.mark(key);
+        let frame = self.frame.clone();
+        cx.spawn(async move |this, cx| {
+            cx.background_executor()
+                .timer(motion::BASE + Duration::from_millis(120))
+                .await;
+            this.update(cx, |_, cx| {
+                cx.notify();
+                frame.redraw(cx);
+            })
+            .ok();
+        })
+        .detach();
+        cx.notify();
+        let frame = self.frame.clone();
+        cx.defer(move |cx| frame.redraw(cx));
+    }
+
+    /// `content` folding open or shut under `key`, moving while `key`'s mark is fresh.
+    pub(crate) fn folding(
+        &self,
+        key: &str,
+        open: bool,
+        content: impl IntoElement + 'static,
+    ) -> Option<AnyElement> {
+        motion::folding(
+            &self.folds,
+            &self.heights,
+            self.motion.recent(key),
+            key,
+            open,
+            content,
+        )
     }
 
     pub(crate) fn page_frame_own(&self) -> gpui::Div {

@@ -99,7 +99,8 @@ ARTOO_PLUGIN_DEV="$PWD/target/debug/libartoo_tasks.dylib" path/to/artoo/target/d
 no one's real work: `python3 scripts/fixture.py` writes `fixtures/` (Jira's Payments board, Trello's Website
 relaunch). Its own `trackers.txt` names
 its sites, a folder named for a site's host holds that site's answers (`_rest_api_2_issue_PAY-412.json`), and a write
-is recorded in its `writes.log` and answered from `POST_rest_api_2_issue.json` when there is one.
+is recorded in its `writes.log` and answered from `POST_rest_api_2_issue.json` when there is one. `ARTOO_TASKS_FIXTURE_SLOW=<ms>` answers
+each read that late, to see what draws while reading.
 
 ## Tests
 

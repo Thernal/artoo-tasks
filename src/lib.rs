@@ -410,10 +410,14 @@ fn install(cx: &mut App) {
             ),
             accounts_input,
         ];
-        // `tasks:` the space; `tasks:connect` its connect card, `tasks:connect-<kind>` with that kind's form open.
+        // `tasks:` the space; `tasks:connect` its connect card, `tasks:connect-<kind>` with that kind's form open;
+        // `tasks:issue=<key>` an issue's page.
         let (snap_frame, snap_view) = (frame.clone(), view.clone());
         let snapshot: artoo_plugin_sdk::shell::Snap = Rc::new(move |arg, cx| {
             snap_frame.go_space(page::SPACE, cx);
+            if let Some(key) = arg.strip_prefix("issue=") {
+                snap_view.update(cx, |p, cx| p.open_issue(key, cx));
+            }
             if let Some(rest) = arg.strip_prefix("connect") {
                 snap_view.update(cx, |p, cx| {
                     p.connect(cx);
@@ -439,12 +443,11 @@ fn install(cx: &mut App) {
                 path: Rc::new(move |route: &Route, _, cx: &App| {
                     let key = agents::key_of(route)?;
                     let s = path_store.read(cx);
-                    let board = s
-                        .picked()
-                        .map(|b| b.name.clone())
-                        .unwrap_or_else(|| "Tasks".into());
+                    let board = s.picked().map(|b| PathUp::new(b.name.clone(), None));
                     Some(PagePath {
-                        up: vec![PathUp::new("Tasks", None), PathUp::new(board, None)],
+                        up: std::iter::once(PathUp::new("Tasks", None))
+                            .chain(board)
+                            .collect(),
                         name: key.clone(),
                         mono: false,
                         hover: None,

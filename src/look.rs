@@ -3,7 +3,7 @@
 
 use crate::model::{Epic, Person, State};
 use artoo_plugin_sdk::gpui::{self, Div, FontWeight, Hsla, SharedString, div, prelude::*};
-use artoo_plugin_sdk::kit::{discussion, icons, px, theme};
+use artoo_plugin_sdk::kit::{discussion, icons, motion, px, theme};
 
 /// A colour as the marks mix it: `c` at `alpha`.
 pub fn tint(c: impl Into<Hsla>, alpha: f32) -> Hsla {
@@ -317,6 +317,24 @@ pub fn small_button(
         .cursor_pointer()
         .hover(|s| s.bg(theme::hover()))
         .child(words.into())
+}
+
+/// A fold's chevron: down while open, turning a quarter to the right as it folds (#56, 1), as the app's sections'.
+pub fn chevron(id: impl Into<gpui::ElementId>, open: bool, size: f32) -> impl IntoElement {
+    motion::toward(
+        icons::icon("chevron")
+            .size(px(size))
+            .text_color(theme::muted()),
+        id,
+        open,
+        false,
+        motion::FAST,
+        |c, v| {
+            c.with_transformation(gpui::Transformation::rotate(gpui::radians(
+                -std::f32::consts::FRAC_PI_2 * (1. - v),
+            )))
+        },
+    )
 }
 
 #[cfg(test)]
