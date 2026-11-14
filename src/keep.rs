@@ -62,6 +62,8 @@ pub struct Draft {
     /// Each field's words by its id, `{"priority": "High"}`: what the preview and the sheet show of it again.
     pub said: Value,
     pub at: i64,
+    /// Who kept it: empty for you, else the agent that wrote it (`Your agent`).
+    pub by: String,
 }
 
 /// An agent's comment for an issue, seen by you alone until you post it.
@@ -155,6 +157,7 @@ impl Kept {
                     words: d["words"].as_str().unwrap_or_default().to_owned(),
                     said: d["said"].clone(),
                     at: d["at"].as_i64().unwrap_or_default(),
+                    by: d["by"].as_str().unwrap_or_default().to_owned(),
                 })
                 .collect(),
             pending: (list("pending").iter())
@@ -191,6 +194,7 @@ impl Kept {
             "drafts": self.drafts.iter().map(|d| json!({
                 "id": d.id, "site": d.site, "project": d.project, "kind_id": d.kind.0, "kind": d.kind.1,
                 "summary": d.summary, "description": d.description, "fields": d.fields, "words": d.words, "said": d.said, "at": d.at,
+                "by": d.by,
             })).collect::<Vec<_>>(),
             "pending": self.pending.iter().map(|p| json!({
                 "id": p.id, "key": p.key, "site": p.site, "body": p.body, "agent": p.agent, "at": p.at,
@@ -274,6 +278,7 @@ mod tests {
             summary: "Clear the remainders".into(),
             fields: json!({"priority": {"id": "2"}}),
             said: json!({"priority": "High"}),
+            by: "Your agent".into(),
             ..Default::default()
         });
         kept.pending.push(Pending {

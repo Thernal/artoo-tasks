@@ -1,5 +1,6 @@
 //! What agents get of the tracker: the tools they call through Artoo's MCP server (#213) and the places a note for
-//! an agent is on (#212). Both read only.
+//! an agent is on (#212). They read; what an agent writes — a comment, a draft of a new issue — is kept in Artoo for
+//! the developer, and reaches the tracker only when they send it.
 
 use crate::{jira, model, store};
 use artoo_plugin_sdk::agents::places::{self, Kind};
@@ -153,10 +154,115 @@ pub fn add_tools(cx: &mut App) {
             },
         ),
     };
-    for tool in [issue, search, comment] {
+    let draft = Tool {
+        name: "jira.draft",
+        description: "A new issue for the team's Jira, kept as a draft in Artoo (Tasks › Drafts) for the developer to open, check and create; nothing reaches Jira until they create it",
+        input: r#"{"type":"object","properties":{"project":{"type":"string","description":"The project's key, PAY"},"summary":{"type":"string","description":"The issue's summary, one line"},"description":{"type":"string","description":"Its description, in markdown"},"type":{"type":"string","description":"Its issue type by name, Task or Bug; the project's first when left out"},"site":{"type":"string","description":"The tracker's host, jira.example.com; every tracker connected when left out"}},"required":["project","summary"]}"#,
+        call: Rc::new(
+            |args: String, cx: &mut App| -> Task<Result<String, String>> {
+                let (Some(project), Some(summary)) = (arg(&args, "project"), arg(&args, "summary"))
+                else {
+                    return Task::ready(Err("project and summary are needed".into()));
+                };
+                let (description, kind, site) = (
+                    arg(&args, "description").unwrap_or_default(),
+                    arg(&args, "type"),
+                    arg(&args, "site"),
+                );
+                crate::trackers::read_offered(cx);
+                let store = store::get(cx);
+                // Where it goes, read as New task reads it: the site that has the project, the project's name, the
+                // type's id.
+                let place = cx.background_spawn(async move {
+                    let sites = sites_for(site)?;
+                    for site in &sites {
+                        let Ok(projects) = model::projects(site) else {
+                            continue;
+                        };
+                        let Some((key, name)) =
+                            (projects.into_iter()).find(|(k, _)| k.eq_ignore_ascii_case(&project))
+                        else {
+                            continue;
+                        };
+                        let kinds = model::kinds(site, &key).unwrap_or_default();
+                        let kind = kind_of(&kinds, kind.as_deref(), &key)?;
+                        return Ok((site.host().to_owned(), format!("{key} {name}"), kind));
+                    }
+                    Err(format!(
+                        "No tracker connected in Artoo has a project {project}"
+                    ))
+                });
+                cx.spawn(async move |cx| {
+                    let (host, project, kind) = place.await?;
+                    let said = format!(
+                        "Kept as a draft for the developer: {summary}, in {project}. They open it under Tasks › Drafts, check it and create it; nothing reaches the tracker before."
+                    );
+                    cx.update(|cx| {
+                        store.update(cx, |s, cx| {
+                            let id = s.kept.next_id();
+                            let draft = agent_draft(id, host, project, kind, summary, description);
+                            s.kept.drafts.insert(0, draft);
+                            s.kept.write();
+                            cx.notify();
+                        })
+                    });
+                    Ok(said)
+                })
+            },
+        ),
+    };
+    for tool in [issue, search, comment, draft] {
         if let Err(why) = tools::add(cx, tool) {
             eprintln!("artoo-tasks: {why}");
         }
+    }
+}
+
+/// The type named `name` among a project's `kinds` (any case), else its first that is not a sub-task; none when the
+/// project's types were not read (the sheet picks one as the draft opens). Named and not among them: why.
+fn kind_of(
+    kinds: &[model::Kind],
+    name: Option<&str>,
+    project: &str,
+) -> Result<Option<model::Kind>, String> {
+    let tops: Vec<&model::Kind> = kinds.iter().filter(|k| !k.subtask).collect();
+    match name {
+        Some(name) if !kinds.is_empty() => (tops.iter())
+            .find(|k| k.name.eq_ignore_ascii_case(name))
+            .map(|k| Some((*k).clone()))
+            .ok_or_else(|| {
+                let names: Vec<&str> = tops.iter().map(|k| k.name.as_str()).collect();
+                format!(
+                    "{project} has no issue type {name}; it has {}",
+                    names.join(", ")
+                )
+            }),
+        _ => Ok(tops.first().map(|k| (*k).clone())),
+    }
+}
+
+/// A draft an agent wrote: issue `summary` in project `project` (`PAY Payments`) on site `host`, of type `kind`,
+/// kept as New task's Save as draft keeps one, saying it is the agent's.
+fn agent_draft(
+    id: u64,
+    host: String,
+    project: String,
+    kind: Option<model::Kind>,
+    summary: String,
+    description: String,
+) -> crate::keep::Draft {
+    crate::keep::Draft {
+        id,
+        site: host,
+        project,
+        kind: kind.map(|k| (k.id, k.name)).unwrap_or_default(),
+        summary: summary.trim().to_owned(),
+        description,
+        fields: json!({}),
+        words: String::new(),
+        said: json!({}),
+        at: store::now(),
+        by: "Your agent".into(),
     }
 }
 
@@ -310,5 +416,40 @@ mod tests {
             place,
             json!({"site": "jira.example.com", "board": "7", "name": "Payments", "mine": true, "count": 3})
         );
+    }
+
+    #[test]
+    fn an_agents_draft_is_kept_with_the_type_it_names_and_whose_it_is() {
+        let kind = |id: &str, name: &str, subtask: bool| model::Kind {
+            id: id.into(),
+            name: name.into(),
+            subtask,
+        };
+        let kinds = [
+            kind("10003", "Sub-task", true),
+            kind("10002", "Task", false),
+            kind("10004", "Bug", false),
+        ];
+        assert_eq!(
+            kind_of(&kinds, Some("bug"), "PAY").unwrap().unwrap().id,
+            "10004"
+        );
+        assert_eq!(kind_of(&kinds, None, "PAY").unwrap().unwrap().id, "10002");
+        assert_eq!(
+            kind_of(&kinds, Some("Epic"), "PAY").unwrap_err(),
+            "PAY has no issue type Epic; it has Task, Bug"
+        );
+        assert_eq!(kind_of(&[], Some("Bug"), "PAY"), Ok(None));
+        let d = agent_draft(
+            4,
+            "acme.atlassian.net".into(),
+            "PAY Payments".into(),
+            Some(kinds[1].clone()),
+            " Clear the remainders already booked ".into(),
+            "The 0.01 remainders.".into(),
+        );
+        assert_eq!(d.kind, ("10002".to_owned(), "Task".to_owned()));
+        assert_eq!(d.summary, "Clear the remainders already booked");
+        assert_eq!(d.by, "Your agent");
     }
 }

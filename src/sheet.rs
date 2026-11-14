@@ -924,6 +924,8 @@ impl Page {
             words: words.join(" · "),
             said,
             at: now(),
+            // Kept by you now, an agent's too once you saved it.
+            by: String::new(),
         };
         let id = draft.id;
         self.store.update(cx, |s, cx| {
@@ -1540,6 +1542,14 @@ impl Page {
 
     /// Drafts: kept on this Mac until created, a list beside the one picked.
     pub fn drafts_page(&mut self, cx: &mut Context<Self>) -> AnyElement {
+        // Whose a draft is, and when it was kept: `Your agent · 2 m`; yours, when alone.
+        let by_when = |d: &Draft| {
+            let when = artoo_plugin_sdk::kit::format::ago(d.at);
+            match d.by.is_empty() {
+                true => when,
+                false => format!("{} · {when}", d.by),
+            }
+        };
         let drafts = self.store.read(cx).kept.drafts.clone();
         if drafts.is_empty() {
             return artoo_plugin_sdk::kit::island()
@@ -1550,7 +1560,7 @@ impl Page {
                 .child(controls::empty_state(
                     "pencil",
                     "No drafts".into(),
-                    "New task's Save as draft ⌘S keeps one here".into(),
+                    "New task's Save as draft ⌘S keeps one here, and so does your agent".into(),
                     None,
                 ))
                 .into_any_element();
@@ -1604,7 +1614,7 @@ impl Page {
                                 div()
                                     .text_size(px(11.))
                                     .text_color(theme::faint())
-                                    .child(artoo_plugin_sdk::kit::format::ago(d.at)),
+                                    .child(by_when(d)),
                             ),
                     )
                     .child(
@@ -1698,7 +1708,7 @@ impl Page {
                     .child(
                         div()
                             .text_color(theme::faint())
-                            .child(format!("· {}", artoo_plugin_sdk::kit::format::ago(d.at))),
+                            .child(format!("· {}", by_when(&d))),
                     ),
             )
             .child(

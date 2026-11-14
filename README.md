@@ -34,8 +34,9 @@ your own).
   short link), its first member the assignee; comments with `@user` mentions, attachments, the due date; New task makes
   a card in the list picked; the Inbox has your notifications. What Trello has no place for — epics, sprints,
   priorities, links, sub-tasks — is not shown, and a write of it is refused with why.
-- **Tools for agents**, through Artoo's MCP server while Artoo runs: `jira_issue`, `jira_search`, and
-  `jira_comment` — a comment an agent writes waits on the issue's page for you to post, edit or discard.
+- **Tools for agents**, through Artoo's MCP server while Artoo runs: `jira_issue`, `jira_search`, `jira_comment` — a
+  comment an agent writes waits on the issue's page for you to post, edit or discard — and `jira_draft`: a new issue
+  an agent writes waits under Drafts, `Your agent`, for you to open, check and create; the tool never creates one.
 
 ## Connect
 
