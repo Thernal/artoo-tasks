@@ -1215,7 +1215,7 @@ impl Page {
                     .items_center()
                     .gap(px(6.))
                     .child(look::kind_mark("Epic", false))
-                    .child(look::epic_lozenge(e).flex_shrink(1.).min_w_0())
+                    .child(look::epic_lozenge(e))
                     .into_any_element(),
             ));
         }

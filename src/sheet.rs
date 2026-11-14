@@ -881,6 +881,31 @@ impl Page {
         wide: bool,
         cx: &mut Context<Self>,
     ) -> Div {
+        let body = match words {
+            Some(w) => div()
+                .flex_1()
+                .min_w_0()
+                .truncate()
+                .text_color(theme::text())
+                .child(w),
+            None => div()
+                .flex_1()
+                .text_color(theme::faint())
+                .child(empty.to_owned()),
+        };
+        self.select_box(field, lead, body.into_any_element(), wide, None, cx)
+    }
+
+    /// `select` drawing `body` as its value, `tip` shown on a long hover.
+    fn select_box(
+        &mut self,
+        field: &str,
+        lead: Option<AnyElement>,
+        body: AnyElement,
+        wide: bool,
+        tip: Option<String>,
+        cx: &mut Context<Self>,
+    ) -> Div {
         let anchor = Anchor::Sheet(field.into());
         let open = self.pop_at(&anchor, PopKind::Sheet(field.into()));
         let picked = field.to_owned();
@@ -907,18 +932,8 @@ impl Page {
                     .text_size(px(13.))
                     .cursor_pointer()
                     .children(lead)
-                    .child(match words {
-                        Some(w) => div()
-                            .flex_1()
-                            .min_w_0()
-                            .truncate()
-                            .text_color(theme::text())
-                            .child(w),
-                        None => div()
-                            .flex_1()
-                            .text_color(theme::faint())
-                            .child(empty.to_owned()),
-                    })
+                    .child(body)
+                    .when_some(tip, |d, tip| d.tip(tip))
                     .child(
                         icons::icon("chevron")
                             .size(px(11.))
@@ -1108,14 +1123,23 @@ impl Page {
             cx,
         );
         let epic_sel = has_epics.then(|| {
-            self.select(
-                "epic",
-                Some(look::kind_mark("Epic", false).into_any_element()),
-                epic.as_ref().map(|e| format!("{} · {}", e.name, e.key)),
-                "No epic",
-                true,
-                cx,
-            )
+            let lead = Some(look::kind_mark("Epic", false).into_any_element());
+            match &epic {
+                // The name ends in … at the box's width, its key kept whole; the whole on a long hover.
+                Some(e) => {
+                    let body = div()
+                        .flex_1()
+                        .min_w_0()
+                        .flex()
+                        .gap(px(4.))
+                        .text_color(theme::text())
+                        .child(div().min_w_0().truncate().child(e.name.clone()))
+                        .child(div().flex_none().child(format!("· {}", e.key)));
+                    let tip = Some(format!("Epic {} {}", e.key, e.name));
+                    self.select_box("epic", lead, body.into_any_element(), true, tip, cx)
+                }
+                None => self.select("epic", lead, None, "No epic", true, cx),
+            }
         });
         // "You" is drawn with your own initial.
         let me_face = assignee.as_ref().map(|w| {

@@ -2,7 +2,10 @@
 //! state's chip, a person, an epic's lozenge, a label's pill, how far its sub-tasks are, a group's state mark.
 
 use crate::model::{Epic, Person, State};
-use artoo_plugin_sdk::gpui::{self, Div, FontWeight, Hsla, SharedString, div, prelude::*};
+use artoo_plugin_sdk::gpui::{
+    self, Div, FontWeight, Hsla, SharedString, Stateful, div, prelude::*,
+};
+use artoo_plugin_sdk::kit::hover::Hover;
 use artoo_plugin_sdk::kit::{discussion, icons, motion, px, theme};
 
 /// A colour as the marks mix it: `c` at `alpha`.
@@ -191,11 +194,14 @@ pub fn epic_color(epic: &Epic) -> Hsla {
     }
 }
 
-/// An epic's lozenge: its name on a tint of its colour, ending in … past 200 px.
-pub fn epic_lozenge(epic: &Epic) -> Div {
+/// An epic's lozenge: its name on a tint of its colour, ending in … past 200 px or where its row ends; the whole on a
+/// long hover.
+pub fn epic_lozenge(epic: &Epic) -> Stateful<Div> {
     let c = epic_color(epic);
     div()
-        .flex_none()
+        .id(SharedString::from(format!("epic-{}", epic.key)))
+        .tip(format!("Epic {} {}", epic.key, epic.name))
+        .min_w_0()
         .max_w(px(200.))
         .h(px(18.))
         .px(px(6.))
