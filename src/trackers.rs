@@ -16,16 +16,21 @@ pub const TRELLO: &str = "trello";
 /// services are not.
 static OFFERED: RwLock<Vec<(TrackerKind, Call)>> = RwLock::new(Vec::new());
 
+/// Whether a Jira site on `host` is Atlassian's Cloud, whose token is read with an email; any other host's is a
+/// server's, read with a personal access token alone, an email sent with it refused.
+pub fn cloud_host(host: &str) -> bool {
+    let host = host.to_ascii_lowercase();
+    host.ends_with(".atlassian.net") || host.ends_with(".jira.com")
+}
+
 /// Jira: Cloud (an email and an API token) or Server and Data Center (a personal access token), on any host.
 pub fn jira() -> TrackerKind {
     TrackerKind {
         id: JIRA.into(),
         name: "Jira".into(),
         hosts: Vec::new(),
-        user: Some((
-            "Email".into(),
-            "For Jira Cloud: the email the token is of".into(),
-        )),
+        // Asked on a Cloud host alone (`cloud_host`).
+        user: Some(("Email".into(), "The email the API token is of".into())),
         // Cloud's page or the profile's, by the site: `accounts`.
         token_page: None,
         unit: "project".into(),
@@ -166,5 +171,12 @@ mod tests {
             ..Default::default()
         };
         assert!(site.cloud() && !site.trello() && site.caps() == Caps::ALL);
+    }
+
+    #[test]
+    fn a_cloud_host_is_atlassians() {
+        assert!(cloud_host("acme.atlassian.net") && cloud_host("Acme.Atlassian.NET"));
+        assert!(cloud_host("acme.jira.com"));
+        assert!(!cloud_host("jira.example.com") && !cloud_host("atlassian.net.example.com"));
     }
 }

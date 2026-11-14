@@ -18,7 +18,7 @@ const WIDTH: f32 = 480.;
 /// What a kind asks for an account, in words: `A site, an email and an API token`, `An API key and a token`.
 fn asks(kind: &artoo_tasks_api::TrackerKind) -> String {
     if kind.id == trackers::JIRA {
-        return "A site, an email and an API token".into();
+        return "A site and a token; on Cloud, an email too".into();
     }
     let a = |word: &str| match word.chars().next().map(|c| c.to_ascii_lowercase()) {
         Some('a' | 'e' | 'i' | 'o' | 'u') => "an",
@@ -239,7 +239,10 @@ mod tests {
 
     #[test]
     fn a_kind_says_what_an_account_asks() {
-        assert_eq!(asks(&trackers::jira()), "A site, an email and an API token");
+        assert_eq!(
+            asks(&trackers::jira()),
+            "A site and a token; on Cloud, an email too"
+        );
         assert_eq!(asks(&trackers::trello()), "An API key and a token");
     }
 }

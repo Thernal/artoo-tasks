@@ -63,13 +63,32 @@ impl Form {
         }
     }
 
-    /// Whether field `ix` is asked: the site unless it is the kind's own, the user when the kind has one.
+    /// Whether field `ix` is asked: the site unless it is the kind's own, the user when the kind has one — Jira's
+    /// email on a Cloud host alone, as a server refuses a token sent with one.
     fn asks(&self, ix: usize) -> bool {
         match ix {
             0 => !self.fixed,
-            1 => self.kind().user.is_some(),
+            1 => {
+                let kind = self.kind();
+                kind.user.is_some()
+                    && (kind.id != trackers::JIRA || trackers::cloud_host(&self.host()))
+            }
             _ => true,
         }
+    }
+
+    /// The host of the site typed: `jira.example.com` of `https://jira.example.com/`.
+    fn host(&self) -> String {
+        let url = self.fields[0].trim();
+        let site = Site {
+            url: if url.contains("://") {
+                url.to_owned()
+            } else {
+                format!("https://{url}")
+            },
+            ..Default::default()
+        };
+        site.host().to_owned()
     }
 
     /// The field after `at` (before it, `back`), round, skipping what is not asked.
@@ -86,8 +105,7 @@ impl Form {
     fn token_page(&self) -> Option<(String, String)> {
         let kind = self.kind();
         let jira = kind.id == trackers::JIRA;
-        let cloud =
-            jira && (self.fields[0].contains("atlassian.net") || !self.fields[1].trim().is_empty());
+        let cloud = jira && trackers::cloud_host(&self.host());
         match (&kind.token_page, cloud) {
             (Some((words, url)), _) => Some((words.clone(), url.clone())),
             (None, true) => Some((
@@ -100,16 +118,7 @@ impl Form {
 
     /// The kind of tracker the site typed is: Trello's on `trello.com`, a plugin's on its hosts, else Jira.
     fn kind(&self) -> TrackerKind {
-        let url = self.fields[0].trim();
-        let site = Site {
-            url: if url.contains("://") {
-                url.to_owned()
-            } else {
-                format!("https://{url}")
-            },
-            ..Default::default()
-        };
-        trackers::kind(&trackers::kind_of(site.host()))
+        trackers::kind(&trackers::kind_of(&self.host()))
     }
 }
 
@@ -229,7 +238,11 @@ impl Accounts {
         } else {
             format!("https://{url}")
         };
-        let email = form.fields[1].trim().to_owned();
+        // A field not asked is not kept: an email typed before the site said it is a server's.
+        let email = match form.asks(1) {
+            true => form.fields[1].trim().to_owned(),
+            false => String::new(),
+        };
         let token = form.fields[2].trim().to_owned();
         let mut site = Site {
             url: url.clone(),
@@ -237,12 +250,6 @@ impl Accounts {
             ..Default::default()
         };
         site.kind = trackers::kind_of(site.host());
-        // A kind whose token alone signs in keeps no user.
-        let email = if trackers::kind(&site.kind).user.is_some() {
-            email
-        } else {
-            String::new()
-        };
         let host = site.host().to_owned();
         if host.is_empty() {
             form.why =
@@ -409,6 +416,7 @@ impl Accounts {
         let kind = form.kind();
         let jira = kind.id == trackers::JIRA;
         let page = form.token_page();
+        let asks_user = form.asks(1);
         let reaches = host
             .as_ref()
             .map(|h| match self.store.read(cx).projects.get(h) {
@@ -448,8 +456,9 @@ impl Accounts {
             false,
             cx,
         );
-        let user =
-            (kind.user.clone()).map(|(label, hint)| (label, self.field(1, &hint, false, cx)));
+        let user = (kind.user.clone())
+            .filter(|_| asks_user)
+            .map(|(label, hint)| (label, self.field(1, &hint, false, cx)));
         let token = self.field(
             2,
             if host.is_some() {
@@ -556,8 +565,13 @@ impl Accounts {
     /// the token is made beside its label; what went wrong, Cancel and Connect at the foot.
     pub fn space_form(&mut self, cx: &mut Context<Self>) -> Option<AnyElement> {
         let form = self.form.as_ref().filter(|f| f.project.is_some())?;
-        let (why, kind, fixed, page) =
-            (form.why.clone(), form.kind(), form.fixed, form.token_page());
+        let (why, kind, fixed, page, asks_user) = (
+            form.why.clone(),
+            form.kind(),
+            form.fixed,
+            form.token_page(),
+            form.asks(1),
+        );
         let labelled = |label: String, aside: Option<AnyElement>, field: AnyElement| {
             div()
                 .flex()
@@ -601,10 +615,12 @@ impl Accounts {
             let field = self.field(0, "your-team.atlassian.net or jira.example.com", true, cx);
             labelled("Site".into(), None, field)
         });
-        let user = (kind.user.clone()).map(|(label, hint)| {
-            let field = self.field(1, &hint, true, cx);
-            labelled(label, None, field)
-        });
+        let user = (kind.user.clone())
+            .filter(|_| asks_user)
+            .map(|(label, hint)| {
+                let field = self.field(1, &hint, true, cx);
+                labelled(label, None, field)
+            });
         let hint = match kind.id.as_str() {
             trackers::JIRA => "API token or personal access token".to_owned(),
             _ => format!("Your {} token", kind.name),
@@ -966,4 +982,24 @@ pub fn parts(
         caret: Rc::new(|_| true),
     };
     (rows, input, view)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn jiras_email_is_asked_on_cloud_alone() {
+        let asks = |url: &str| {
+            let mut form = Form::new(None);
+            form.fields[0] = url.into();
+            form.asks(1)
+        };
+        assert!(asks("acme.atlassian.net"));
+        assert!(asks("https://acme.atlassian.net/"));
+        assert!(!asks("jira.example.com"));
+        assert!(!asks("https://jira.example.com"));
+        // Trello's user is its API key, asked on its own host.
+        assert!(asks("trello.com"));
+    }
 }
