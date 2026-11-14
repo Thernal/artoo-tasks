@@ -24,7 +24,9 @@ your own).
   column (its `+`, or a state group's) it says the state it lands in, and once made it is moved there.
 - **The Inbox**: an issue assigned to you (also a toast), a mention of you, a change on an issue of yours — each
   switched in Settings → Notifications.
-- **⌘K**: the Tasks tab finds the issues read by key or words; Here offers what the page on screen does.
+- **⌘K**: the Tasks tab finds the issues read by key or words, and the boards by name; a key not read yet
+  (`PAY-427`) is read and is the top hit; in All, Tasks comes first among what is found. Here offers what the page on
+  screen does.
 - **Notes for your agent**: `+` on a paragraph of the description (`C`), or on a board (`⋯`, Note for an agent);
   the agent reads it with its place, `PAY-412 · description · ¶4`, or the board's issues as filtered.
 - **Trello**, behind the same pages: a board's lists are its columns and states, a card an issue (its key the card's

@@ -551,11 +551,43 @@ impl Store {
         again: bool,
         cx: &mut Context<Self>,
     ) {
+        self.read_issue_then(key, site, again, true, |_, _| {}, cx)
+    }
+
+    /// Issue `key` looked up for ⌘K on site `host` alone: read once, its pictures left until it is shown
+    /// (`read_issue` reads them then); `then` once it is read or refused.
+    pub fn look_up(
+        &mut self,
+        key: &str,
+        host: &str,
+        then: impl FnOnce(&mut Store, &mut Context<Store>) + 'static,
+        cx: &mut Context<Self>,
+    ) {
+        self.read_issue_then(key, Some(host), false, false, then, cx)
+    }
+
+    /// `read_issue`, its pictures read too with `pictures`, `then` once the read is answered.
+    fn read_issue_then(
+        &mut self,
+        key: &str,
+        site: Option<&str>,
+        again: bool,
+        pictures: bool,
+        then: impl FnOnce(&mut Store, &mut Context<Store>) + 'static,
+        cx: &mut Context<Self>,
+    ) {
         let sites = match site.and_then(|host| self.site_of(host)) {
             Some(site) => vec![site],
             None => self.sites.clone(),
         };
-        if sites.is_empty() || (!again && self.issues.contains_key(key)) {
+        if sites.is_empty() {
+            return;
+        }
+        if !again && self.issues.contains_key(key) {
+            // Read before without its pictures (⌘K looked it up): they are read as it is shown.
+            if pictures {
+                self.read_images(key, cx);
+            }
             return;
         }
         if !self.issues.contains_key(key) {
@@ -566,18 +598,23 @@ impl Store {
         spawn_read(
             cx,
             move || model::read_issue_on(&sites, &asked),
-            move |this, read, cx| match read {
-                Ok(issue) => {
-                    if let Some(Read::Done(before)) = this.issues.get(&key).cloned() {
-                        this.note_change(&before, &issue);
+            move |this, read, cx| {
+                match read {
+                    Ok(issue) => {
+                        if let Some(Read::Done(before)) = this.issues.get(&key).cloned() {
+                            this.note_change(&before, &issue);
+                        }
+                        this.issues.insert(key.clone(), Read::Done(issue));
+                        if pictures {
+                            this.read_images(&key, cx);
+                        }
                     }
-                    this.issues.insert(key.clone(), Read::Done(issue));
-                    this.read_images(&key, cx);
+                    Err(_) if matches!(this.issues.get(&key), Some(Read::Done(_))) => {}
+                    Err(why) => {
+                        this.issues.insert(key, Read::Failed(why));
+                    }
                 }
-                Err(_) if matches!(this.issues.get(&key), Some(Read::Done(_))) => {}
-                Err(why) => {
-                    this.issues.insert(key, Read::Failed(why));
-                }
+                then(this, cx);
             },
         );
     }

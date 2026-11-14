@@ -449,7 +449,7 @@ fn install(cx: &mut App) {
             overlay: Some(overlay),
             snapshots: vec![("tasks:", snapshot)],
             settings: vec![accounts_rows],
-            searches: vec![search::scope(store.clone())],
+            searches: vec![search::scope(store.clone(), view.clone())],
             pages: Some(Pages {
                 space: page::SPACE,
                 kinds: &[agents::ISSUE],
