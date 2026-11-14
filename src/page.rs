@@ -148,6 +148,7 @@ pub fn compose(target: Target, text: &str) -> Compose {
         page: None,
         file: None,
         answers: None,
+        attachments: Vec::new(),
     }
 }
 
@@ -711,6 +712,7 @@ impl Page {
             completion: None,
             measure: div().into_any_element(),
             link_base: None,
+            clip: false,
         };
         let input = note.compose.render_input(look, acts, cx);
         artoo_plugin_sdk::shell::input_box(

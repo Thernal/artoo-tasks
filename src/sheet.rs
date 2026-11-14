@@ -1065,6 +1065,7 @@ impl Page {
             completion: None,
             measure: div().into_any_element(),
             link_base: None,
+            clip: false,
         };
         let description = self
             .sheet

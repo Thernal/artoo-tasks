@@ -877,6 +877,7 @@ impl Page {
             completion: None,
             measure: div().into_any_element(),
             link_base: None,
+            clip: false,
         };
         let input = desc.render_input(look, acts, cx);
         let editor = artoo_plugin_sdk::shell::input_box(
@@ -2563,23 +2564,36 @@ impl Page {
             }));
         let page = cx.entity();
         let acts: artoo_plugin_sdk::kit::composer::ComposeActs = Rc::new(move |act, cx| {
-            page.update(cx, |this, cx| {
-                if let (
-                    Some(c),
-                    ComposeAct::Place {
-                        at,
-                        shift,
-                        clicks,
-                        drag,
-                        lower,
-                    },
-                ) = (this.issue.comment.as_mut(), act)
-                {
-                    c.place(at, shift, clicks, drag, lower);
-                    cx.notify();
+            page.update(cx, |this, cx| match act {
+                ComposeAct::Place {
+                    at,
+                    shift,
+                    clicks,
+                    drag,
+                    lower,
+                } => {
+                    if let Some(c) = this.issue.comment.as_mut() {
+                        c.place(at, shift, clicks, drag, lower);
+                        cx.notify();
+                    }
                 }
+                ComposeAct::Clip => this.pick_comment_files(cx),
+                ComposeAct::Dropped(paths) => this.attach_to_comment(paths, cx),
+                ComposeAct::Unattach(id) => {
+                    if let Some(c) = this.issue.comment.as_mut() {
+                        c.unattach(id);
+                        cx.notify();
+                    }
+                }
+                ComposeAct::Retry(id) => {
+                    if let Some(path) = this.issue.comment.as_mut().and_then(|c| c.retry(id)) {
+                        this.upload_comment_file(id, path, cx);
+                    }
+                }
+                _ => {}
             });
         });
+        let waits = self.issue.comment.as_ref().is_some_and(|c| c.waiting());
         let words = if agent {
             "Add to drafts"
         } else if editing {
@@ -2587,8 +2601,12 @@ impl Page {
         } else {
             "Comment"
         };
+        // An upload going: Comment waits for it, dimmed, and says why.
         let send = controls::primary_button("tasks-comment-send", words, "⌘↵")
             .when(agent, |d| d.bg(theme::agent()))
+            .when(waits, |d| {
+                d.opacity(0.5).cursor_default().tip("Waits for the upload")
+            })
             .on_click(cx.listener(|this, _: &ClickEvent, _, cx| this.send_comment(cx)));
         let cancel = div()
             .id("tasks-comment-cancel")
@@ -2613,6 +2631,8 @@ impl Page {
             completion: None,
             measure: div().into_any_element(),
             link_base: None,
+            // A comment takes a pasted screenshot, a dropped file or the clip's: the tracker's attachments.
+            clip: true,
         };
         let Some(c) = self.issue.comment.as_ref() else {
             return div().into_any_element();
@@ -2635,6 +2655,91 @@ impl Page {
     }
 
     /// ⌘↵ in the composer: posted, saved, or to the agent's drafts.
+    /// The clip or ⇧⌘A in a comment: files picked, attached.
+    fn pick_comment_files(&mut self, cx: &mut Context<Self>) {
+        let paths = cx.prompt_for_paths(gpui::PathPromptOptions {
+            files: true,
+            directories: false,
+            multiple: true,
+            prompt: Some("Attach".into()),
+        });
+        cx.spawn(async move |this, cx| {
+            let Ok(Ok(Some(paths))) = paths.await else {
+                return;
+            };
+            this.update(cx, |p, cx| p.attach_to_comment(paths, cx)).ok();
+        })
+        .detach();
+    }
+
+    /// `paths` attached to the comment being written: each a tile, uploaded to the issue (a note for the agent keeps
+    /// it on this Mac and gives its path).
+    fn attach_to_comment(&mut self, paths: Vec<std::path::PathBuf>, cx: &mut Context<Self>) {
+        for path in paths.into_iter().filter(|p| p.is_file()) {
+            let Some(c) = self.issue.comment.as_mut() else {
+                return;
+            };
+            let id = c.attach(path.clone());
+            self.upload_comment_file(id, path, cx);
+        }
+        cx.notify();
+    }
+
+    /// Attachment `id` of the comment taken where the comment goes: attached to the issue, its Markdown the tracker's
+    /// picture (`*shot.png*`, which goes as `!shot.png|thumbnail!`) or a link; for the agent, its path here.
+    fn upload_comment_file(&mut self, id: u64, path: std::path::PathBuf, cx: &mut Context<Self>) {
+        let name = (path.file_name())
+            .map(|n| n.to_string_lossy().into_owned())
+            .unwrap_or_default();
+        if self.issue.to_agent {
+            let shown = path.to_string_lossy().into_owned();
+            let md = if is_picture(&name) {
+                format!("![{name}](<{shown}>)")
+            } else {
+                format!("[{name}](<{shown}>)")
+            };
+            if let Some(c) = self.issue.comment.as_mut() {
+                c.uploaded(id, md);
+            }
+            return cx.notify();
+        }
+        let (Some(key), Some(site)) = (
+            self.issue_key(),
+            self.issue_key()
+                .and_then(|k| self.store.read(cx).site_for(&k)),
+        ) else {
+            if let Some(c) = self.issue.comment.as_mut() {
+                c.upload_failed(id, "No tracker for this issue".into());
+            }
+            return cx.notify();
+        };
+        if let Some(c) = self.issue.comment.as_mut() {
+            c.upload_progress(id, 0.3);
+        }
+        cx.spawn(async move |this, cx| {
+            let file = path.clone();
+            let sent = cx
+                .background_spawn(async move { model::attach(&site, &key, &file) })
+                .await;
+            this.update(cx, |p, cx| {
+                let Some(c) = (p.issue.comment.as_mut())
+                    .filter(|c| c.attachments.iter().any(|a| a.id == id && a.path == path))
+                else {
+                    return;
+                };
+                match sent {
+                    Ok(answer) => c.uploaded(id, attached_markdown(&answer, &name)),
+                    Err(why) => c.upload_failed(id, why),
+                }
+                // The issue's Attachments lists it too.
+                p.read_again(cx);
+                cx.notify();
+            })
+            .ok();
+        })
+        .detach();
+    }
+
     fn send_comment(&mut self, cx: &mut Context<Self>) {
         let Some(key) = self.issue_key() else {
             return;
@@ -2642,6 +2747,9 @@ impl Page {
         let Some(c) = self.issue.comment.as_ref() else {
             return;
         };
+        if c.waiting() {
+            return;
+        }
         let text = c.edit.text().trim().to_owned();
         if text.is_empty() {
             return;
@@ -2693,8 +2801,27 @@ impl Page {
     pub fn comment_key(&mut self, event: &KeyDownEvent, cx: &mut Context<Self>) -> Typed {
         let key = &event.keystroke;
         if key.modifiers.platform && key.key == "enter" {
+            if self.issue.comment.as_ref().is_some_and(|c| c.waiting()) {
+                return Typed::Kept;
+            }
             self.send_comment(cx);
             return Typed::Leave;
+        }
+        // ⇧⌘A: a file or an image attached; ⌘V with a screenshot on the clipboard attaches it.
+        if key.key == "a"
+            && key.modifiers.secondary()
+            && key.modifiers.shift
+            && key.modifiers.number_of_modifiers() == 2
+        {
+            self.pick_comment_files(cx);
+            return Typed::Kept;
+        }
+        if let Some(folder) = crate::keep::folder().map(|f| f.join("attachments")) {
+            let files = artoo_plugin_sdk::kit::composer::pasted_files(key, &folder, cx);
+            if !files.is_empty() {
+                self.attach_to_comment(files, cx);
+                return Typed::Kept;
+            }
         }
         if key.key == "tab"
             && !key.modifiers.platform
@@ -3151,5 +3278,62 @@ mod tests {
         assert_eq!(value_words(&json!(3.0)), Some("3.0".into()));
         assert_eq!(value_words(&json!("2026-11-13")), Some("Fri 13 Nov".into()));
         assert_eq!(value_words(&Value::Null), None);
+    }
+}
+
+/// Whether a file named `name` is a picture the tracker shows where it stands.
+fn is_picture(name: &str) -> bool {
+    let lower = name.to_lowercase();
+    [".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp", ".svg"]
+        .iter()
+        .any(|e| lower.ends_with(e))
+}
+
+/// The Markdown for a file the tracker attached (`answer`, Jira's list of attachments or Trello's one): a picture by
+/// its name alone (`*shot.png*`, which `wiki::from_markdown` sends as `!shot.png|thumbnail!`), any other file a link to it.
+fn attached_markdown(answer: &Value, sent: &str) -> String {
+    let one = if answer.is_array() {
+        &answer[0]
+    } else {
+        answer
+    };
+    let name = (one["filename"].as_str())
+        .or(one["name"].as_str())
+        .unwrap_or(sent)
+        .to_owned();
+    let url = (one["content"].as_str())
+        .or(one["url"].as_str())
+        .unwrap_or_default();
+    if is_picture(&name) && !name.contains(' ') {
+        format!("*{name}*")
+    } else if url.is_empty() {
+        name
+    } else {
+        format!("[{name}]({url})")
+    }
+}
+
+#[cfg(test)]
+mod attached_tests {
+    use super::*;
+
+    #[test]
+    fn a_file_attached_to_a_comment_reads_as_the_tracker_shows_it() {
+        let jira = json!([{ "filename": "shot.png", "content": "https://x/secure/attachment/1/shot.png" }]);
+        assert_eq!(attached_markdown(&jira, "shot.png"), "*shot.png*");
+        assert_eq!(
+            crate::wiki::from_markdown("*shot.png*"),
+            "!shot.png|thumbnail!"
+        );
+        let log = json!([{ "filename": "run.log", "content": "https://x/a/run.log" }]);
+        assert_eq!(
+            attached_markdown(&log, "run.log"),
+            "[run.log](https://x/a/run.log)"
+        );
+        let trello = json!({ "name": "card shot.png", "url": "https://t/a.png" });
+        assert_eq!(
+            attached_markdown(&trello, "x"),
+            "[card shot.png](https://t/a.png)"
+        );
     }
 }
