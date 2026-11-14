@@ -91,6 +91,13 @@ pub fn side(page: &Entity<Page>, width: f32, cx: &mut App) -> Option<AnyElement>
                     .iter()
                     .find(|(h, _)| *h == host)
                     .map(|(_, why)| why.clone());
+                // A board of it read before and not again: when it was read, as the board's line says.
+                let since = (s.stale.keys())
+                    .filter(|b| b.0 == host)
+                    .filter_map(|b| s.read_at.get(b).copied())
+                    .min()
+                    .map(artoo_plugin_sdk::kit::format::clock);
+                let unreached = bad.is_some() || since.is_some();
                 let mine: Vec<_> = boards.iter().filter(|b| b.site == host).collect();
                 let (leave_store, leave_project, leave_host, leave_frame) =
                     (store.clone(), project.clone(), host.clone(), frame.clone());
@@ -118,19 +125,21 @@ pub fn side(page: &Entity<Page>, width: f32, cx: &mut App) -> Option<AnyElement>
                         .pt(px(6.))
                         .pb(px(2.))
                         .text_size(px(11.))
-                        .text_color(if bad.is_some() {
-                            theme::removed()
+                        .text_color(if unreached {
+                            theme::warning()
                         } else {
                             theme::faint()
                         })
                         .children(
-                            bad.as_ref()
-                                .map(|_| div().size(px(6.)).rounded_full().bg(theme::removed())),
+                            unreached
+                                .then(|| div().size(px(6.)).rounded_full().bg(theme::warning())),
                         )
                         .child(div().flex_1().truncate().child(host.clone()))
-                        .tip(match &bad {
-                            Some(why) => format!("Can’t reach {host} · {why}"),
-                            None => {
+                        .children(since.clone().map(|at| div().flex_none().child(at)))
+                        .tip(match (&since, &bad) {
+                            (Some(at), _) => format!("Can’t reach {host} · boards from {at}"),
+                            (None, Some(why)) => format!("Can’t reach {host} · {why}"),
+                            (None, None) => {
                                 if site.cloud() {
                                     "Jira Cloud".to_owned()
                                 } else {

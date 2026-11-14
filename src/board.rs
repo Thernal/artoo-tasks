@@ -8,7 +8,7 @@ use crate::model::{self, BoardInfo, Epic, Issue, Person, Row, State};
 use crate::page::{Anchor, Page, PopKind};
 use crate::store::Read;
 use artoo_plugin_sdk::gpui::{
-    AnyElement, ClickEvent, Context, Div, FontWeight, SharedString, div, prelude::*,
+    AnyElement, App, ClickEvent, Context, Div, FontWeight, SharedString, div, prelude::*,
 };
 use artoo_plugin_sdk::kit::hover::Hover;
 use artoo_plugin_sdk::kit::{controls, icons, markdown, px, theme};
@@ -16,6 +16,9 @@ use std::collections::HashSet;
 
 /// Who the people filter picks, by person id; `NONE` for Unassigned.
 pub const NONE: &str = "-";
+
+/// How a board is drawn while its site is not reached: as last read, dimmed.
+const STALE: f32 = 0.72;
 
 /// What the board shows of its issues, as the bar's filters and the board's own say.
 #[derive(Clone, Debug, Default)]
@@ -352,7 +355,7 @@ impl Page {
             return line
                 .text_color(theme::warning())
                 .child(div().size(px(8.)).rounded_full().bg(theme::warning()))
-                .child(format!("Can’t reach {host} · board from {at}"))
+                .child(format!("Can’t reach {host} · boards from {at}"))
                 .child(div().flex_1())
                 .child(
                     look::small_button("tasks-retry", "Retry")
@@ -442,10 +445,7 @@ impl Page {
         let s = self.store.read(cx);
         let board = s.picked().cloned();
         let rows_read = s.board.as_ref().and_then(|b| s.rows.get(b)).cloned();
-        let stale = (s.board.as_ref())
-            .filter(|b| s.stale.contains_key(*b))
-            .and_then(|b| Some((b.0.clone(), s.read_at.get(b).copied()?)))
-            .map(|(host, at)| (host, artoo_plugin_sdk::kit::format::clock(at)));
+        let stale = self.stale(cx);
         let Some(board) = board else {
             return self
                 .page_frame()
@@ -527,13 +527,14 @@ impl Page {
         });
         if shown.columns {
             return (self.page_frame())
+                .when(stale.is_some(), |d| d.opacity(STALE))
                 .child(self.facts_line(&shown, stale, cx))
                 .children(note)
                 .child(self.columns(&shown, cx))
                 .into_any_element();
         }
         let list = (self.list_frame())
-            .when(stale.is_some(), |d| d.opacity(0.6))
+            .when(stale.is_some(), |d| d.opacity(STALE))
             .child(self.facts_line(&shown, stale.clone(), cx))
             .children(note)
             .child(
@@ -1115,6 +1116,7 @@ impl Page {
     /// The picked issue beside the list: its kind and key, its title, its facts, its description's first part,
     /// Open and Open in Jira.
     fn preview(&mut self, shown: &Shown, cx: &mut Context<Self>) -> AnyElement {
+        let stale = self.stale(cx).is_some();
         let frame = || {
             artoo_plugin_sdk::kit::island()
                 .size_full()
@@ -1123,6 +1125,7 @@ impl Page {
                 .flex_col()
                 .overflow_hidden()
                 .bg(theme::editor())
+                .when(stale, |d| d.opacity(STALE))
         };
         let Some(r) = self
             .pick
@@ -1552,6 +1555,15 @@ impl Page {
             );
         }
         Some(out.into_any_element())
+    }
+
+    /// The board picked, when its last read failed after one that did not: its site's host and when it was read.
+    fn stale(&self, cx: &App) -> Option<(String, String)> {
+        let s = self.store.read(cx);
+        (s.board.as_ref())
+            .filter(|b| s.stale.contains_key(*b))
+            .and_then(|b| Some((b.0.clone(), s.read_at.get(b).copied()?)))
+            .map(|(host, at)| (host, artoo_plugin_sdk::kit::format::clock(at)))
     }
 
     fn page_frame(&self) -> Div {
