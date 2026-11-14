@@ -15,8 +15,8 @@ use crate::trackers::SiteExt;
 use crate::wiki::{self, handle};
 use artoo_plugin_sdk::core::textedit::TextEdit;
 use artoo_plugin_sdk::gpui::{
-    self, AnyElement, App, Bounds, ClickEvent, Context, Div, FontWeight, KeyDownEvent, ObjectFit,
-    Pixels, SharedString, canvas, div, img, point, prelude::*,
+    self, AnyElement, App, Bounds, ClickEvent, Context, Div, ExternalPaths, FontWeight,
+    KeyDownEvent, ObjectFit, Pixels, SharedString, canvas, div, img, point, prelude::*,
 };
 use artoo_plugin_sdk::images::{Image, Picture, Viewer};
 use artoo_plugin_sdk::kit::composer::{Compose, ComposeAct, Look, Target, Typed as Written};
@@ -25,6 +25,7 @@ use artoo_plugin_sdk::kit::{controls, icons, input, markdown, px, theme};
 use artoo_plugin_sdk::serde_json::{Value, json};
 use artoo_plugin_sdk::shell::Typed;
 use std::cell::Cell;
+use std::path::PathBuf;
 use std::rc::Rc;
 
 /// The issue's key and title as text the tab selects and copies (`Frame::selecting`), by the names its selection
@@ -122,6 +123,18 @@ fn section_with(head: Div) -> Div {
                 .text_size(px(13.))
                 .text_color(theme::text()),
         )
+}
+
+/// A section's one row while it holds nothing: `No attachments`.
+fn empty_row(text: &'static str) -> Div {
+    div()
+        .flex()
+        .items_center()
+        .h(px(34.))
+        .px(px(16.))
+        .text_size(px(13.))
+        .text_color(theme::faint())
+        .child(text)
 }
 
 /// A fact of the facts row: its label over its value.
@@ -272,15 +285,25 @@ impl Page {
             .gap(px(16.))
             .child(self.description(&issue, cx))
             .when(caps.subtasks, |d| d.child(self.subtasks(&issue, cx)))
-            .when(!issue.links.is_empty() || self.issue.link.is_some(), |d| {
-                d.child(self.links(&issue, cx))
-            })
-            .when(!issue.attachments.is_empty(), |d| {
+            // A tracker that has them shows them while the issue has none too, with their Add.
+            .when(
+                caps.links || !issue.links.is_empty() || self.issue.link.is_some(),
+                |d| d.child(self.links(&issue, cx)),
+            )
+            .when(caps.attachments || !issue.attachments.is_empty(), |d| {
                 d.child(self.attachments(&issue, cx))
             })
             .child(self.comments(&issue, cx));
         let details = self.details(&issue, cx);
+        let attaches = caps.attachments;
         frame()
+            // A file dropped on the page is attached to the issue; on a composer, to what is written there.
+            .when(attaches, |d| {
+                d.drag_over::<ExternalPaths>(|s, _, _, _| s.border_color(theme::focus()))
+                    .on_drop(cx.listener(|this, paths: &ExternalPaths, _, cx| {
+                        this.attach_files(paths.paths().to_vec(), cx)
+                    }))
+            })
             .child(
                 div()
                     .id("tasks-issue")
@@ -1537,6 +1560,9 @@ impl Page {
                 );
             }
         }
+        if issue.links.is_empty() {
+            body = body.child(empty_row("No linked issues"));
+        }
         section_with(head).child(body.pb(px(6.))).into_any_element()
     }
 
@@ -1925,12 +1951,14 @@ impl Page {
             .child(
                 look::small_button("tasks-attach", "Add")
                     .child(icons::icon("plus").size(px(12.)).text_color(theme::muted()))
-                    .tip("Add a file  ⇧⌘A; or drop one on the page")
+                    // ⇧⌘A is the Agents window's while nothing is typed; a comment being written takes it.
+                    .tip("Add a file, or drop one on the page")
                     .on_click(cx.listener(|this, _: &ClickEvent, _, cx| this.pick_attachment(cx))),
             );
         let (pictures, files): (Vec<&Attachment>, Vec<&Attachment>) =
             issue.attachments.iter().partition(|a| a.image());
         let open = self.shown_whole(cx);
+        let any_picture = !pictures.is_empty();
         let mut tiles = div().flex().flex_wrap().gap(px(10.)).p(px(12.));
         for a in pictures {
             let image = self.store.read(cx).images.get(&a.id).cloned();
@@ -2006,39 +2034,54 @@ impl Page {
             );
         }
         section_with(head)
-            .child(tiles)
+            .when(any_picture, |d| d.child(tiles))
             .child(rows)
+            .when(issue.attachments.is_empty(), |d| {
+                d.child(empty_row("No attachments"))
+            })
             .into_any_element()
     }
 
-    /// + Add: a file picked and attached.
+    /// + Add: files picked and attached.
     pub fn pick_attachment(&mut self, cx: &mut Context<Self>) {
+        let paths = cx.prompt_for_paths(gpui::PathPromptOptions {
+            files: true,
+            directories: false,
+            multiple: true,
+            prompt: None,
+        });
+        cx.spawn(async move |this, cx| {
+            let Ok(Ok(Some(paths))) = paths.await else {
+                return;
+            };
+            this.update(cx, |p, cx| p.attach_files(paths, cx)).ok();
+        })
+        .detach();
+    }
+
+    /// Files `paths` attached to the issue on screen, one after another; then it is read again, or the first
+    /// refusal is said.
+    pub fn attach_files(&mut self, paths: Vec<PathBuf>, cx: &mut Context<Self>) {
         let Some(key) = self.issue_key() else {
             return;
         };
         let Some(site) = self.store.read(cx).site_for(&key) else {
             return;
         };
-        let paths = cx.prompt_for_paths(gpui::PathPromptOptions {
-            files: true,
-            directories: false,
-            multiple: false,
-            prompt: None,
-        });
+        let files: Vec<PathBuf> = paths.into_iter().filter(|p| p.is_file()).collect();
+        if files.is_empty() {
+            return;
+        }
         let frame = self.frame.clone();
         cx.spawn(async move |this, cx| {
-            let Ok(Ok(Some(paths))) = paths.await else {
-                return;
-            };
-            let Some(file) = paths.into_iter().next() else {
-                return;
-            };
             let sent = cx
-                .background_spawn(async move { model::attach(&site, &key, &file) })
+                .background_spawn(async move {
+                    (files.iter()).try_for_each(|file| model::attach(&site, &key, file).map(drop))
+                })
                 .await;
             this.update(cx, |p, cx| {
                 match sent {
-                    Ok(_) => p.read_again(cx),
+                    Ok(()) => p.read_again(cx),
                     Err(why) => frame.error(why.into(), cx),
                 }
                 cx.notify();

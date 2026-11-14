@@ -47,6 +47,10 @@ pub struct Caps {
     pub project_keys: bool,
     /// A workflow that allows some moves and not others, drawn over the page (View workflow…).
     pub workflow: bool,
+    /// Links between issues (`blocks`, `relates to`): an issue's Linked issues, shown while it has none too.
+    pub links: bool,
+    /// Files attached from Tasks (`Tracker::attach`): an issue's Attachments, shown while it has none too.
+    pub attachments: bool,
 }
 
 impl Caps {
@@ -59,6 +63,8 @@ impl Caps {
         labels: true,
         project_keys: true,
         workflow: true,
+        links: true,
+        attachments: true,
     };
     /// None of them.
     pub const NONE: Caps = Caps {
@@ -69,6 +75,8 @@ impl Caps {
         labels: false,
         project_keys: false,
         workflow: false,
+        links: false,
+        attachments: false,
     };
 }
 

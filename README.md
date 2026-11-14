@@ -12,10 +12,10 @@ your own).
 - **An issue's page**: its facts as controls (state by the workflow, the fields a move asks, assignee, priority,
   type, epic, sprint); the key and the title selected to copy (`⌘C`; the branch name and link in `⋯`); the title and
   the description edited in place, kept on this Mac until saved, a change someone else saved meanwhile compared before
-  yours goes; sub-tasks with an empty row (`N`), linked issues (`L`), attachments and pictures where they stand (a
-  click opens one whole in Artoo's viewer), details from the edit screen. Comments: yours to everyone, edited and
-  deleted, a reply mentioning who wrote last (`R`), people mentioned by name (`@Juniper.Hale`); `⇥` sends it to your
-  agent instead.
+  yours goes; sub-tasks with an empty row (`N`), linked issues (`L`) and attachments, shown while there are none too
+  (a file dropped on the page is attached), pictures where they stand (a click opens one whole in Artoo's viewer),
+  details from the edit screen. Comments: yours to everyone, edited and deleted, a reply mentioning who wrote last
+  (`R`), people mentioned by name (`@Juniper.Hale`); `⇥` sends it to your agent instead.
 - **Someone else's change**: what is on screen is read again each minute; a line over the title says who changed
   what, dots mark it.
 - **New task** (`⌥⌘N`): a sheet over the window — project, type, epic, summary, description, assignee, priority,
@@ -59,8 +59,8 @@ while that plugin is off, the site is left out and Settings says why, rather tha
 
 A company's tracker is added by a plugin of its own, in Rust, beside Tasks: it depends on the SDK and on this
 repository's `api/` crate (`artoo-tasks-api`) alone, and in its `install` offers its kind — its name, the hosts its
-sites are on, what its sign-in asks, what it has (priority, types, sprints, sub-tasks, labels, project keys, a workflow) — and how a
-site of it is opened as a `Tracker`:
+sites are on, what its sign-in asks, what it has (priority, types, sprints, sub-tasks, labels, project keys, a workflow,
+links, attachments) — and how a site of it is opened as a `Tracker`:
 
 ```rust
 fn install(cx: &mut App) {

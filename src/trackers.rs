@@ -50,7 +50,10 @@ pub fn trello() -> TrackerKind {
             "https://trello.com/power-ups/admin".into(),
         )),
         unit: "board".into(),
-        caps: Caps::NONE,
+        caps: Caps {
+            attachments: true,
+            ..Caps::NONE
+        },
     }
 }
 
