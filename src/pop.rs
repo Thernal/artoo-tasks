@@ -96,6 +96,17 @@ fn open_of(rows: &[Row], who: Option<&Person>) -> usize {
         .count()
 }
 
+/// A menu of one value numbered as Move to is: its first nine values picked by 1–9 while nothing is typed in it.
+fn numbered(rows: &mut [PopRow]) {
+    let one = |r: &PopRow| {
+        matches!(r.act, Act::Set(..) | Act::Epic(_) | Act::Sheet(..)) && r.key.is_none()
+    };
+    for (n, r) in (1..=9).zip(rows.iter_mut().filter(|r| one(r))) {
+        r.key = char::from_digit(n, 10);
+        r.hint.get_or_insert_with(|| n.to_string());
+    }
+}
+
 /// How long a toast shows, as the app's do: ⌘Z undoes a reassignment while its toast is there.
 const TOAST_SHOWN: Duration = Duration::from_secs(6);
 
@@ -312,6 +323,9 @@ impl Page {
                 none.rule = !rows.is_empty();
                 none.checked = now.is_none();
                 rows.push(none);
+                if f.is_empty() {
+                    numbered(&mut rows);
+                }
                 let site = s.site_of(&host);
                 let foot = now.as_ref().map(|k| format!("Open {k} in Jira ↗"));
                 if let (Some(k), Some(site)) = (now, site) {
@@ -381,6 +395,9 @@ impl Page {
                 let name = field.as_ref().map_or(id.clone(), |f| f.name.clone());
                 if let Some(field) = &field {
                     rows = field_rows(field, &current, &f, s, &pop.key);
+                    if f.is_empty() {
+                        numbered(&mut rows);
+                    }
                     // A field of free words (labels, a number, a day): what is typed is the value.
                     if field.values.is_empty() && !pop.filter.trim().is_empty() {
                         let typed = pop.filter.trim().to_owned();
@@ -435,7 +452,10 @@ impl Page {
                 reading: false,
             },
             PopKind::Sheet(field) => {
-                let (title, rows, reading) = self.sheet_rows(field, &f, cx);
+                let (title, mut rows, reading) = self.sheet_rows(field, &f, cx);
+                if f.is_empty() {
+                    numbered(&mut rows);
+                }
                 let filter = (rows.len() > 7
                     || !matches!(field.as_str(), "issuetype" | "epic" | "sprint" | "priority"))
                 .then(|| format!("Filter {}", title.to_lowercase()));
@@ -733,6 +753,18 @@ impl Page {
                             .text_color(theme::faint())
                             .child(h)
                     }))
+                    // A numbered row whose hint is a count (`2 of 3 done`): its number after it.
+                    .children(
+                        (r.key.filter(char::is_ascii_digit).map(String::from))
+                            .filter(|n| r.hint.as_ref() != Some(n))
+                            .map(|n| {
+                                div()
+                                    .flex_none()
+                                    .text_size(px(11.))
+                                    .text_color(theme::faint())
+                                    .child(n)
+                            }),
+                    )
                     .when(r.checked, |d| {
                         d.child(
                             icons::icon("check")
@@ -1413,6 +1445,26 @@ mod tests {
             id: id.into(),
             name: name.into(),
         }
+    }
+
+    #[test]
+    fn a_menu_of_one_value_is_numbered_one_to_nine_after_what_has_a_key() {
+        let set = |n: usize| {
+            PopRow::new(
+                Lead::None,
+                format!("v{n}"),
+                Act::Set("priority".into(), json!(n)),
+            )
+        };
+        let mut rows: Vec<PopRow> = (0..11).map(set).collect();
+        rows[0].key = Some('i');
+        rows[2].hint = Some("2 of 3 done".into());
+        rows.push(PopRow::new(Lead::None, "Open", Act::Url(String::new())));
+        numbered(&mut rows);
+        let keys: String = rows.iter().map(|r| r.key.unwrap_or('-')).collect();
+        assert_eq!(keys, "i123456789--");
+        assert_eq!(rows[1].hint.as_deref(), Some("1"));
+        assert_eq!(rows[2].hint.as_deref(), Some("2 of 3 done"));
     }
 
     #[test]
