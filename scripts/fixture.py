@@ -90,7 +90,7 @@ Done when the refund equals what was captured for any split, rounding is half-ev
 COMMENTS = {
     'PAY-412': [
         ('juniper', '2026-11-12T10:20:00.000+0000', 'Seen on three merchants since Tuesday; all three take split tenders.'),
-        ('ember', '2026-11-13T06:05:00.000+0000', '[~accountid:u-you] the ledger job flags these as remainders. Can the fix also clear the ones already booked, or is that its own issue?'),
+        ('ember', '2026-11-13T06:05:00.000+0000', '[~accountid:u-you] the ledger job flags these as remainders. Can the fix also clear the ones already booked, or is that its own issue?\n\n!ledger-remainders.png|thumbnail!'),
         ('you', '2026-11-13T07:40:00.000+0000', "Its own: this one stops new remainders. I'll write it up."),
     ],
 }

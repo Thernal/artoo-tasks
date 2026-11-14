@@ -98,7 +98,7 @@
       },
       "emailAddress": ""
      },
-     "body": "[~accountid:u-you] the ledger job flags these as remainders. Can the fix also clear the ones already booked, or is that its own issue?",
+     "body": "[~accountid:u-you] the ledger job flags these as remainders. Can the fix also clear the ones already booked, or is that its own issue?\n\n!ledger-remainders.png|thumbnail!",
      "created": "2026-11-13T06:05:00.000+0000",
      "updated": "2026-11-13T06:05:00.000+0000"
     },

@@ -773,24 +773,8 @@ impl Page {
             let n = ix + 1;
             let (key, site) = (issue.row.key.clone(), issue.site.clone());
             let on = self.note.as_ref().is_some_and(|note| matches!(&note.spot, Spot::Para { key: k, para, .. } if *k == key && *para == n));
-            // A picture standing alone: drawn where it stands.
-            let picture = picture_of(&para, &issue.attachments);
-            let content: AnyElement = match picture {
-                Some(a) => self.picture(&a, cx),
-                None => div()
-                    .text_size(px(13.))
-                    .line_height(px(20.))
-                    .text_color(theme::text())
-                    .child(markdown::body(
-                        &para,
-                        true,
-                        format!("tasks-para-{n}"),
-                        None,
-                        None,
-                        cx,
-                    ))
-                    .into_any_element(),
-            };
+            // Its pictures drawn where they stand, alone or among its words.
+            let content = self.drawn(&para, &issue.attachments, format!("tasks-para-{n}"), cx);
             body = body.child(
                 div()
                     .id(SharedString::from(format!("para-{n}")))
@@ -1152,6 +1136,41 @@ impl Page {
             .tip(format!("{} · click to open", a.name))
             .on_click(cx.listener(move |this, _: &ClickEvent, _, cx| this.open_whole(&id, cx)))
             .into_any_element()
+    }
+
+    /// Markdown `md` as the page draws text: its words, and each picture of `attachments` named in it drawn where
+    /// it stands; `id` is the words' own.
+    fn drawn(
+        &mut self,
+        md: &str,
+        attachments: &[Attachment],
+        id: String,
+        cx: &mut Context<Self>,
+    ) -> AnyElement {
+        let words = |md: &str, id: String, cx: &mut Context<Self>| {
+            div()
+                .text_size(px(13.))
+                .line_height(px(20.))
+                .text_color(theme::text())
+                .child(markdown::body(md, true, id, None, None, cx))
+                .into_any_element()
+        };
+        let pieces = pieces(md, attachments);
+        if let [Piece::Words(md)] = pieces.as_slice() {
+            return words(md, id, cx);
+        }
+        let mut out = div()
+            .id(SharedString::from(format!("{id}-pieces")))
+            .flex()
+            .flex_col()
+            .gap(px(8.));
+        for (ix, piece) in pieces.into_iter().enumerate() {
+            out = out.child(match piece {
+                Piece::Words(md) => words(&md, format!("{id}-{ix}"), cx),
+                Piece::Picture(a) => self.picture(&a, cx),
+            });
+        }
+        out.into_any_element()
     }
 
     /// The app's image viewer, which the tab offers its parts.
@@ -2245,20 +2264,12 @@ impl Page {
                             .child(div().flex_1())
                             .child(acts),
                     )
-                    .child(
-                        div()
-                            .text_size(px(13.))
-                            .line_height(px(20.))
-                            .text_color(theme::text())
-                            .child(markdown::body(
-                                &body,
-                                true,
-                                format!("tasks-comment-{}", c.id),
-                                None,
-                                None,
-                                cx,
-                            )),
-                    ),
+                    .child(self.drawn(
+                        &body,
+                        &issue.attachments,
+                        format!("tasks-comment-{}", c.id),
+                        cx,
+                    )),
             )
             .into_any_element()
     }
@@ -3228,24 +3239,93 @@ impl Page {
     }
 }
 
-/// A paragraph that is a picture alone (`*name.png*`, as wiki's `!name.png|thumbnail!` reads), and its attachment.
-fn picture_of(para: &str, attachments: &[Attachment]) -> Option<Attachment> {
-    let name = para.trim().strip_prefix('*')?.strip_suffix('*')?;
-    attachments
-        .iter()
-        .find(|a| a.image() && a.name == name)
-        .cloned()
+/// A part of a text as the page draws it.
+#[derive(Clone, Debug, PartialEq)]
+enum Piece {
+    /// Markdown between pictures.
+    Words(String),
+    /// A picture of the attachments, where its name stands.
+    Picture(Attachment),
 }
 
-/// An issue's pictures in the order its page shows them: those standing in its description, then the rest of its
-/// attachments' as Attachments tiles them; each once.
+/// Markdown `md` cut at each picture of `attachments` named in it (`*name.png*`, as wiki's `!name.png|thumbnail!`
+/// reads): the words before it, the picture, the words after; a fenced code block is left whole, words that are only
+/// blank are left out.
+fn pieces(md: &str, attachments: &[Attachment]) -> Vec<Piece> {
+    let names: Vec<(String, &Attachment)> = (attachments.iter())
+        .filter(|a| a.image() && !a.name.is_empty())
+        .map(|a| (format!("*{}*", a.name), a))
+        .collect();
+    let mut out = Vec::new();
+    let mut words = String::new();
+    let mut fenced = false;
+    let said = |words: &mut String, out: &mut Vec<Piece>| {
+        let at_start = out.is_empty();
+        let text = if at_start {
+            words.trim_end()
+        } else {
+            words.trim()
+        };
+        if !text.trim().is_empty() {
+            out.push(Piece::Words(text.to_owned()));
+        }
+        words.clear();
+    };
+    for line in md.split_inclusive('\n') {
+        if line.trim_start().starts_with("```") {
+            fenced = !fenced;
+        }
+        if fenced || names.is_empty() {
+            words.push_str(line);
+            continue;
+        }
+        let mut rest = line;
+        while let Some(at) = rest.find('*') {
+            let found = (names.iter()).find(|(n, _)| {
+                rest[at..].starts_with(n.as_str())
+                    && !(rest[..at].ends_with('*') || at == 0 && words.ends_with('*'))
+                    && !rest[at + n.len()..].starts_with('*')
+            });
+            match found {
+                Some((n, a)) => {
+                    words.push_str(&rest[..at]);
+                    said(&mut words, &mut out);
+                    out.push(Piece::Picture((*a).clone()));
+                    rest = &rest[at + n.len()..];
+                }
+                None => {
+                    words.push_str(&rest[..=at]);
+                    rest = &rest[at + 1..];
+                }
+            }
+        }
+        words.push_str(rest);
+    }
+    said(&mut words, &mut out);
+    out
+}
+
+/// The pictures of `pieces`.
+fn pictures(pieces: Vec<Piece>) -> impl Iterator<Item = Attachment> {
+    pieces.into_iter().filter_map(|p| match p {
+        Piece::Picture(a) => Some(a),
+        Piece::Words(_) => None,
+    })
+}
+
+/// An issue's pictures in the order its page shows them: those standing in its description, then in its comments,
+/// then the rest of its attachments' as Attachments tiles them; each once.
 fn page_pictures(issue: &Issue) -> Vec<Attachment> {
+    let at = &issue.attachments;
     let standing = (model::paragraphs(&issue.description).iter())
-        .filter_map(|p| picture_of(p, &issue.attachments))
+        .flat_map(|p| pictures(pieces(p, at)))
+        .collect::<Vec<_>>();
+    let commented = (issue.comments.iter())
+        .flat_map(|c| pictures(pieces(&wiki::to_markdown(c.body.trim()), at)))
         .collect::<Vec<_>>();
     let tiled = issue.attachments.iter().filter(|a| a.image()).cloned();
     let mut out: Vec<Attachment> = Vec::new();
-    for a in standing.into_iter().chain(tiled) {
+    for a in standing.into_iter().chain(commented).chain(tiled) {
         if !out.iter().any(|x| x.id == a.id) {
             out.push(a);
         }
@@ -3309,6 +3389,38 @@ fn chrono_like_now() -> String {
     )
 }
 
+/// Whether a file named `name` is a picture the tracker shows where it stands.
+fn is_picture(name: &str) -> bool {
+    let lower = name.to_lowercase();
+    [".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp", ".svg"]
+        .iter()
+        .any(|e| lower.ends_with(e))
+}
+
+/// The Markdown for a file the tracker attached (`answer`, Jira's list of attachments or Trello's one): a picture by
+/// its name alone (`*shot.png*`, which `wiki::from_markdown` sends as `!shot.png|thumbnail!`), any other file a link to it.
+fn attached_markdown(answer: &Value, sent: &str) -> String {
+    let one = if answer.is_array() {
+        &answer[0]
+    } else {
+        answer
+    };
+    let name = (one["filename"].as_str())
+        .or(one["name"].as_str())
+        .unwrap_or(sent)
+        .to_owned();
+    let url = (one["content"].as_str())
+        .or(one["url"].as_str())
+        .unwrap_or_default();
+    if is_picture(&name) && !name.contains(' ') {
+        format!("*{name}*")
+    } else if url.is_empty() {
+        name
+    } else {
+        format!("[{name}]({url})")
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -3351,38 +3463,56 @@ mod tests {
         };
         let ids: Vec<String> = page_pictures(&issue).into_iter().map(|a| a.id).collect();
         assert_eq!(ids, ["2", "1"]);
+        let issue = Issue {
+            comments: vec![Comment {
+                body: "Seen here: !replay.png|thumbnail!".into(),
+                ..Default::default()
+            }],
+            ..issue
+        };
+        let ids: Vec<String> = page_pictures(&issue).into_iter().map(|a| a.id).collect();
+        assert_eq!(ids, ["2", "1"]);
+        let issue = Issue {
+            attachments: (issue.attachments.iter().cloned())
+                .chain([file("4", "after.png", "image/png")])
+                .collect(),
+            comments: vec![Comment {
+                body: "!after.png!".into(),
+                ..Default::default()
+            }],
+            ..issue
+        };
+        let ids: Vec<String> = page_pictures(&issue).into_iter().map(|a| a.id).collect();
+        assert_eq!(ids, ["2", "4", "1"]);
     }
-}
 
-/// Whether a file named `name` is a picture the tracker shows where it stands.
-fn is_picture(name: &str) -> bool {
-    let lower = name.to_lowercase();
-    [".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp", ".svg"]
-        .iter()
-        .any(|e| lower.ends_with(e))
-}
-
-/// The Markdown for a file the tracker attached (`answer`, Jira's list of attachments or Trello's one): a picture by
-/// its name alone (`*shot.png*`, which `wiki::from_markdown` sends as `!shot.png|thumbnail!`), any other file a link to it.
-fn attached_markdown(answer: &Value, sent: &str) -> String {
-    let one = if answer.is_array() {
-        &answer[0]
-    } else {
-        answer
-    };
-    let name = (one["filename"].as_str())
-        .or(one["name"].as_str())
-        .unwrap_or(sent)
-        .to_owned();
-    let url = (one["content"].as_str())
-        .or(one["url"].as_str())
-        .unwrap_or_default();
-    if is_picture(&name) && !name.contains(' ') {
-        format!("*{name}*")
-    } else if url.is_empty() {
-        name
-    } else {
-        format!("[{name}]({url})")
+    #[test]
+    fn a_picture_named_among_words_is_drawn_where_it_stands() {
+        let shot = Attachment {
+            id: "1".into(),
+            name: "shot.png".into(),
+            mime: "image/png".into(),
+            ..Default::default()
+        };
+        let at = std::slice::from_ref(&shot);
+        let words = |s: &str| Piece::Words(s.into());
+        assert_eq!(
+            pieces("Seen here: *shot.png* after the split.", at),
+            [
+                words("Seen here:"),
+                Piece::Picture(shot.clone()),
+                words("after the split.")
+            ]
+        );
+        assert_eq!(pieces("*shot.png*", at), [Piece::Picture(shot.clone())]);
+        // A name that is no picture of the issue, bold, or in a code block stays words.
+        for md in [
+            "*other.png* stays",
+            "**shot.png** stays",
+            "```\n*shot.png*\n```",
+        ] {
+            assert_eq!(pieces(md, at), [words(md)]);
+        }
     }
 }
 
