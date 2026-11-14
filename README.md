@@ -5,7 +5,8 @@ Inbox, Code, Branches and Merge requests. It reads and writes Jira (Cloud, Serve
 your own).
 
 - **A board** (`⌃⌘5`): the side panel's boards under each site's host, Drafts at its foot; a board's issues as a
-  list beside a preview, or as columns (List · Board, `V`), grouped by state, story or epic (`G`), `Mine · All` with
+  list beside a preview, or as columns (List · Board, `V`), grouped by state, story or epic (`G`) — on the columns a
+  lane across them for each story or epic, folding as the list's groups do —, `Mine · All` with
   the people's faces beside them, the filter (`⌘F`). Each row's state chip moves the issue (`⌥S`), its face assigns
   it (`A`, `I` to you; a reassignment says from whom to whom in a toast with Undo, `⌘Z`); the epic, the sprint,
   Blocked by.

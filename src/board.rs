@@ -1,6 +1,7 @@
 //! A board as the space's own page shows it: which issues it shows (the sprint going on, Mine or All, the people
 //! picked, what the filter says), grouped by state, story or epic; drawn as a list beside a preview or as columns of
-//! cards. What is drawn here reads plain data (`Shown`); the page's state and its clicks are the page's (`page.rs`).
+//! cards, a lane across them for each story or epic. What is drawn here reads plain data (`Shown`); the page's state
+//! and its clicks are the page's (`page.rs`).
 
 use crate::keep::Group;
 use crate::look::{self, sep};
@@ -116,20 +117,7 @@ pub fn shelves(
     match group {
         Group::State => (info.columns.iter().enumerate())
             .map(|(ix, c)| {
-                let first = (rows.iter())
-                    .find(|r| c.states.contains(&r.state.id))
-                    .map(|r| r.state.clone());
-                let state = first.unwrap_or_else(|| State {
-                    id: c.states.first().cloned().unwrap_or_default(),
-                    name: c.name.clone(),
-                    category: if ix + 1 == info.columns.len() {
-                        "done".into()
-                    } else if ix == 0 {
-                        "new".into()
-                    } else {
-                        "indeterminate".into()
-                    },
-                });
+                let state = column_state(info, rows.iter().copied(), ix);
                 Shelf {
                     id: format!("state:{}", c.name),
                     head: Head::State {
@@ -225,6 +213,31 @@ pub fn shelves(
             out
         }
     }
+}
+
+/// The state column `ix` of `info` is drawn with: the first of its states one of `rows` is in, else one named for
+/// the column, its category by its place (the first new, the last done).
+pub fn column_state<'a>(
+    info: &BoardInfo,
+    mut rows: impl Iterator<Item = &'a Row>,
+    ix: usize,
+) -> State {
+    let Some(c) = info.columns.get(ix) else {
+        return State::default();
+    };
+    (rows.find(|r| c.states.contains(&r.state.id)))
+        .map(|r| r.state.clone())
+        .unwrap_or_else(|| State {
+            id: c.states.first().cloned().unwrap_or_default(),
+            name: c.name.clone(),
+            category: if ix + 1 == info.columns.len() {
+                "done".into()
+            } else if ix == 0 {
+                "new".into()
+            } else {
+                "indeterminate".into()
+            },
+        })
 }
 
 /// The people on the board's issues in play: you first, then by how many issues, Unassigned (`None`) last; each
@@ -329,6 +342,8 @@ impl Page {
         } else if !self.folded_ids.remove(id) {
             self.folded_ids.insert(id.to_owned());
         }
+        // The list's group and the board's lane are one fold, each drawn moving.
+        self.motion.mark(format!("lane-{id}"));
         self.moved(&format!("shelf-{id}"), cx);
     }
 
@@ -923,8 +938,12 @@ impl Page {
             .into_any_element()
     }
 
-    /// The board's columns side by side, each with its cards.
+    /// The board's columns side by side, each with its cards; grouped by story or epic, a lane for each across
+    /// them (`lanes`).
     fn columns(&mut self, shown: &Shown, cx: &mut Context<Self>) -> AnyElement {
+        if shown.group != Group::State {
+            return self.lanes(shown, cx);
+        }
         let mut cols = div()
             .id("tasks-cols")
             .flex_1()
@@ -933,34 +952,10 @@ impl Page {
             .gap(px(8.))
             .p(px(10.))
             .overflow_x_scroll();
-        let play: Vec<&Row> = shown.all.iter().collect();
-        let filter = Filter {
-            mine: self.store.read(cx).mine,
-            faces: shown.people_picked.clone(),
-            words: self.frame.filter(cx),
-        };
-        let kept = self::shown(&play, &filter, shown.me.as_ref());
-        for (ix, c) in shown.info.columns.iter().enumerate() {
-            let cards: Vec<&Row> = kept
-                .iter()
-                .copied()
-                .filter(|r| r.parent.is_none() && shown.info.column_of(&r.state) == ix)
-                .collect();
-            let state = (shown.all.iter())
-                .find(|r| c.states.contains(&r.state.id))
-                .map(|r| r.state.clone())
-                .unwrap_or(State {
-                    id: String::new(),
-                    name: c.name.clone(),
-                    category: if ix + 1 == shown.info.columns.len() {
-                        "done".into()
-                    } else if ix == 0 {
-                        "new".into()
-                    } else {
-                        "indeterminate".into()
-                    },
-                });
-            let done = state.done();
+        for (ix, shelf) in shown.shelves.iter().enumerate() {
+            let Head::State { name, state } = &shelf.head else {
+                continue;
+            };
             let mut col = div()
                 .id(SharedString::from(format!("col-{ix}")))
                 .flex_1()
@@ -972,52 +967,264 @@ impl Page {
                 .rounded(px(8.))
                 .bg(theme::base())
                 .overflow_y_scroll()
-                .child(
-                    div()
-                        .flex_none()
-                        .flex()
-                        .items_center()
-                        .gap(px(6.))
-                        .h(px(26.))
-                        .px(px(6.))
-                        .text_size(px(12.))
-                        .font_weight(FontWeight::SEMIBOLD)
-                        .text_color(theme::text())
-                        .child(look::state_mark(&state, 13.))
-                        .child(c.name.clone())
-                        .child(
-                            div()
-                                .px(px(6.))
-                                .rounded_full()
-                                .bg(theme::hover())
-                                .text_size(px(11.))
-                                .font_weight(FontWeight::NORMAL)
-                                .text_color(theme::muted())
-                                .child(cards.len().to_string()),
-                        )
-                        .child(div().flex_1())
-                        .child(
-                            div()
-                                .id(SharedString::from(format!("col-add-{ix}")))
-                                .size(px(22.))
-                                .flex()
-                                .items_center()
-                                .justify_center()
-                                .rounded(px(4.))
-                                .hover(|s| s.bg(theme::hover()))
-                                .child(icons::icon("plus").size(px(12.)).text_color(theme::muted()))
-                                .tip(format!("New task in {}", c.name))
-                                .on_click(cx.listener(|this, _: &ClickEvent, _, cx| {
-                                    this.open_sheet(None, None, cx)
-                                })),
-                        ),
-                );
-            for r in cards {
-                col = col.child(self.card(r, done, shown, cx));
+                .child(self.column_head(ix, name, state, shelf.rows.len(), cx));
+            for r in &shelf.rows {
+                col = col.child(self.card(r, state.done(), shown, cx));
             }
             cols = cols.child(col);
         }
         cols.into_any_element()
+    }
+
+    /// A column's head: its state's mark, its name, how many cards it holds, `+` for a new task in it.
+    fn column_head(
+        &mut self,
+        ix: usize,
+        name: &str,
+        state: &State,
+        count: usize,
+        cx: &mut Context<Self>,
+    ) -> Div {
+        div()
+            .flex_none()
+            .flex()
+            .items_center()
+            .gap(px(6.))
+            .h(px(26.))
+            .px(px(6.))
+            .text_size(px(12.))
+            .font_weight(FontWeight::SEMIBOLD)
+            .text_color(theme::text())
+            .whitespace_nowrap()
+            .child(look::state_mark(state, 13.))
+            .child(name.to_owned())
+            .child(
+                div()
+                    .px(px(6.))
+                    .rounded_full()
+                    .bg(theme::hover())
+                    .text_size(px(11.))
+                    .font_weight(FontWeight::NORMAL)
+                    .text_color(theme::muted())
+                    .child(count.to_string()),
+            )
+            .child(div().flex_1())
+            .child(
+                div()
+                    .id(SharedString::from(format!("col-add-{ix}")))
+                    .size(px(22.))
+                    .flex()
+                    .items_center()
+                    .justify_center()
+                    .rounded(px(4.))
+                    .hover(|s| s.bg(theme::hover()))
+                    .child(icons::icon("plus").size(px(12.)).text_color(theme::muted()))
+                    .tip(format!("New task in {name}"))
+                    .on_click(
+                        cx.listener(|this, _: &ClickEvent, _, cx| this.open_sheet(None, None, cx)),
+                    ),
+            )
+    }
+
+    /// Grouped by story or epic, as Jira's swimlanes: the columns' heads across the top, then a lane for each group
+    /// of the list — its head across the columns, its cards in each, folding as the list's group does —, Other
+    /// issues or No epic last.
+    fn lanes(&mut self, shown: &Shown, cx: &mut Context<Self>) -> AnyElement {
+        let columns = shown.info.columns.clone();
+        let states: Vec<State> = (0..columns.len())
+            .map(|ix| column_state(&shown.info, shown.all.iter(), ix))
+            .collect();
+        let col = |r: &Row| shown.info.column_of(&r.state);
+        // The columns hold their 180 px each and the gaps between them, the lanes' edges besides; past the page's
+        // width the lanes scroll sideways under their heads.
+        let wide = columns.len() as f32 * 188. + 4.;
+        let mut heads = div().flex_none().flex().gap(px(8.)).px(px(6.)).pb(px(6.));
+        for (ix, c) in columns.iter().enumerate() {
+            let count = (shown.shelves.iter().flat_map(|s| &s.rows))
+                .filter(|r| col(r) == ix)
+                .count();
+            heads = heads.child(div().flex_1().min_w(px(180.)).child(self.column_head(
+                ix,
+                &c.name,
+                &states[ix],
+                count,
+                cx,
+            )));
+        }
+        let mut body = div()
+            .id("tasks-lanes")
+            .flex_1()
+            .min_h_0()
+            .flex()
+            .flex_col()
+            .gap(px(8.))
+            .pb(px(10.))
+            .overflow_y_scroll();
+        for shelf in &shown.shelves {
+            let folded = self.folded(&shelf.id);
+            let key = format!("lane-{}", shelf.id);
+            let mut lane = div()
+                .flex_none()
+                .flex()
+                .flex_col()
+                .px(px(6.))
+                .pb(px(6.))
+                .rounded(px(8.))
+                .bg(theme::base())
+                .child(self.lane_head(shelf, folded, shown, cx));
+            // Its cards fold in and out moving; folded and still, they are not drawn.
+            if !folded || self.motion.recent(&key) {
+                let mut cells = div().flex().gap(px(8.));
+                for (ix, state) in states.iter().enumerate() {
+                    let mut cell = div().flex_1().min_w(px(180.)).flex().flex_col().gap(px(6.));
+                    for r in shelf.rows.iter().filter(|r| col(r) == ix) {
+                        cell = cell.child(self.card(r, state.done(), shown, cx));
+                    }
+                    cells = cells.child(cell);
+                }
+                lane = lane.children(self.folding(&key, !folded, cells));
+            }
+            body = body.child(lane);
+        }
+        div()
+            .id("tasks-lanes-across")
+            .flex_1()
+            .min_h_0()
+            .flex()
+            .flex_col()
+            .pt(px(10.))
+            .px(px(10.))
+            .overflow_x_scroll()
+            .child(
+                div()
+                    .flex_1()
+                    .min_h_0()
+                    .w_full()
+                    .min_w(px(wide))
+                    .flex()
+                    .flex_col()
+                    .child(heads)
+                    .child(body),
+            )
+            .into_any_element()
+    }
+
+    /// A lane's head across the columns, its chevron first: a story's kind, key and summary, its sub-tasks done of
+    /// all, who has it and its state, picked and opened as the list's story is; an epic's key and name, its issues
+    /// done of all, `+`; or Other issues, No epic, with how many. A click on it, or on a story's chevron, folds it.
+    fn lane_head(
+        &mut self,
+        shelf: &Shelf,
+        folded: bool,
+        shown: &Shown,
+        cx: &mut Context<Self>,
+    ) -> AnyElement {
+        let id = shelf.id.clone();
+        let head = div()
+            .id(SharedString::from(format!("lane-{id}")))
+            .flex_none()
+            .flex()
+            .items_center()
+            .gap(px(8.))
+            .h(px(34.))
+            .px(px(4.))
+            .text_size(px(12.))
+            .text_color(theme::muted())
+            .whitespace_nowrap()
+            .cursor_pointer();
+        let chevron = look::chevron(SharedString::from(format!("lane-turn-{id}")), !folded, 12.);
+        let faint = |words: String| div().flex_none().text_color(theme::faint()).child(words);
+        let title = |words: String| {
+            div()
+                .min_w_0()
+                .truncate()
+                .font_weight(FontWeight::SEMIBOLD)
+                .text_color(theme::text())
+                .child(words)
+        };
+        let head = match &shelf.head {
+            Head::Story { row, done, all } => {
+                let key = row.key.clone();
+                let picked = self.pick.as_deref() == Some(&row.key);
+                let me = (shown.me.as_ref())
+                    .is_some_and(|me| row.assignee.as_ref().is_some_and(|p| p.id == me.id));
+                let fold_id = id.clone();
+                return head
+                    .rounded(px(6.))
+                    .when(picked, |d| d.bg(theme::selected()))
+                    .child(
+                        div()
+                            .id(SharedString::from(format!("lane-fold-{id}")))
+                            .flex_none()
+                            .child(chevron)
+                            .on_click(cx.listener(move |this, _: &ClickEvent, _, cx| {
+                                cx.stop_propagation();
+                                this.fold(&fold_id, cx)
+                            })),
+                    )
+                    .child(look::kind_mark(&row.kind, row.subtask))
+                    .child(look::key(&row.key))
+                    .child(title(row.summary.clone()))
+                    .child(faint(format!("{done} of {all}")))
+                    .child(div().flex_1())
+                    .children(row.assignee.as_ref().map(|p| look::face(&p.name, me, 16.)))
+                    .child(self.state_control(row, Anchor::Row(row.key.clone()), true, cx))
+                    .tip(format!("{} {}", row.key, row.summary))
+                    .on_click(cx.listener(move |this, e: &ClickEvent, _, cx| {
+                        this.pick_row(&key, cx);
+                        if e.click_count() > 1 {
+                            this.open_issue(&key, cx);
+                        }
+                    }))
+                    .into_any_element();
+            }
+            Head::Epic {
+                epic: Some(e),
+                done,
+                all,
+            } => {
+                let e = self.store.read(cx).epic(e);
+                let (name, key) = (e.name.clone(), e.key.clone());
+                head.child(chevron)
+                    .child(look::kind_mark("Epic", false))
+                    .child(look::key(&e.key))
+                    .child(look::epic_lozenge(&e))
+                    .child(faint(format!("{done} of {all}")))
+                    .child(div().flex_1())
+                    .child(
+                        div()
+                            .id(SharedString::from(format!("lane-add-{id}")))
+                            .size(px(20.))
+                            .flex()
+                            .items_center()
+                            .justify_center()
+                            .rounded(px(4.))
+                            .hover(|s| s.bg(theme::hover()))
+                            .child(icons::icon("plus").size(px(12.)).text_color(theme::muted()))
+                            .tip(format!("New task in {name}"))
+                            .on_click(cx.listener(move |this, _: &ClickEvent, _, cx| {
+                                cx.stop_propagation();
+                                this.open_sheet(Some(key.clone()), None, cx);
+                            })),
+                    )
+            }
+            Head::Epic {
+                epic: None, all, ..
+            } => head
+                .child(chevron)
+                .child(title("No epic".into()))
+                .child(faint(all.to_string())),
+            Head::Other => head
+                .child(chevron)
+                .child(title("Other issues".into()))
+                .child(faint(shelf.rows.len().to_string())),
+            Head::State { name, .. } => head
+                .child(chevron)
+                .child(title(name.clone()))
+                .child(faint(shelf.rows.len().to_string())),
+        };
+        head.on_click(cx.listener(move |this, _: &ClickEvent, _, cx| this.fold(&id, cx)))
+            .into_any_element()
     }
 
     fn card(&mut self, r: &Row, done: bool, shown: &Shown, cx: &mut Context<Self>) -> AnyElement {
@@ -1070,7 +1277,9 @@ impl Page {
                     .child(b.key.clone()),
             );
         }
-        if let Some(e) = &epic {
+        if shown.group != Group::Epic
+            && let Some(e) = &epic
+        {
             meta = meta.child(look::epic_lozenge(e));
         }
         meta = meta.child(div().flex_1());
@@ -1705,6 +1914,17 @@ mod tests {
                 .collect::<Vec<_>>(),
             ["PAY-418", "PAY-395"]
         );
+    }
+
+    #[test]
+    fn a_column_is_drawn_with_the_state_an_issue_is_in_else_its_first_by_its_place() {
+        let rows = [row("PAY-412", "prog", "indeterminate", None)];
+        assert_eq!(column_state(&info(), rows.iter(), 1), rows[0].state);
+        let empty = column_state(&info(), rows.iter(), 2);
+        assert_eq!((empty.id.as_str(), empty.name.as_str()), ("done", "Done"));
+        assert!(empty.done());
+        assert_eq!(column_state(&info(), rows.iter(), 0).category, "new");
+        assert_eq!(column_state(&info(), rows.iter(), 9), State::default());
     }
 
     #[test]
