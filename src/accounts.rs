@@ -1,7 +1,9 @@
-//! Settings → Accounts, its Trackers group, under the code hosts: each tracker the plugin reads, what it reaches and
-//! how it signs in, Test and Change; a tracker not reached says so with Retry; Change opens its fields — the site,
-//! the email (Jira Cloud), the token — and what it reaches; Add a tracker. The sites are kept in the plugin's
-//! `trackers.txt`, each token in `~/.config/tokens/<host>` as the Mac keeps internal hosts' tokens.
+//! The accounts on trackers, everyone's whichever project reads them: Settings → Accounts, its Trackers group, under
+//! the code hosts — each account, what it reaches and how it signs in, Test and Change; one not reached says so with
+//! Retry; Change opens its fields — the site, the email (Jira Cloud), the token — and what it reaches; Add a tracker.
+//! The space's connect card opens the same form for a new account (`open_in_space`), drawn as a card's fields, and
+//! links what it saves to the project. The sites are kept in the plugin's `trackers.txt`, each token in
+//! `~/.config/tokens/<host>` as the Mac keeps internal hosts' tokens.
 
 use crate::jira::{self, Site};
 use crate::model;
@@ -9,29 +11,18 @@ use crate::store::{Read, Store};
 use crate::trackers::{self, SiteExt};
 use artoo_plugin_sdk::core::textedit::TextEdit;
 use artoo_plugin_sdk::gpui::{
-    AnyElement, App, ClickEvent, Context, Entity, FontWeight, KeyDownEvent, SharedString, Window,
-    div, prelude::*,
+    self, AnyElement, App, ClickEvent, Context, Entity, FontWeight, KeyDownEvent, SharedString,
+    Window, div, prelude::*,
 };
 use artoo_plugin_sdk::kit::hover::Hover;
 use artoo_plugin_sdk::kit::{controls, icons, input, px, theme};
 use artoo_plugin_sdk::shell::{Frame, Typed};
 use artoo_tasks_api::TrackerKind;
-use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
 
 /// The fields' input: the keys while one of them is typed into.
 pub const INPUT: &str = "tasks.accounts";
-
-thread_local! {
-    /// The row to open when the group is drawn next: the first run's Connect… asks for it before Settings opens.
-    static WANTED: RefCell<Option<String>> = const { RefCell::new(None) };
-}
-
-/// The row of `tracker` (`jira`, a host) opened when Settings → Accounts shows next.
-pub fn open_row(tracker: Option<String>, _cx: &mut App) {
-    WANTED.with(|w| *w.borrow_mut() = tracker);
-}
 
 /// A tracker's fields as Change shows them.
 struct Form {
@@ -42,6 +33,10 @@ struct Form {
     /// The field with the keyboard: the site, the email, the token.
     at: usize,
     why: Option<String>,
+    /// The project whose space opened it: what it saves, that project reads.
+    project: Option<String>,
+    /// The site is the kind's own (Trello's): not asked.
+    fixed: bool,
 }
 
 impl Form {
@@ -63,6 +58,43 @@ impl Form {
             fields: [url, email, String::new()],
             at: 0,
             why: None,
+            project: None,
+            fixed: false,
+        }
+    }
+
+    /// Whether field `ix` is asked: the site unless it is the kind's own, the user when the kind has one.
+    fn asks(&self, ix: usize) -> bool {
+        match ix {
+            0 => !self.fixed,
+            1 => self.kind().user.is_some(),
+            _ => true,
+        }
+    }
+
+    /// The field after `at` (before it, `back`), round, skipping what is not asked.
+    fn step(&mut self, back: bool) {
+        for _ in 0..3 {
+            self.at = (self.at + if back { 2 } else { 1 }) % 3;
+            if self.asks(self.at) {
+                break;
+            }
+        }
+    }
+
+    /// Where a token is made for the kind typed: the link's words and its address, when it is known.
+    fn token_page(&self) -> Option<(String, String)> {
+        let kind = self.kind();
+        let jira = kind.id == trackers::JIRA;
+        let cloud =
+            jira && (self.fields[0].contains("atlassian.net") || !self.fields[1].trim().is_empty());
+        match (&kind.token_page, cloud) {
+            (Some((words, url)), _) => Some((words.clone(), url.clone())),
+            (None, true) => Some((
+                "Make one on id.atlassian.com".into(),
+                "https://id.atlassian.com/manage-profile/security/api-tokens".into(),
+            )),
+            _ => None,
         }
     }
 
@@ -123,6 +155,40 @@ impl Accounts {
         self.form = None;
         self.frame.leave_keyboard(INPUT, cx);
         cx.notify();
+    }
+
+    /// A new account of kind `kind` (`jira`, `trello`, a plugin's) asked in project `project`'s space: its form, on
+    /// the kind's own site when it has one.
+    pub fn open_in_space(&mut self, kind: &str, project: String, cx: &mut Context<Self>) {
+        let own = (trackers::kinds().into_iter())
+            .find(|k| k.id == kind)
+            .and_then(|k| k.hosts.iter().find(|h| !h.starts_with('*')).cloned());
+        let mut form = match &own {
+            Some(host) => Form::filled(None, format!("https://{host}")),
+            None => Form::new(None),
+        };
+        form.project = Some(project);
+        form.fixed = own.is_some();
+        if form.fixed {
+            form.step(false);
+        }
+        self.form = Some(form);
+        self.frame.take_keyboard(INPUT, cx);
+        cx.notify();
+    }
+
+    /// The space's form closed, if it is open there.
+    pub fn close_in_space(&mut self, cx: &mut Context<Self>) {
+        if self.form.as_ref().is_some_and(|f| f.project.is_some()) {
+            self.close(cx);
+        }
+    }
+
+    /// The kind of the account being added in a space, while its form is open there.
+    pub fn space_kind(&self) -> Option<String> {
+        (self.form.as_ref())
+            .filter(|f| f.project.is_some())
+            .map(|f| f.kind().id)
     }
 
     /// Test: who the token is on the site, read now.
@@ -207,8 +273,18 @@ impl Accounts {
             form.why = Some(why);
             return cx.notify();
         }
+        let project = form.project.clone();
         self.close(cx);
-        self.store.update(cx, |s, cx| s.sites_again(cx));
+        let linked = self.store.update(cx, |s, cx| {
+            s.sites_again(cx);
+            match project {
+                Some(project) => s.link(&project, &host, true, cx),
+                None => Ok(()),
+            }
+        });
+        if let Err(why) = linked {
+            self.frame.error(why.into(), cx);
+        }
     }
 
     /// Remove: the site out of `trackers.txt`; its token stays where the Mac keeps it.
@@ -232,12 +308,7 @@ impl Accounts {
             return Typed::Leave;
         };
         if key.key == "tab" {
-            let step = if key.modifiers.shift { 2 } else { 1 };
-            form.at = (form.at + step) % 3;
-            // A kind whose token alone signs in asks no user.
-            if form.at == 1 && form.kind().user.is_none() {
-                form.at = (form.at + step) % 3;
-            }
+            form.step(key.modifiers.shift);
             cx.notify();
             return Typed::Kept;
         }
@@ -249,7 +320,7 @@ impl Accounts {
             }
             input::Edit::Enter { .. } => {
                 if at < 2 {
-                    form.at += 1;
+                    form.step(false);
                 } else {
                     self.save(cx);
                     return if self.form.is_some() {
@@ -265,7 +336,14 @@ impl Accounts {
         Typed::Kept
     }
 
-    fn field(&self, ix: usize, placeholder: &str, cx: &mut Context<Self>) -> AnyElement {
+    /// Field `ix`; `card` drawn as a card's field (32 px, a ring while it has the keyboard), else as a row's.
+    fn field(
+        &self,
+        ix: usize,
+        placeholder: &str,
+        card: bool,
+        cx: &mut Context<Self>,
+    ) -> AnyElement {
         let Some(form) = self.form.as_ref() else {
             return div().into_any_element();
         };
@@ -283,8 +361,9 @@ impl Accounts {
             div()
                 .id(SharedString::from(format!("tracker-field-{ix}")))
                 .flex_1()
-                .h(px(28.))
-                .px(px(8.))
+                .min_w_0()
+                .h(px(if card { 32. } else { 28. }))
+                .px(px(if card { 10. } else { 8. }))
                 .flex()
                 .items_center()
                 .rounded(px(6.))
@@ -294,6 +373,15 @@ impl Accounts {
                     theme::focus()
                 } else {
                     theme::island_border()
+                })
+                .when(card && active, |d| {
+                    d.shadow(vec![gpui::BoxShadow {
+                        color: theme::focus().into(),
+                        offset: gpui::point(px(0.), px(0.)),
+                        blur_radius: px(0.),
+                        spread_radius: px(1.),
+                        inset: false,
+                    }])
                 })
                 .text_size(px(13.))
                 .cursor_text()
@@ -320,8 +408,7 @@ impl Accounts {
         let why = form.why.clone();
         let kind = form.kind();
         let jira = kind.id == trackers::JIRA;
-        let cloud =
-            jira && (form.fields[0].contains("atlassian.net") || !form.fields[1].trim().is_empty());
+        let page = form.token_page();
         let reaches = host
             .as_ref()
             .map(|h| match self.store.read(cx).projects.get(h) {
@@ -350,21 +437,19 @@ impl Accounts {
                 .child(t.to_owned())
         };
         let line = |l, v: AnyElement| div().flex().items_center().gap(px(10.)).child(l).child(v);
-        let (make, make_url) = match (&kind.token_page, cloud) {
-            (Some((words, url)), _) => (words.clone(), url.clone()),
-            (None, true) => (
-                "Make one on id.atlassian.com".into(),
-                "https://id.atlassian.com/manage-profile/security/api-tokens".into(),
-            ),
-            (None, false) if jira => ("Make one in your Jira profile".into(), String::new()),
-            (None, false) => (String::new(), String::new()),
+        let (make, make_url) = match page {
+            Some(page) => page,
+            None if jira => ("Make one in your Jira profile".into(), String::new()),
+            None => (String::new(), String::new()),
         };
         let site = self.field(
             0,
             "your-team.atlassian.net, jira.example.com or trello.com",
+            false,
             cx,
         );
-        let user = (kind.user.clone()).map(|(label, hint)| (label, self.field(1, &hint, cx)));
+        let user =
+            (kind.user.clone()).map(|(label, hint)| (label, self.field(1, &hint, false, cx)));
         let token = self.field(
             2,
             if host.is_some() {
@@ -372,6 +457,7 @@ impl Accounts {
             } else {
                 "API token or personal access token"
             },
+            false,
             cx,
         );
         div()
@@ -464,6 +550,114 @@ impl Accounts {
                     ),
             )
             .into_any_element()
+    }
+
+    /// The form opened in a space, as the design system draws a card's fields: each label over its field, where
+    /// the token is made beside its label; what went wrong, Cancel and Connect at the foot.
+    pub fn space_form(&mut self, cx: &mut Context<Self>) -> Option<AnyElement> {
+        let form = self.form.as_ref().filter(|f| f.project.is_some())?;
+        let (why, kind, fixed, page) =
+            (form.why.clone(), form.kind(), form.fixed, form.token_page());
+        let labelled = |label: String, aside: Option<AnyElement>, field: AnyElement| {
+            div()
+                .flex()
+                .flex_col()
+                .gap(px(4.))
+                .child(
+                    div()
+                        .flex()
+                        .items_center()
+                        .gap(px(8.))
+                        .child(
+                            div()
+                                .flex_1()
+                                .text_size(px(12.))
+                                .text_color(theme::muted())
+                                .child(label),
+                        )
+                        .children(aside),
+                )
+                .child(div().flex().child(field))
+        };
+        let made = page.map(|(words, url)| {
+            div()
+                .id("tracker-make-token")
+                .flex()
+                .items_center()
+                .gap(px(4.))
+                .text_size(px(12.))
+                .text_color(theme::accent())
+                .cursor_pointer()
+                .child(words)
+                .child(
+                    icons::icon("external")
+                        .size(px(11.))
+                        .text_color(theme::accent()),
+                )
+                .on_click(move |_, _, cx| cx.open_url(&url))
+                .into_any_element()
+        });
+        let site = (!fixed).then(|| {
+            let field = self.field(0, "your-team.atlassian.net or jira.example.com", true, cx);
+            labelled("Site".into(), None, field)
+        });
+        let user = (kind.user.clone()).map(|(label, hint)| {
+            let field = self.field(1, &hint, true, cx);
+            labelled(label, None, field)
+        });
+        let hint = match kind.id.as_str() {
+            trackers::JIRA => "API token or personal access token".to_owned(),
+            _ => format!("Your {} token", kind.name),
+        };
+        let token = self.field(2, &hint, true, cx);
+        Some(
+            div()
+                .flex()
+                .flex_col()
+                .child(
+                    div()
+                        .flex()
+                        .flex_col()
+                        .gap(px(12.))
+                        .px(px(16.))
+                        .pt(px(4.))
+                        .pb(px(14.))
+                        .children(site)
+                        .children(user)
+                        .child(labelled("Token".into(), made, token)),
+                )
+                .child(
+                    div()
+                        .flex()
+                        .items_center()
+                        .gap(px(8.))
+                        .px(px(16.))
+                        .py(px(12.))
+                        .border_t_1()
+                        .border_color(theme::island_border())
+                        .child(
+                            div()
+                                .flex_1()
+                                .min_w_0()
+                                .text_size(px(12.))
+                                .text_color(theme::removed())
+                                .children(why),
+                        )
+                        .child(
+                            crate::look::small_button("tracker-space-cancel", "Cancel")
+                                .h(px(28.))
+                                .tip("esc")
+                                .on_click(
+                                    cx.listener(|this, _: &ClickEvent, _, cx| this.close(cx)),
+                                ),
+                        )
+                        .child(
+                            controls::primary_button("tracker-space-save", "Connect", "↵")
+                                .on_click(cx.listener(|this, _: &ClickEvent, _, cx| this.save(cx))),
+                        ),
+                )
+                .into_any_element(),
+        )
     }
 
     /// One tracker's row: its mark, host and what it reaches, how it signs in or why it is not reached; Test (Retry)
@@ -586,27 +780,6 @@ impl Accounts {
     }
 
     fn draw(&mut self, cx: &mut Context<Self>) -> AnyElement {
-        if let Some(want) = WANTED.with(|w| w.borrow_mut().take()) {
-            let host = self
-                .store
-                .read(cx)
-                .sites
-                .iter()
-                .find(|s| s.host() == want)
-                .map(|s| s.host().to_owned());
-            if self.form.is_none() {
-                let site = host.as_ref().and_then(|h| self.store.read(cx).site_of(h));
-                // A kind asked for by its id (the first run's Connect…) starts on its host.
-                let own = (trackers::kinds().into_iter())
-                    .find(|k| k.id == want)
-                    .and_then(|k| k.hosts.iter().find(|h| !h.starts_with('*')).cloned());
-                self.form = Some(match (&site, own) {
-                    (None, Some(host)) => Form::filled(None, format!("https://{host}")),
-                    _ => Form::new(site.as_ref()),
-                });
-                self.frame.take_keyboard(INPUT, cx);
-            }
-        }
         let sites = self.store.read(cx).sites.clone();
         let missing = self.store.read(cx).missing.clone();
         let mut out = div()
@@ -628,7 +801,8 @@ impl Accounts {
                     .child(why),
             );
         }
-        let adding = self.form.as_ref().is_some_and(|f| f.host.is_none());
+        // A new account's form in a space is the space's.
+        let adding = (self.form.as_ref()).is_some_and(|f| f.host.is_none() && f.project.is_none());
         let adding_kind = (self.form.as_ref()).map_or_else(trackers::jira, Form::kind);
         if adding {
             out = out.child(
@@ -692,7 +866,7 @@ fn adds() -> String {
 }
 
 /// A tracker kind's mark: its name's first letter, on Jira's blue, Trello's or another's own hue.
-fn mark(kind: &TrackerKind) -> impl IntoElement {
+pub fn mark(kind: &TrackerKind) -> impl IntoElement {
     let letter: String = kind.name.chars().take(1).collect();
     let hue = match kind.id.as_str() {
         trackers::JIRA => 2,
@@ -764,7 +938,7 @@ fn keep_site(
     Ok(())
 }
 
-/// The group's rows for Settings → Accounts, and its fields' input.
+/// The group's rows for Settings → Accounts, its fields' input, and the accounts the space's connect card draws.
 pub fn parts(
     store: Entity<Store>,
     frame: Rc<dyn Frame>,
@@ -772,6 +946,7 @@ pub fn parts(
 ) -> (
     artoo_plugin_sdk::shell::settings::Rows,
     artoo_plugin_sdk::shell::Input,
+    Entity<Accounts>,
 ) {
     let view = cx.new(|cx| Accounts::new(store, frame.clone(), cx));
     let redraw = frame.clone();
@@ -790,5 +965,5 @@ pub fn parts(
         selected: Rc::new(|_| None),
         caret: Rc::new(|_| true),
     };
-    (rows, input)
+    (rows, input, view)
 }

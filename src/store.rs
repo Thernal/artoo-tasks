@@ -57,7 +57,12 @@ pub struct Changed {
 pub type LinkKind = (String, String, String);
 
 pub struct Store {
+    /// Every account kept, whichever project reads it.
     pub sites: Vec<Site>,
+    /// Which accounts each project's space reads.
+    pub links: crate::links::Links,
+    /// The project whose space was shown last: the board picked is among its accounts'.
+    pub here: Option<String>,
     /// Sites named with no token, said in the space.
     pub missing: Vec<String>,
     /// Who the token is, by site.
@@ -141,6 +146,8 @@ impl Store {
     fn blank(sites: Vec<Site>, missing: Vec<String>, kept: keep::Kept) -> Self {
         Store {
             sites,
+            links: crate::links::read(),
+            here: None,
             missing,
             me: HashMap::new(),
             boards: None,
@@ -245,17 +252,7 @@ impl Store {
             }
             this.update(cx, |this, cx| {
                 this.me.extend(mes);
-                let kept = this
-                    .board
-                    .clone()
-                    .filter(|b| boards.iter().any(|x| x.key() == *b));
-                this.board = kept.or_else(|| {
-                    // The board opened lately first, else the first.
-                    (this.kept.recent.iter())
-                        .find(|r| boards.iter().any(|b| b.key() == **r))
-                        .cloned()
-                        .or_else(|| boards.first().map(Board::key))
-                });
+                this.board = this.board_among(&boards);
                 this.boards = Some(if boards.is_empty() && !unread.is_empty() {
                     Read::Failed(
                         unread
@@ -359,6 +356,124 @@ impl Store {
         self.me.clear();
         self.projects.clear();
         self.read_boards_again(cx);
+        cx.notify();
+    }
+
+    /// Whether the space of the project shown reads account `host`; every account while no project was shown (an
+    /// agent's read).
+    fn reads_here(&self, host: &str) -> bool {
+        match &self.here {
+            Some(project) => (self.links.get(project)).is_some_and(|h| h.iter().any(|x| x == host)),
+            None => true,
+        }
+    }
+
+    /// The board to show among `boards`: the one picked when the project shown reads its account, else the board
+    /// opened lately there, else its first.
+    fn board_among(&self, boards: &[Board]) -> Option<BoardId> {
+        let here: Vec<&Board> = (boards.iter())
+            .filter(|b| self.reads_here(&b.site))
+            .collect();
+        let picked = (self.board.clone()).filter(|b| here.iter().any(|x| x.key() == *b));
+        picked.or_else(|| {
+            (self.kept.recent.iter())
+                .find(|r| here.iter().any(|b| b.key() == **r))
+                .cloned()
+                .or_else(|| here.first().map(|b| b.key()))
+        })
+    }
+
+    /// The accounts project `project`'s space reads.
+    pub fn sites_in(&self, project: &str) -> Vec<Site> {
+        let hosts = self.links.get(project);
+        (self.sites.iter())
+            .filter(|s| hosts.is_some_and(|h| h.iter().any(|x| x == s.host())))
+            .cloned()
+            .collect()
+    }
+
+    /// The accounts kept that project `project`'s space does not read yet.
+    pub fn sites_not_in(&self, project: &str) -> Vec<Site> {
+        let hosts = self.links.get(project);
+        (self.sites.iter())
+            .filter(|s| !hosts.is_some_and(|h| h.iter().any(|x| x == s.host())))
+            .cloned()
+            .collect()
+    }
+
+    /// Project `project`'s accounts whose boards were not read, and why.
+    pub fn unread_in(&self, project: &str) -> Vec<(String, String)> {
+        let hosts = self.links.get(project);
+        (self.unread.iter())
+            .filter(|(h, _)| hosts.is_some_and(|x| x.contains(h)))
+            .cloned()
+            .collect()
+    }
+
+    /// The boards of project `project`'s accounts; failed when none was read and one of its accounts was not.
+    pub fn boards_in(&self, project: &str) -> Option<Read<Vec<Board>>> {
+        let hosts = self.links.get(project)?;
+        let unread = self.unread_in(project);
+        let failed = || {
+            let why: Vec<String> = unread.iter().map(|(_, w)| w.clone()).collect();
+            Read::Failed(why.join(" · "))
+        };
+        Some(match self.boards.as_ref()? {
+            Read::Reading => Read::Reading,
+            Read::Failed(_) if unread.is_empty() => Read::Done(Vec::new()),
+            Read::Failed(_) => failed(),
+            Read::Done(boards) => {
+                let ours: Vec<Board> = (boards.iter())
+                    .filter(|b| hosts.contains(&b.site))
+                    .cloned()
+                    .collect();
+                if ours.is_empty() && !unread.is_empty() {
+                    failed()
+                } else {
+                    Read::Done(ours)
+                }
+            }
+        })
+    }
+
+    /// Project `project`'s space shown: the board picked is one of its accounts'.
+    pub fn show_project(&mut self, project: &str, cx: &mut Context<Self>) {
+        if self.here.as_deref() == Some(project) {
+            return;
+        }
+        self.here = Some(project.to_owned());
+        self.pick_here(cx);
+    }
+
+    /// Account `host` read by project `project`'s space (`on`), or no longer; the board picked again when it is the
+    /// project shown.
+    pub fn link(
+        &mut self,
+        project: &str,
+        host: &str,
+        on: bool,
+        cx: &mut Context<Self>,
+    ) -> Result<(), String> {
+        crate::links::set(&mut self.links, project, host, on)?;
+        if self.here.as_deref() == Some(project) {
+            self.pick_here(cx);
+        }
+        self.read_boards(cx);
+        cx.notify();
+        Ok(())
+    }
+
+    fn pick_here(&mut self, cx: &mut Context<Self>) {
+        let boards = match &self.boards {
+            Some(Read::Done(boards)) => boards.clone(),
+            _ => return cx.notify(),
+        };
+        let board = self.board_among(&boards);
+        if board != self.board {
+            self.board = board;
+            self.faces.clear();
+            self.read_board(false, cx);
+        }
         cx.notify();
     }
 

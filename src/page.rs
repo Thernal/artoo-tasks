@@ -179,6 +179,14 @@ pub struct Page {
     pub sheet: Option<crate::sheet::Sheet>,
     /// Whether New task is over the window: the part's `Overlay` reads it.
     pub sheet_shown: Rc<std::cell::Cell<bool>>,
+    /// The tab's accounts, whose form the connect card draws.
+    pub accounts: Option<Entity<crate::accounts::Accounts>>,
+    /// The project this tab's space is of, as the page last drew it: what the shell's hooks read, since a hook may
+    /// not read the tab (`project_now`).
+    pub here: String,
+    /// The connect card on screen in place of the board, `+` beside Boards pressed with this many accounts read:
+    /// one more and the board is back.
+    pub connecting: Option<usize>,
 }
 
 impl Page {
@@ -219,7 +227,40 @@ impl Page {
             issue: Default::default(),
             sheet: None,
             sheet_shown: Rc::default(),
+            accounts: None,
+            here: String::new(),
+            connecting: None,
         }
+    }
+
+    /// The project this tab's space is of, as last drawn.
+    pub fn project(&self) -> &str {
+        &self.here
+    }
+
+    /// The tab's project, read from the tab: its main working tree, whatever worktree is open; empty with none. Read
+    /// in the page's own drawing alone: the shell's hooks run while the tab is being changed.
+    fn project_now(&self, cx: &App) -> String {
+        let places = self.frame.places(cx);
+        (places.project.or(places.root))
+            .map(|p| p.to_string_lossy().into_owned())
+            .unwrap_or_default()
+    }
+
+    /// The connect card on screen, over the board: another tracker for the project.
+    pub fn connect(&mut self, cx: &mut Context<Self>) {
+        self.connecting = Some(self.store.read(cx).sites_in(&self.here).len());
+        self.drafts = false;
+        cx.notify();
+    }
+
+    /// The connect card gone: the project's boards on screen.
+    pub fn connected(&mut self, cx: &mut Context<Self>) {
+        self.connecting = None;
+        if let Some(accounts) = self.accounts.clone() {
+            accounts.update(cx, |a, cx| a.close_in_space(cx));
+        }
+        cx.notify();
     }
 
     /// The issue page's key, when one is on screen.
@@ -252,6 +293,10 @@ impl Page {
         let site = route.and_then(places_of::site_of);
         if key.is_some() {
             self.drafts = false;
+        }
+        let project = self.here.clone();
+        if !project.is_empty() {
+            self.store.update(cx, |s, cx| s.show_project(&project, cx));
         }
         self.store.update(cx, |s, cx| match key {
             Some(key) => {
@@ -723,14 +768,23 @@ impl Page {
         .into_any_element()
     }
 
-    /// The board's own page: the board, the drafts, or what is missing for them.
+    /// The board's own page: the board, the drafts, or what is missing for them; the connect card while the project
+    /// reads no tracker, or while `+` asked for another.
     fn own_page(&mut self, cx: &mut Context<Self>) -> AnyElement {
+        let project = self.here.clone();
         let s = self.store.read(cx);
-        if s.sites.is_empty() {
-            return self.first_run(cx);
+        let sites = s.sites_in(&project);
+        match self.connecting {
+            Some(n) if sites.len() > n => self.connecting = None,
+            Some(_) => return self.connect_page(&project, !sites.is_empty(), cx),
+            None if sites.is_empty() => return self.connect_page(&project, false, cx),
+            None => {}
         }
-        if let Some(Read::Failed(why)) = &s.boards {
-            let why = why.clone();
+        let s = self.store.read(cx);
+        let boards = s.boards_in(&project);
+        // The board picked is another project's, in a window behind: this one's is picked once it is in front.
+        let elsewhere = (s.board.as_ref()).is_some_and(|b| !sites.iter().any(|x| x.host() == b.0));
+        if let Some(Read::Failed(why)) = boards {
             return (self.page_frame_own())
                 .child(controls::empty_state(
                     "alert",
@@ -740,9 +794,13 @@ impl Page {
                 ))
                 .into_any_element();
         }
-        if matches!(&s.boards, Some(Read::Done(b)) if b.is_empty()) {
-            let host = s
-                .sites
+        if elsewhere {
+            return (self.page_frame_own())
+                .child(controls::skeleton("tasks-board-elsewhere", 6))
+                .into_any_element();
+        }
+        if matches!(&boards, Some(Read::Done(b)) if b.is_empty()) {
+            let host = sites
                 .first()
                 .map(|x| x.host().to_owned())
                 .unwrap_or_default();
@@ -790,7 +848,7 @@ impl Page {
         self.board(cx)
     }
 
-    fn page_frame_own(&self) -> gpui::Div {
+    pub(crate) fn page_frame_own(&self) -> gpui::Div {
         artoo_plugin_sdk::kit::island()
             .flex_1()
             .flex()
@@ -799,94 +857,6 @@ impl Page {
             .min_w_0()
             .overflow_hidden()
             .bg(theme::editor())
-    }
-
-    /// No tracker yet: what the space shows, each tracker opening its row in Settings → Accounts.
-    fn first_run(&mut self, cx: &mut Context<Self>) -> AnyElement {
-        let row = |id: &'static str,
-                   name: &'static str,
-                   mark: &'static str,
-                   hue: u32,
-                   asks: &'static str,
-                   cx: &mut Context<Self>| {
-            div()
-                .flex()
-                .items_center()
-                .gap(px(12.))
-                .w(px(420.))
-                .px(px(14.))
-                .py(px(12.))
-                .rounded(px(8.))
-                .border_1()
-                .border_color(theme::island_border())
-                .child(
-                    div()
-                        .size(px(28.))
-                        .rounded(px(6.))
-                        .flex()
-                        .items_center()
-                        .justify_center()
-                        .bg(crate::look::tint(theme::code(hue), 0.2))
-                        .text_color(theme::code(hue))
-                        .font_weight(gpui::FontWeight::BOLD)
-                        .child(mark),
-                )
-                .child(
-                    div()
-                        .flex_1()
-                        .flex()
-                        .flex_col()
-                        .child(
-                            div()
-                                .text_size(px(13.))
-                                .font_weight(gpui::FontWeight::SEMIBOLD)
-                                .text_color(theme::text())
-                                .child(name),
-                        )
-                        .child(
-                            div()
-                                .text_size(px(12.))
-                                .text_color(theme::muted())
-                                .child(asks),
-                        ),
-                )
-                .child(
-                    crate::look::small_button(id, "Connect…").on_click(cx.listener(
-                        move |this, _, _, cx| {
-                            crate::accounts::open_row(Some(name.to_lowercase()), cx);
-                            this.frame
-                                .open_settings(artoo_plugin_sdk::hosts::connect::SETTINGS, cx)
-                        },
-                    )),
-                )
-        };
-        (self.page_frame_own())
-            .child(
-                div()
-                    .flex_1()
-                    .flex()
-                    .flex_col()
-                    .items_center()
-                    .justify_center()
-                    .gap(px(10.))
-                    .child(div().text_size(px(16.)).font_weight(gpui::FontWeight::SEMIBOLD).text_color(theme::text()).child("Connect a tracker"))
-                    .child(
-                        div()
-                            .text_size(px(13.))
-                            .text_color(theme::muted())
-                            .child("Its boards and issues show here, beside the code and the merge requests that do them."),
-                    )
-                    .child(
-                        div()
-                            .mt(px(10.))
-                            .flex()
-                            .flex_col()
-                            .gap(px(8.))
-                            .child(row("tasks-connect-jira", "Jira", "J", 2, "A site, an email and an API token", cx))
-                            .child(row("tasks-connect-trello", "Trello", "T", 4, "A key and a token", cx)),
-                    ),
-            )
-            .into_any_element()
     }
 }
 
@@ -908,7 +878,20 @@ pub fn branch_name(key: &str, summary: &str) -> String {
 }
 
 impl Render for Page {
-    fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+    fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        // The project is read here, where the tab may be read; the side panel and the bar, drawn by the tab, read it
+        // as kept, so the tab is drawn again when it changes.
+        let project = self.project_now(cx);
+        if project != self.here {
+            self.here = project.clone();
+            let frame = self.frame.clone();
+            cx.defer(move |cx| frame.redraw(cx));
+        }
+        // The store's board follows the project of the window in front; one behind waits for its turn.
+        if window.is_window_active() && self.store.read(cx).here.as_deref() != Some(&project) {
+            let store = self.store.clone();
+            cx.defer(move |cx| store.update(cx, |s, cx| s.show_project(&project, cx)));
+        }
         let page = match self.issue_key() {
             Some(key) => self.issue_page(key, cx),
             None => self.own_page(cx),

@@ -32,8 +32,13 @@ your own).
 
 ## Connect
 
-Settings → Accounts → Trackers: Add a tracker, its site, your email (Jira Cloud) or API key (Trello) and a token,
-Test, Save. The sites are kept in `~/Library/Application Support/Artoo/plugins/artoo-tasks/trackers.txt`, one a line:
+An account is kept once, for every project; each project reads the accounts it picks. A project that reads none
+yet shows `Connect a tracker` in the Tasks space: the accounts kept, each with Use, and Add… for a new one — its site,
+your email (Jira Cloud) or API key (Trello) and a token, in the same card; `+` beside Boards connects another later,
+and a host's menu in the side panel stops reading it there. Settings → Accounts → Trackers keeps the accounts: Test,
+Change, Remove, Add a tracker. The accounts are kept in
+`~/Library/Application Support/Artoo/plugins/artoo-tasks/trackers.txt`, one a line, and which a project reads in
+`projects.txt` beside it (the project's folder, a tab, its accounts' hosts):
 
 ```text
 https://jira.example.com

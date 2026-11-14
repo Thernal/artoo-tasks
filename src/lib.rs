@@ -3,16 +3,19 @@
 //! note for your agent on a paragraph of an issue or on a board as it is filtered; tools agents call for an issue or
 //! a search; issues moved, assigned, edited, commented on, linked and made, a write at a time, on your act.
 //!
-//! The trackers are named in `<data>/plugins/artoo-tasks/trackers.txt` (`https://jira.example.com`, an email after
-//! it for Jira Cloud), a line each, every one read; each one's token in `~/.config/tokens/<host>`.
+//! The accounts are named in `<data>/plugins/artoo-tasks/trackers.txt` (`https://jira.example.com`, an email after
+//! it for Jira Cloud), a line each, each one's token in `~/.config/tokens/<host>`; which of them a project's space
+//! reads, in `projects.txt` beside it (`links`).
 
 mod accounts;
 mod agents;
 mod bar;
 mod board;
+mod connect;
 mod issue;
 mod jira;
 mod keep;
+mod links;
 mod look;
 mod model;
 mod news;
@@ -291,7 +294,12 @@ fn install(cx: &mut App) {
             (view.clone(), view.clone(), view.clone(), view.clone());
         let (note_frame, note_view) = (frame.clone(), view.clone());
         let (step_view, open_view) = (view.clone(), view.clone());
-        let (accounts_rows, accounts_input) = accounts::parts(store.clone(), frame.clone(), cx);
+        let (accounts_rows, accounts_input, accounts) =
+            accounts::parts(store.clone(), frame.clone(), cx);
+        view.update(cx, |p, cx| {
+            cx.observe(&accounts, |_, _, cx| cx.notify()).detach();
+            p.accounts = Some(accounts);
+        });
         news::install_in(&store, &frame, cx);
         let (news_store, news_frame) = (store.clone(), frame.clone());
         let searching = frame.clone();
@@ -402,10 +410,25 @@ fn install(cx: &mut App) {
             ),
             accounts_input,
         ];
+        // `tasks:` the space; `tasks:connect` its connect card, `tasks:connect-<kind>` with that kind's form open.
+        let (snap_frame, snap_view) = (frame.clone(), view.clone());
+        let snapshot: artoo_plugin_sdk::shell::Snap = Rc::new(move |arg, cx| {
+            snap_frame.go_space(page::SPACE, cx);
+            if let Some(rest) = arg.strip_prefix("connect") {
+                snap_view.update(cx, |p, cx| {
+                    p.connect(cx);
+                    let project = p.project().to_owned();
+                    if let (Some(kind), Some(a)) = (rest.strip_prefix('-'), p.accounts.clone()) {
+                        a.update(cx, |a, cx| a.open_in_space(kind, project, cx));
+                    }
+                });
+            }
+        });
         Parts {
             actions,
             inputs,
             overlay: Some(overlay),
+            snapshots: vec![("tasks:", snapshot)],
             settings: vec![accounts_rows],
             searches: vec![search::scope(store.clone())],
             pages: Some(Pages {
@@ -486,8 +509,13 @@ fn install(cx: &mut App) {
                 view: view.clone().into(),
                 side: Some(Rc::new(
                     move |route: Option<&Route>, width: f32, cx: &mut App| {
-                        // The boards beside the board; an issue's page has the window's width.
-                        route.is_none().then(|| side::side(&side_view, width, cx))
+                        // The boards beside the board; an issue's page, and the first run with no tracker, have
+                        // the window's width.
+                        if route.is_none() {
+                            side::side(&side_view, width, cx)
+                        } else {
+                            None
+                        }
                     },
                 )),
                 show: Rc::new(move |route: Option<&Route>, fresh: bool, cx: &mut App| {
@@ -514,7 +542,7 @@ fn install(cx: &mut App) {
 /// ⌘K's Here on the space's pages: an issue's acts on its page, a board's on the board.
 fn here_of(page: &Entity<Page>, route: Option<&Route>, cx: &App) -> Vec<&'static str> {
     let p = page.read(cx);
-    if p.store.read(cx).sites.is_empty() {
+    if p.store.read(cx).sites_in(p.project()).is_empty() {
         return vec!["tasks.new"];
     }
     match route {

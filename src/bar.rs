@@ -53,7 +53,7 @@ pub fn bar(page: &Entity<Page>, route: Option<&Route>, cx: &mut App) -> Option<B
     let p = page.read(cx);
     let store = p.store.clone();
     let s = store.read(cx);
-    if s.sites.is_empty() {
+    if s.sites_in(p.project()).is_empty() {
         return Some(BarParts {
             path: Some(path(Vec::new(), "Tasks", None)),
             ..Default::default()

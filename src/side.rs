@@ -1,21 +1,29 @@
-//! The space's side panel: every site's boards under its host, the one picked marked, a site not reached saying so
-//! with when its boards were read; Drafts at the foot, with how many.
+//! The space's side panel: the boards of every account the project reads, under its host, the one picked marked, a
+//! site not reached saying so with when its boards were read; `+` connecting another, a host's menu leaving it;
+//! Drafts at the foot, with how many.
 
 use crate::page::{Page, SPACE};
 use crate::store::Read;
 use crate::trackers::SiteExt;
-use artoo_plugin_sdk::gpui::{AnyElement, App, Entity, FontWeight, SharedString, div, prelude::*};
+use artoo_plugin_sdk::gpui::{
+    self, AnyElement, App, Entity, FontWeight, SharedString, div, prelude::*,
+};
 use artoo_plugin_sdk::kit::hover::Hover;
 use artoo_plugin_sdk::kit::{controls, icons, px, theme};
+use artoo_plugin_sdk::shell::MenuItem;
 
-pub fn side(page: &Entity<Page>, width: f32, cx: &mut App) -> AnyElement {
+/// `None` while the project reads no tracker: the page alone, as wide as the window, says how to connect one.
+pub fn side(page: &Entity<Page>, width: f32, cx: &mut App) -> Option<AnyElement> {
     let p = page.read(cx);
+    let project = p.project().to_owned();
     let (store, frame, drafts_on) = (
         p.store.clone(),
         p.frame.clone(),
         p.drafts && p.issue_key().is_none(),
     );
     let s = store.read(cx);
+    let sites = s.sites_in(&project);
+    let unread = s.unread_in(&project);
     let mut list = div()
         .w(px(width))
         .min_w_0()
@@ -24,10 +32,11 @@ pub fn side(page: &Entity<Page>, width: f32, cx: &mut App) -> AnyElement {
         .gap(px(2.))
         .px(px(8.))
         .py(px(8.));
-    // No tracker yet: the page says how to connect one, the panel nothing.
-    if s.sites.is_empty() {
-        return list.into_any_element();
+    // No tracker yet: no panel at all, not an empty one keeping its room.
+    if sites.is_empty() {
+        return None;
     }
+    let connects = page.clone();
     list = list.child(
         div()
             .flex()
@@ -43,22 +52,51 @@ pub fn side(page: &Entity<Page>, width: f32, cx: &mut App) -> AnyElement {
                     .size(px(11.))
                     .text_color(theme::faint()),
             )
-            .child("BOARDS"),
+            .child(div().flex_1().child("BOARDS"))
+            .child(
+                div()
+                    .id("tasks-connect-more")
+                    .size(px(18.))
+                    .flex()
+                    .items_center()
+                    .justify_center()
+                    .rounded(px(4.))
+                    .cursor_pointer()
+                    .hover(|d| d.bg(theme::hover()))
+                    .child(icons::icon("plus").size(px(12.)).text_color(theme::muted()))
+                    .tip("Connect a tracker")
+                    .on_click(move |_, _, cx| connects.update(cx, |p, cx| p.connect(cx))),
+            ),
     );
-    match &s.boards {
+    match s.boards_in(&project) {
         Some(Read::Done(boards)) => {
-            for site in &s.sites {
+            for site in &sites {
                 let host = site.host().to_owned();
                 let keys = site.caps().project_keys;
-                let bad = s
-                    .unread
+                let bad = unread
                     .iter()
                     .find(|(h, _)| *h == host)
                     .map(|(_, why)| why.clone());
                 let mine: Vec<_> = boards.iter().filter(|b| b.site == host).collect();
+                let (leave_store, leave_project, leave_host, leave_frame) =
+                    (store.clone(), project.clone(), host.clone(), frame.clone());
                 list = list.child(
                     div()
                         .id(SharedString::from(format!("site-{host}")))
+                        .on_mouse_down(gpui::MouseButton::Right, move |e, _, cx| {
+                            let (store, project, host) = (
+                                leave_store.clone(),
+                                leave_project.clone(),
+                                leave_host.clone(),
+                            );
+                            let words = format!("Stop reading {host} in this project");
+                            let item = MenuItem::new(words, move |_, cx| {
+                                store
+                                    .update(cx, |s, cx| s.link(&project, &host, false, cx))
+                                    .ok();
+                            });
+                            leave_frame.menu(e.position, vec![vec![item]], cx);
+                        })
                         .flex()
                         .items_center()
                         .gap(px(6.))
@@ -157,11 +195,11 @@ pub fn side(page: &Entity<Page>, width: f32, cx: &mut App) -> AnyElement {
                     .child(why.clone()),
             );
         }
-        None if s.sites.is_empty() => {}
+        None if sites.is_empty() => {}
         _ => list = list.child(controls::skeleton("tasks-boards", 3)),
     }
     let n = s.kept.drafts.len();
-    if !s.sites.is_empty() {
+    if !sites.is_empty() {
         let (page, frame) = (page.clone(), frame.clone());
         list = list
             .child(
@@ -205,5 +243,5 @@ pub fn side(page: &Entity<Page>, width: f32, cx: &mut App) -> AnyElement {
                     }),
             );
     }
-    list.into_any_element()
+    Some(list.into_any_element())
 }
