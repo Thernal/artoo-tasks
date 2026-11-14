@@ -20,7 +20,8 @@ your own).
 - **Someone else's change**: what is on screen is read again as the window comes to the front, and each minute while
   it is there; a line over the title says who changed what, dots mark it.
 - **New task** (`⌥⌘N`): a sheet over the window — project, type, epic, summary, description, assignee, priority,
-  labels, sprint, then what the project's create screen requires; `⌘↵` creates it, `⌘S` keeps a draft.
+  labels, sprint, then what the project's create screen requires; `⌘↵` creates it, `⌘S` keeps a draft. From a
+  column (its `+`, or a state group's) it says the state it lands in, and once made it is moved there.
 - **The Inbox**: an issue assigned to you (also a toast), a mention of you, a change on an issue of yours — each
   switched in Settings → Notifications.
 - **⌘K**: the Tasks tab finds the issues read by key or words; Here offers what the page on screen does.

@@ -130,7 +130,10 @@ LINKS = {
 }
 LINK_TYPES = {'Blocks': ('is blocked by', 'blocks', '10000'), 'Relates': ('relates to', 'relates to', '10003'),
               'Duplicate': ('is duplicated by', 'duplicates', '10002'), 'Cloners': ('is cloned by', 'clones', '10001')}
-EXTRA = {'PAY-426': ('PAY-426', 'Clear the remainders already booked', 'task', 'medium', '', 'todo', ['refunds'], '', None, 0)}
+EXTRA = {'PAY-426': ('PAY-426', 'Clear the remainders already booked', 'task', 'medium', '', 'todo', ['refunds'], '', None, 0),
+         # What New task makes (POST /rest/api/2/issue answers its key): in the workflow's first state, as Jira makes one.
+         'PAY-427': ('PAY-427', 'Rounding note in the refund sheet', 'task', 'medium', 'you', 'todo', ['refunds'],
+                     'Under the amount, one line: how it was rounded and why.', None, 0)}
 
 def links_of(key):
     out = []
@@ -223,6 +226,9 @@ def jira(folder):
     for k, *_ in ISSUES:
         write(folder, '/rest/agile/1.0/issue/' + k, issue(k, True))
     write(folder, '/rest/agile/1.0/issue/PAY-426', issue('PAY-426', True))
+    BY.setdefault('PAY-427', EXTRA['PAY-427'])
+    IDS.setdefault('PAY-427', 30427)
+    write(folder, '/rest/agile/1.0/issue/PAY-427', issue('PAY-427', True))
     transitions = {
         'todo': [('21', 'Start', 'prog'), ('41', 'Done', 'done')],
         'prog': [('31', 'Review', 'rev'), ('41', 'Done', 'done'), ('11', 'Stop', 'todo')],
@@ -231,7 +237,7 @@ def jira(folder):
     }
     resolution = {'resolution': {'required': True, 'name': 'Resolution', 'schema': {'type': 'resolution', 'system': 'resolution'},
                                  'allowedValues': [{'id': '1', 'name': 'Done'}, {'id': '2', 'name': "Won't do"}, {'id': '3', 'name': 'Duplicate'}]}}
-    for k, *_ in ISSUES:
+    for k in [k for k, *_ in ISSUES] + ['PAY-427']:
         state = BY[k][5]
         write(folder, '/rest/api/2/issue/%s/transitions' % k, {'transitions': [
             {'id': tid, 'name': name, 'to': STATES[to], 'hasScreen': to == 'done', 'fields': resolution if to == 'done' else {}}
@@ -251,7 +257,7 @@ def jira(folder):
         'customfield_10020': {'required': False, 'name': 'Sprint', 'schema': {'type': 'array', 'items': 'json', 'custom': 'com.pyxis.greenhopper.jira:gh-sprint', 'customId': 10020}, 'operations': ['set']},
         'assignee': {'required': False, 'name': 'Assignee', 'schema': {'type': 'user', 'system': 'assignee'}, 'operations': ['set']},
     }}
-    for k, *_ in ISSUES:
+    for k in [k for k, *_ in ISSUES] + ['PAY-427']:
         write(folder, '/rest/api/2/issue/%s/editmeta' % k, edit)
     write(folder, '/rest/api/2/user/assignable/search', [person(p) for p in ('you', 'juniper', 'kestrel', 'ember')])
     write(folder, '/rest/api/2/priority', [priority(p) for p in ('highest', 'high', 'medium', 'low', 'lowest')])

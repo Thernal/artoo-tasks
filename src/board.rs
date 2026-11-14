@@ -613,22 +613,27 @@ impl Page {
             .text_size(px(12.))
             .cursor_pointer();
         let count = |n: String| div().text_size(px(11.)).text_color(theme::muted()).child(n);
-        let add = |cx: &mut Context<Self>, words: String, epic: Option<String>| {
-            div()
-                .id(SharedString::from(format!("shelf-add-{}", words)))
-                .size(px(20.))
-                .flex()
-                .items_center()
-                .justify_center()
-                .rounded(px(4.))
-                .hover(|s| s.bg(theme::hover()))
-                .child(icons::icon("plus").size(px(12.)).text_color(theme::muted()))
-                .tip(format!("New task in {words}"))
-                .on_click(cx.listener(move |this, _: &ClickEvent, _, cx| {
-                    cx.stop_propagation();
-                    this.open_sheet(epic.clone(), None, cx);
-                }))
-        };
+        // New task in the group: a column's state, an epic.
+        let add =
+            |cx: &mut Context<Self>, words: String, epic: Option<String>, state: Option<State>| {
+                div()
+                    .id(SharedString::from(format!("shelf-add-{}", words)))
+                    .size(px(20.))
+                    .flex()
+                    .items_center()
+                    .justify_center()
+                    .rounded(px(4.))
+                    .hover(|s| s.bg(theme::hover()))
+                    .child(icons::icon("plus").size(px(12.)).text_color(theme::muted()))
+                    .tip(format!("New task in {words}"))
+                    .on_click(cx.listener(move |this, _: &ClickEvent, _, cx| {
+                        cx.stop_propagation();
+                        match &state {
+                            Some(state) => this.open_sheet_in(&words, state.clone(), cx),
+                            None => this.open_sheet(epic.clone(), None, cx),
+                        }
+                    }))
+            };
         let chevron = look::chevron(SharedString::from(format!("shelf-turn-{id}")), !folded, 12.);
         let head = match &shelf.head {
             Head::State { name, state } => head
@@ -641,7 +646,7 @@ impl Page {
                 )
                 .child(div().flex_1())
                 .child(count(shelf.rows.len().to_string()))
-                .child(add(cx, name.clone(), None))
+                .child(add(cx, name.clone(), None, Some(state.clone())))
                 .child(chevron),
             Head::Story { row, done, all } => {
                 // The story is a row of its own: a click picks it, its chevron folds it.
@@ -701,7 +706,7 @@ impl Page {
                     .child(look::epic_lozenge(&e))
                     .child(div().flex_1())
                     .child(count(format!("{done} of {all}")))
-                    .child(add(cx, e.name.clone(), Some(e.key.clone())))
+                    .child(add(cx, e.name.clone(), Some(e.key.clone()), None))
                     .child(chevron)
             }
             Head::Epic {
@@ -976,7 +981,7 @@ impl Page {
         cols.into_any_element()
     }
 
-    /// A column's head: its state's mark, its name, how many cards it holds, `+` for a new task in it.
+    /// A column's head: its state's mark, its name, how many cards it holds, `+` for a new task in its state.
     fn column_head(
         &mut self,
         ix: usize,
@@ -1020,9 +1025,12 @@ impl Page {
                     .hover(|s| s.bg(theme::hover()))
                     .child(icons::icon("plus").size(px(12.)).text_color(theme::muted()))
                     .tip(format!("New task in {name}"))
-                    .on_click(
-                        cx.listener(|this, _: &ClickEvent, _, cx| this.open_sheet(None, None, cx)),
-                    ),
+                    .on_click(cx.listener({
+                        let (name, state) = (name.to_owned(), state.clone());
+                        move |this, _: &ClickEvent, _, cx| {
+                            this.open_sheet_in(&name, state.clone(), cx)
+                        }
+                    })),
             )
     }
 

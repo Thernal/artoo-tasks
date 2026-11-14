@@ -1,11 +1,11 @@
-//! New task: a sheet over the window — the project, its kind, the epic (from the group it was opened in), the
-//! summary and the description, who does it, its priority, labels and sprint, then what the project's create screen
-//! asks for beside them. Create ⌘↵; Save as draft ⌘S keeps it on this Mac; esc lets it go. The drafts: the side
+//! New task: a sheet over the window — the project, its kind, the epic (from the group it was opened in), the state
+//! (from the column it was opened in), the summary and the description, who does it, its priority, labels and sprint,
+//! then what the project's create screen asks for beside them. Create ⌘↵; Save as draft ⌘S keeps it on this Mac; esc lets it go. The drafts: the side
 //! panel's Drafts, a list beside a preview, a draft opening as the sheet again.
 
 use crate::keep::Draft;
 use crate::look;
-use crate::model::{self, Caps, Field, Kind, Person, Write};
+use crate::model::{self, Caps, Column, Field, Kind, Move, Person, State, Write};
 use crate::page::{Anchor, Page, PopKind, compose};
 use crate::pop::{Act, Lead, PopRow};
 use crate::store::{Read, Store, now};
@@ -48,6 +48,24 @@ const OWN: [&str; 12] = [
     "customfield_10014",
 ];
 
+/// The board's column New task was opened from: the task is made in the workflow's first state, then moved into
+/// the column's.
+#[derive(Clone, Debug, PartialEq)]
+pub struct InColumn {
+    pub column: Column,
+    /// The state the column is drawn with: its mark on the sheet.
+    pub state: State,
+    /// Every state of the board, its other columns' too.
+    pub board: Vec<String>,
+}
+
+/// A task made from a column, its page opening: once it is read there, moved into the column's state when it is not
+/// in one already.
+pub struct Arriving {
+    pub key: String,
+    pub column: Column,
+}
+
 /// New task being written.
 pub struct Sheet {
     pub host: String,
@@ -58,6 +76,7 @@ pub struct Sheet {
     pub epic: Option<String>,
     /// The issue it is a sub-task of, and its summary.
     pub parent: Option<(String, String)>,
+    pub column: Option<InColumn>,
     pub summary: String,
     pub summary_edit: TextEdit,
     pub description: Compose,
@@ -129,12 +148,63 @@ fn asked(screen: &[Field]) -> Vec<Field> {
     out
 }
 
+/// The move from where issue `now` is into `column`'s state, the column's first state it reaches first: none when it
+/// is in one already, why when the workflow has none.
+fn move_into(now: &State, column: &Column, moves: &[Move]) -> Result<Option<Move>, String> {
+    if column.states.contains(&now.id) {
+        return Ok(None);
+    }
+    (column.states.iter())
+        .find_map(|id| moves.iter().find(|m| &m.to.id == id))
+        .cloned()
+        .map(Some)
+        .ok_or_else(|| {
+            format!(
+                "{} has no move to {}",
+                look::display_state(&now.name),
+                look::display_state(&column.name)
+            )
+        })
+}
+
 impl Page {
     /// New task, from the board picked: its project, the kind `Task` (a sub-task's under `parent`), in `epic`.
     pub fn open_sheet(
         &mut self,
         epic: Option<String>,
         parent: Option<(String, String)>,
+        cx: &mut Context<Self>,
+    ) {
+        self.open_sheet_from(epic, parent, None, cx)
+    }
+
+    /// New task from the board's column named `column` (its `+`), drawn with `state`: made, then moved there.
+    pub fn open_sheet_in(&mut self, column: &str, state: State, cx: &mut Context<Self>) {
+        let info = self
+            .store
+            .read(cx)
+            .board_info()
+            .cloned()
+            .unwrap_or_default();
+        let board = (info.columns.iter())
+            .flat_map(|c| c.states.iter().cloned())
+            .collect();
+        let column = (info.columns.iter())
+            .find(|c| c.name == column)
+            .cloned()
+            .map(|column| InColumn {
+                column,
+                state,
+                board,
+            });
+        self.open_sheet_from(None, None, column, cx)
+    }
+
+    fn open_sheet_from(
+        &mut self,
+        epic: Option<String>,
+        parent: Option<(String, String)>,
+        column: Option<InColumn>,
         cx: &mut Context<Self>,
     ) {
         let s = self.store.read(cx);
@@ -168,6 +238,7 @@ impl Page {
             kind: None,
             epic: if parent.is_some() { None } else { epic },
             parent: parent.clone(),
+            column,
             summary: parent.as_ref().map(|(_, s)| s.clone()).unwrap_or_default(),
             summary_edit: TextEdit::new(
                 parent.as_ref().map(|(_, s)| s.clone()).unwrap_or_default(),
@@ -229,8 +300,10 @@ impl Page {
         self.sheet_defaults(cx);
     }
 
-    /// A read arrived: the kind picked once the project's kinds are read, the screen's defaults once it is.
+    /// A read arrived: the kind picked once the project's kinds are read, the screen's defaults once it is; a task
+    /// made from a column moved once its page has it.
     pub fn sheet_heard(&mut self, cx: &mut Context<Self>) {
+        self.arrival(cx);
         let Some(sheet) = self.sheet.as_ref() else {
             return;
         };
@@ -241,6 +314,59 @@ impl Page {
             }
         } else {
             self.sheet_defaults(cx);
+        }
+    }
+
+    /// A task made from a column, its page on screen and read there: moved into the column's state as Move to moves
+    /// it (a move that asks, asking on its page), or why the workflow has no such move said under its state.
+    fn arrival(&mut self, cx: &mut Context<Self>) {
+        let Some(a) = self.arriving.as_ref() else {
+            return;
+        };
+        let key = a.key.clone();
+        if self.issue_key().as_deref() != Some(key.as_str()) {
+            return;
+        }
+        let s = self.store.read(cx);
+        let Some(now) = s.issue(&key).map(|i| i.row.state.clone()) else {
+            return;
+        };
+        let picked = if a.column.states.contains(&now.id) {
+            Ok(None)
+        } else {
+            match s.moves.get(&key) {
+                Some(Read::Done(moves)) => move_into(&now, &a.column, moves),
+                Some(Read::Failed(why)) => Err(why.clone()),
+                Some(Read::Reading) => return,
+                None => {
+                    self.store.update(cx, |s, cx| s.read_moves(&key, cx));
+                    return;
+                }
+            }
+        };
+        let Some(a) = self.arriving.take() else {
+            return;
+        };
+        match picked {
+            Ok(None) => {}
+            Ok(Some(m)) if m.asks.is_empty() => {
+                self.make_move(&key, &m, json!({}), Anchor::Issue, cx)
+            }
+            Ok(Some(m)) => {
+                self.open_pop(PopKind::Ask, Anchor::Issue, &key, cx);
+                if let Some(p) = self.pop.as_mut() {
+                    p.asked = vec![0; m.asks.len()];
+                    p.ask = Some(m);
+                }
+            }
+            Err(why) => {
+                self.refused_to = Some(look::display_state(&a.column.name));
+                self.refusal = Some((Anchor::Issue, key.clone()));
+                self.store.update(cx, |s, cx| {
+                    s.refused.insert((key, "state".into()), why);
+                    cx.notify();
+                });
+            }
         }
     }
 
@@ -258,11 +384,13 @@ impl Page {
         }
         sheet.defaulted = Some(kind);
         for f in &screen {
-            if let Some((id, name)) = &f.default
-                && sheet.value(&f.id).is_none()
-                && !f.many()
-            {
-                sheet.set(&f.id, json!({ "id": id }), name.clone());
+            if sheet.value(&f.id).is_some() || f.many() {
+                continue;
+            }
+            // A field whose values are the board's states (Trello's list) starts in the column's.
+            let landing = (sheet.column.as_ref()).and_then(|c| column_value(f, c));
+            if let Some((id, name)) = landing.or_else(|| f.default.clone()) {
+                sheet.set(&f.id, json!({ "id": id }), name);
             }
         }
     }
@@ -691,10 +819,11 @@ impl Page {
         let Some(site) = self.store.read(cx).site_of(&sheet.host) else {
             return;
         };
-        let (epic, sprint, draft) = (
+        let (epic, sprint, draft, column) = (
             sheet.epic.clone(),
             sheet.value("sprint").and_then(|(_, v, _)| v.as_u64()),
             sheet.draft,
+            sheet.column.clone(),
         );
         let made = cx.background_spawn(async move {
             let made = model::write(&site, &Write::created(fields))?;
@@ -731,6 +860,11 @@ impl Page {
                     for why in after {
                         p.frame.error(why.into(), cx);
                     }
+                    // Into the column's state once its page has it: a tracker makes it in the workflow's first.
+                    p.arriving = column.map(|c| Arriving {
+                        key: key.clone(),
+                        column: c.column,
+                    });
                     p.open_issue(&key, cx);
                 }
                 Err(why) => {
@@ -766,6 +900,13 @@ impl Page {
         }
         if let Some((parent, _)) = &sheet.parent {
             fields["parent"] = json!(parent);
+        }
+        if let Some(c) = &sheet.column {
+            fields["state"] = json!({
+                "column": c.column.name, "states": c.column.states, "board": c.board,
+                "id": c.state.id, "name": c.state.name, "category": c.state.category,
+            });
+            said["state"] = json!(look::display_state(&c.column.name));
         }
         let s = self.store.read(cx);
         let draft = Draft {
@@ -816,12 +957,13 @@ impl Page {
         let mut values = Vec::new();
         let words: Vec<&str> = d.words.split(" · ").collect();
         let mut w = words.iter();
-        let (mut epic, mut parent) = (None, None);
+        let (mut epic, mut parent, mut column) = (None, None, None);
         if let Some(o) = d.fields.as_object() {
             for (k, v) in o {
                 match k.as_str() {
                     "epic" => epic = v.as_str().map(str::to_owned),
                     "parent" => parent = v.as_str().map(|p| (p.to_owned(), String::new())),
+                    "state" => column = in_column(v),
                     _ => values.push((
                         k.clone(),
                         v.clone(),
@@ -843,6 +985,7 @@ impl Page {
             }),
             epic,
             parent,
+            column,
             summary: d.summary.clone(),
             summary_edit: TextEdit::new(d.summary.clone()),
             description: compose(Target::Request(0), &d.description),
@@ -966,6 +1109,7 @@ impl Page {
         let project = sheet.project.clone();
         let kind = sheet.kind.clone();
         let parent = sheet.parent.clone();
+        let column = sheet.column.clone();
         let at = sheet.at;
         let summary = sheet.summary.clone();
         let refused = sheet.refused.clone();
@@ -1211,6 +1355,27 @@ impl Page {
         }
         if let Some(e) = epic_sel {
             form = form.child(line(label("Epic", false), e.into_any_element()));
+        }
+        // The state it lands in, unless a field of the screen says it (Trello's List, started in the column's).
+        if let Some(c) = column.filter(|c| !screen.iter().any(|f| column_value(f, c).is_some())) {
+            let name = look::display_state(&c.column.name);
+            form = form.child(line(
+                label("State", false),
+                div()
+                    .id("sheet-state")
+                    .flex()
+                    .items_center()
+                    .gap(px(6.))
+                    .h(px(28.))
+                    .text_size(px(13.))
+                    .text_color(theme::text())
+                    .child(look::state_mark(&c.state, 13.))
+                    .child(name.clone())
+                    .tip(format!(
+                        "From its column on the board: made, then moved to {name}"
+                    ))
+                    .into_any_element(),
+            ));
         }
         form = form
             .child(line(
@@ -1643,6 +1808,38 @@ fn done_or_reading<T: Clone>(read: Option<&Read<Vec<T>>>) -> (Vec<T>, bool) {
 }
 
 /// A field's id as its row says it.
+/// A draft's column, as `keep_draft` writes it.
+fn in_column(v: &Value) -> Option<InColumn> {
+    let text = |k: &str| v[k].as_str().unwrap_or_default().to_owned();
+    let ids = |k: &str| -> Vec<String> {
+        (v[k].as_array().into_iter().flatten())
+            .filter_map(|s| s.as_str().map(str::to_owned))
+            .collect()
+    };
+    v["states"].as_array()?;
+    Some(InColumn {
+        column: Column {
+            name: text("column"),
+            states: ids("states"),
+        },
+        state: State {
+            id: text("id"),
+            name: text("name"),
+            category: text("category"),
+        },
+        board: ids("board"),
+    })
+}
+
+/// When field `f`'s values are the board's states (Trello's `List`, which a card is made in), its value that is one
+/// of the column's, the column's first first.
+fn column_value(f: &Field, c: &InColumn) -> Option<(String, String)> {
+    if f.values.is_empty() || !f.values.iter().all(|(id, _)| c.board.contains(id)) {
+        return None;
+    }
+    (c.column.states.iter()).find_map(|s| f.values.iter().find(|(id, _)| id == s).cloned())
+}
+
 fn field_name(id: &str) -> String {
     match id {
         "assignee" => "Assignee".into(),
@@ -1654,6 +1851,7 @@ fn field_name(id: &str) -> String {
         "duedate" => "Due".into(),
         "epic" => "Epic".into(),
         "parent" => "Parent".into(),
+        "state" => "State".into(),
         other => other.to_owned(),
     }
 }
@@ -1682,6 +1880,66 @@ mod tests {
     }
 
     #[test]
+    fn a_task_from_a_column_moves_into_its_first_state_it_reaches() {
+        let st = |id: &str, name: &str| State {
+            id: id.into(),
+            name: name.into(),
+            category: "indeterminate".into(),
+        };
+        let to = |id: &str, name: &str| Move {
+            id: format!("go-{id}"),
+            name: name.into(),
+            to: st(id, name),
+            asks: Vec::new(),
+        };
+        let column = Column {
+            name: "In progress".into(),
+            states: vec!["3".into(), "4".into()],
+        };
+        let todo = st("1", "To Do");
+        let moves = [to("9", "Done"), to("4", "Blocked"), to("3", "In Progress")];
+        assert_eq!(
+            move_into(&todo, &column, &moves),
+            Ok(Some(moves[2].clone()))
+        );
+        assert_eq!(move_into(&st("4", "Blocked"), &column, &moves), Ok(None));
+        assert_eq!(
+            move_into(&todo, &column, &moves[..1]),
+            Err("To do has no move to In progress".to_owned())
+        );
+        // Trello's List starts in the column's list; a field whose ids only look like states (a priority's) does not.
+        let c = InColumn {
+            column,
+            state: st("3", "In Progress"),
+            board: vec!["1".into(), "3".into(), "4".into(), "9".into()],
+        };
+        let field = |values: &[(&str, &str)]| Field {
+            values: (values.iter())
+                .map(|(id, name)| (id.to_string(), name.to_string()))
+                .collect(),
+            ..Default::default()
+        };
+        let list = field(&[("1", "Next up"), ("4", "Doing")]);
+        assert_eq!(column_value(&list, &c), Some(("4".into(), "Doing".into())));
+        let priority = field(&[("1", "Highest"), ("2", "High"), ("3", "Medium")]);
+        assert_eq!(column_value(&priority, &c), None);
+    }
+
+    #[test]
+    fn a_drafts_column_reads_back_as_kept() {
+        let kept = json!({
+            "column": "In review", "states": ["10001"], "board": ["10000", "10001"],
+            "id": "10001", "name": "In Review", "category": "indeterminate",
+        });
+        let back = in_column(&kept).unwrap();
+        assert_eq!(back.column.name, "In review");
+        assert_eq!(back.column.states, ["10001"]);
+        assert_eq!(back.state.name, "In Review");
+        assert_eq!(back.board, ["10000", "10001"]);
+        assert!(in_column(&json!("10001")).is_none());
+    }
+
+    #[test]
     fn a_field_of_many_toggles_its_values() {
         let mut s = Sheet {
             host: String::new(),
@@ -1689,6 +1947,7 @@ mod tests {
             kind: None,
             epic: None,
             parent: None,
+            column: None,
             summary: String::new(),
             summary_edit: TextEdit::new(String::new()),
             description: compose(Target::Request(0), ""),

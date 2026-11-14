@@ -194,6 +194,8 @@ pub struct Page {
     pub issue: crate::issue::IssueState,
     /// The New task sheet, when open.
     pub sheet: Option<crate::sheet::Sheet>,
+    /// A task made from a column, waiting for its page to move it there.
+    pub arriving: Option<crate::sheet::Arriving>,
     /// Whether New task is over the window: the part's `Overlay` reads it.
     pub sheet_shown: Rc<std::cell::Cell<bool>>,
     /// The tab's accounts, whose form the connect card draws.
@@ -257,6 +259,7 @@ impl Page {
             issue_scroll: ScrollHandle::new(),
             issue: Default::default(),
             sheet: None,
+            arriving: None,
             sheet_shown: Rc::default(),
             accounts: None,
             here: String::new(),
@@ -333,6 +336,13 @@ impl Page {
         }
         self.route = route.cloned();
         let key = self.issue_key();
+        if self
+            .arriving
+            .as_ref()
+            .is_some_and(|a| Some(&a.key) != key.as_ref())
+        {
+            self.arriving = None;
+        }
         let site = route.and_then(places_of::site_of);
         if key.is_some() {
             self.drafts = false;
