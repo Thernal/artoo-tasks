@@ -65,6 +65,8 @@ gpui::actions!(
         CopyBranch,
         OpenNews,
         SearchTasks,
+        UndoAssign,
+        UndoInTasks,
     ]
 );
 
@@ -221,6 +223,13 @@ fn commands() -> Vec<Action> {
         }
         .words("Copy a branch name for the issue")
         .order(52),
+        // ⌘Z presses the app's toasts' Undo alone, not a plugin's: in the Tasks space it undoes the reassignment
+        // whose toast shows, else it goes on to the app's.
+        Action {
+            act: Box::new(UndoInTasks),
+            ..Action::new("tasks.undo", GoToTasks)
+        }
+        .key("cmd-z", HERE),
     ]
 }
 
@@ -350,6 +359,17 @@ fn install(cx: &mut App) {
             (Box::new(NoteHere), on(Page::key_note)),
             (Box::new(Reply), on(Page::key_reply)),
             (Box::new(CopyBranch), on(Page::copy_branch)),
+            (Box::new(UndoAssign), on(Page::undo_assign)),
+            (Box::new(UndoInTasks), {
+                let page = view.clone();
+                Rc::new(move |window, cx| {
+                    if !page.update(cx, |p, cx| p.undo_key(cx))
+                        && let Ok(undo) = cx.build_action("artoo::UndoToast", None)
+                    {
+                        window.dispatch_action(undo, cx);
+                    }
+                })
+            }),
         ]);
         let input = |id: &'static str,
                      open: fn(&Page) -> bool,

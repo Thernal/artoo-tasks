@@ -195,6 +195,8 @@ pub struct Page {
     /// The connect card on screen in place of the board, `+` beside Boards pressed with this many accounts read:
     /// one more and the board is back.
     pub connecting: Option<usize>,
+    /// The last reassignment, which its toast's Undo gives back.
+    pub undo_assign: Option<crate::pop::Undo>,
 }
 
 impl Page {
@@ -243,6 +245,7 @@ impl Page {
             accounts: None,
             here: String::new(),
             connecting: None,
+            undo_assign: None,
         }
     }
 

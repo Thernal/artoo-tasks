@@ -14,7 +14,8 @@ use artoo_plugin_sdk::gpui::{
 };
 use artoo_plugin_sdk::kit::{icons, input, px, theme};
 use artoo_plugin_sdk::serde_json::{Value, json};
-use artoo_plugin_sdk::shell::Typed;
+use artoo_plugin_sdk::shell::{Toast, Typed};
+use std::time::{Duration, Instant};
 
 /// What a row of a popover shows first.
 #[derive(Clone)]
@@ -93,6 +94,28 @@ fn open_of(rows: &[Row], who: Option<&Person>) -> usize {
         .filter(|r| !r.state.done() && r.parent.is_none())
         .filter(|r| r.assignee.as_ref().map(|p| &p.id) == who.map(|p| &p.id))
         .count()
+}
+
+/// How long a toast shows, as the app's do: ⌘Z undoes a reassignment while its toast is there.
+const TOAST_SHOWN: Duration = Duration::from_secs(6);
+
+/// The reassignment a toast offers to undo: the issue, whom it was assigned to before, when.
+pub struct Undo {
+    pub key: String,
+    pub before: Option<Person>,
+    pub at: Instant,
+}
+
+/// What the toast of a reassignment says, from whom to whom, `me` as you: `Reassigned from you to Juniper Hale`.
+fn reassigned(from: &Person, to: Option<&Person>, me: Option<&Person>) -> String {
+    let name = |p: &Person| match me.is_some_and(|m| m.id == p.id) {
+        true => "you".to_owned(),
+        false => p.name.clone(),
+    };
+    match to {
+        Some(to) => format!("Reassigned from {} to {}", name(from), name(to)),
+        None => format!("Unassigned from {}", name(from)),
+    }
 }
 
 impl Page {
@@ -976,17 +999,71 @@ impl Page {
         }
     }
 
-    /// Issue `key` given to `who`, or to no one.
+    /// Issue `key` given to `who`, or to no one; once the tracker took it from someone, a toast says from whom to whom,
+    /// with Undo.
     pub fn assign(&mut self, key: &str, who: Option<Person>, cx: &mut Context<Self>) {
+        self.assign_to(key, who, true, cx)
+    }
+
+    /// The toast's Undo, or ⌘Z while it shows: the issue last reassigned given back, with no toast of its own.
+    pub fn undo_assign(&mut self, cx: &mut Context<Self>) {
+        let Some(undo) = self.undo_assign.take() else {
+            return;
+        };
+        self.frame
+            .drop_toasts(Box::new(|a| a.partial_eq(&crate::UndoAssign)), cx);
+        self.assign_to(&undo.key, undo.before, false, cx);
+    }
+
+    /// ⌘Z in the Tasks space: the reassignment whose toast still shows, undone; false when there is none.
+    pub fn undo_key(&mut self, cx: &mut Context<Self>) -> bool {
+        let shown = (self.undo_assign.as_ref()).is_some_and(|u| u.at.elapsed() < TOAST_SHOWN);
+        if shown {
+            self.undo_assign(cx);
+        }
+        shown
+    }
+
+    /// Issue `key` given to `who`, a toast with Undo after it when `told`.
+    fn assign_to(&mut self, key: &str, who: Option<Person>, told: bool, cx: &mut Context<Self>) {
+        let s = self.store.read(cx);
+        let before = s.row(key).and_then(|r| r.assignee.clone());
+        let summary = s.row(key).map(|r| r.summary.clone()).unwrap_or_default();
+        let me = (s.site_for(key)).and_then(|x| s.me.get(x.host()).cloned());
         let write = Write::assigned(key, who.as_ref());
         let k = key.to_owned();
+        // Reassigned: it had someone, and has another or no one now.
+        let told = told
+            && before.is_some()
+            && before.as_ref().map(|p| &p.id) != who.as_ref().map(|p| &p.id);
+        let (frame, page) = (self.frame.clone(), cx.entity().downgrade());
+        let (to, key_told) = (who.clone(), k.clone());
         self.store.update(cx, |s, cx| {
             s.change(
-                &k.clone(),
+                &k,
                 "assignee",
                 write,
                 |s| s.edit_row(&k, |r| r.assignee = who.clone()),
-                |_, _, _| {},
+                move |_, read, cx| {
+                    let (true, Some(from), Ok(_)) = (told, before.as_ref(), read) else {
+                        return;
+                    };
+                    let says = reassigned(from, to.as_ref(), me.as_ref());
+                    let about = format!("{key_told} {summary}");
+                    let undo = Undo {
+                        key: key_told,
+                        before,
+                        at: Instant::now(),
+                    };
+                    page.update(cx, |p, _| p.undo_assign = Some(undo)).ok();
+                    frame.toast(
+                        Toast {
+                            about: Some(about),
+                            ..Toast::new(says).button("Undo", crate::UndoAssign)
+                        },
+                        cx,
+                    );
+                },
                 cx,
             )
         });
@@ -1325,4 +1402,27 @@ pub fn anchored_under(card: AnyElement) -> AnyElement {
             .with_priority(2),
         )
         .into_any_element()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn person(id: &str, name: &str) -> Person {
+        Person {
+            id: id.into(),
+            name: name.into(),
+        }
+    }
+
+    #[test]
+    fn a_reassignment_says_from_whom_to_whom_and_you_as_you() {
+        let (me, juniper) = (person("1", "Kestrel"), person("2", "Juniper Hale"));
+        let says = reassigned(&me, Some(&juniper), Some(&me));
+        assert_eq!(says, "Reassigned from you to Juniper Hale");
+        let says = reassigned(&juniper, None, Some(&me));
+        assert_eq!(says, "Unassigned from Juniper Hale");
+        let says = reassigned(&juniper, Some(&me), None);
+        assert_eq!(says, "Reassigned from Juniper Hale to Kestrel");
+    }
 }

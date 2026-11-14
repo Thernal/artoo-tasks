@@ -7,7 +7,8 @@ your own).
 - **A board** (`⌃⌘5`): the side panel's boards under each site's host, Drafts at its foot; a board's issues as a
   list beside a preview, or as columns (List · Board, `V`), grouped by state, story or epic (`G`), `Mine · All` with
   the people's faces beside them, the filter (`⌘F`). Each row's state chip moves the issue (`⌥S`), its face assigns
-  it (`A`, `I` to you); the epic, the sprint, Blocked by.
+  it (`A`, `I` to you; a reassignment says from whom to whom in a toast with Undo, `⌘Z`); the epic, the sprint,
+  Blocked by.
 - **An issue's page**: its facts as controls (state by the workflow, the fields a move asks, assignee, priority,
   type, epic, sprint); the key and the title selected to copy (`⌘C`; the branch name and link in `⋯`); the title and
   the description edited in place, kept on this Mac until saved, a change someone else saved meanwhile compared before
