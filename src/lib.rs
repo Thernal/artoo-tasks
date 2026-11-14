@@ -62,7 +62,6 @@ gpui::actions!(
         ReadAgain,
         NoteHere,
         Reply,
-        CopyKey,
         CopyBranch,
         OpenNews,
         SearchTasks,
@@ -215,21 +214,12 @@ fn commands() -> Vec<Action> {
         )
         .here("Reply")
         .order(50),
-        a(
-            "tasks.copy-key",
-            Box::new(CopyKey),
-            "Copy the issue’s key",
-            "shift-cmd-c",
-            SPACE_KEYS,
-        )
-        .order(51),
-        a(
-            "tasks.copy-branch",
-            Box::new(CopyBranch),
-            "Copy a branch name for the issue",
-            "shift-cmd-b",
-            SPACE_KEYS,
-        )
+        // No key of its own: ⇧⌘B is ⌘K's Branches everywhere, the Tasks space too.
+        Action {
+            act: Box::new(CopyBranch),
+            ..Action::new("tasks.copy-branch", GoToTasks)
+        }
+        .words("Copy a branch name for the issue")
         .order(52),
     ]
 }
@@ -359,7 +349,6 @@ fn install(cx: &mut App) {
             (Box::new(ReadAgain), on(Page::read_again)),
             (Box::new(NoteHere), on(Page::key_note)),
             (Box::new(Reply), on(Page::key_reply)),
-            (Box::new(CopyKey), on(Page::copy_key)),
             (Box::new(CopyBranch), on(Page::copy_branch)),
         ]);
         let input = |id: &'static str,
@@ -647,14 +636,7 @@ impl Page {
         }
     }
 
-    /// ⇧⌘C: the issue's key.
-    fn copy_key(&mut self, cx: &mut Context<Self>) {
-        if let Some(key) = self.acted_on() {
-            cx.write_to_clipboard(ClipboardItem::new_string(key));
-        }
-    }
-
-    /// ⇧⌘B: a branch's name for the issue.
+    /// A branch's name for the issue on screen or picked, copied (⌘K, `⋯`).
     fn copy_branch(&mut self, cx: &mut Context<Self>) {
         let Some(key) = self.acted_on() else {
             return;

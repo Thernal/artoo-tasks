@@ -27,6 +27,11 @@ use artoo_plugin_sdk::shell::Typed;
 use std::cell::Cell;
 use std::rc::Rc;
 
+/// The issue's key and title as text the tab selects and copies (`Frame::selecting`), by the names its selection
+/// knows them by: what can be selected gets no Copy item of its own.
+const KEY_TEXT: &str = "tasks-key-text";
+const TITLE_TEXT: &str = "tasks-title-text";
+
 /// The issue page's own state: what is being written or edited on it.
 #[derive(Default)]
 pub struct IssueState {
@@ -415,9 +420,21 @@ impl Page {
                 .font_weight(FontWeight::SEMIBOLD)
                 .text_color(theme::text())
                 .cursor_text()
-                .child(r.summary.clone())
+                .child(markdown::body(
+                    &r.summary,
+                    false,
+                    TITLE_TEXT,
+                    None,
+                    self.frame.selecting(cx),
+                    cx,
+                ))
                 .tip("Click to edit")
-                .on_click(cx.listener(move |this, _: &ClickEvent, _, cx| this.edit_title(cx)))
+                .on_click(cx.listener(move |this, _: &ClickEvent, _, cx| {
+                    // A drag across it selects its words to copy rather than editing it.
+                    if !this.selected_in(TITLE_TEXT, cx) {
+                        this.edit_title(cx)
+                    }
+                }))
                 .into_any_element(),
         };
         let _ = title_editing;
@@ -571,15 +588,29 @@ impl Page {
                     .child(look::kind_mark(&r.kind, r.subtask))
                     .child(
                         div()
+                            .flex_none()
                             .text_size(px(13.))
                             .text_color(theme::accent())
-                            .child(r.key.clone()),
+                            .child(markdown::body(
+                                &r.key,
+                                false,
+                                KEY_TEXT,
+                                None,
+                                self.frame.selecting(cx),
+                                cx,
+                            )),
                     )
                     .child(title)
                     .children(dot(unseen.contains("Summary"))),
             )
             .child(facts)
             .into_any_element()
+    }
+
+    /// Whether the tab's selection holds some of text `note` (`KEY_TEXT`, `TITLE_TEXT`).
+    fn selected_in(&self, note: &str, cx: &App) -> bool {
+        (self.frame.selecting(cx).and_then(|s| s.current))
+            .is_some_and(|sel| sel.note.as_ref() == note && sel.text().is_some())
     }
 
     /// Click on the title: its summary in a field, ↵ saves, esc leaves it.

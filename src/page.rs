@@ -561,8 +561,8 @@ impl Page {
         self.open_note(spot, cx);
     }
 
-    /// What the page bar's `⋯` holds: an issue's key, branch name and link to copy and a note for an agent on it;
-    /// a board's note and link.
+    /// What the page bar's `⋯` holds: an issue's branch name and link to copy (its key is selectable on its page)
+    /// and a note for an agent on it; a board's note and link.
     pub fn more_items(page: &Entity<Self>, cx: &App) -> Vec<MenuItem> {
         let p = page.read(cx);
         let s = p.store.read(cx);
@@ -578,8 +578,7 @@ impl Page {
                 let url = s.issue(&key).map(|i| i.url.clone());
                 let branch = s.issue(&key).map(|i| branch_name(&key, &i.row.summary));
                 vec![
-                    copy(format!("Copy key  {key}"), Some(key.clone())).key("⇧⌘C"),
-                    copy("Copy branch name".into(), branch).key("⇧⌘B"),
+                    copy("Copy branch name".into(), branch),
                     copy("Copy link".into(), url),
                     MenuItem::new("Note for an agent…", move |_, cx| {
                         weak.update(cx, |p, cx| p.note_on_first_paragraph(cx)).ok();
