@@ -376,23 +376,21 @@ fn install(cx: &mut App) {
             (Box::new(Reply), on(Page::key_reply)),
             (Box::new(CopyBranch), on(Page::copy_branch)),
             (Box::new(UndoAssign), on(Page::undo_assign)),
+            // ⌘P with no side panel to filter, and ⌘Z with no reassignment to undo, go on to whatever the app binds
+            // to the key (Search files, a toast's Undo), whichever key a preset gives it.
             (Box::new(FilterBoards), {
                 let page = view.clone();
-                Rc::new(move |window, cx| {
-                    if !page.update(cx, |p, cx| p.filter_boards(cx))
-                        && let Ok(files) = cx.build_action("artoo::SearchFiles", None)
-                    {
-                        window.dispatch_action(files, cx);
+                Rc::new(move |_, cx| {
+                    if !page.update(cx, |p, cx| p.filter_boards(cx)) {
+                        cx.propagate();
                     }
                 })
             }),
             (Box::new(UndoInTasks), {
                 let page = view.clone();
-                Rc::new(move |window, cx| {
-                    if !page.update(cx, |p, cx| p.undo_key(cx))
-                        && let Ok(undo) = cx.build_action("artoo::UndoToast", None)
-                    {
-                        window.dispatch_action(undo, cx);
+                Rc::new(move |_, cx| {
+                    if !page.update(cx, |p, cx| p.undo_key(cx)) {
+                        cx.propagate();
                     }
                 })
             }),
