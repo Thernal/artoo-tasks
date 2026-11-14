@@ -18,6 +18,7 @@ use artoo_plugin_sdk::gpui::{
     self, AnyElement, App, Bounds, ClickEvent, Context, Div, FontWeight, KeyDownEvent, ObjectFit,
     Pixels, SharedString, canvas, div, img, point, prelude::*,
 };
+use artoo_plugin_sdk::images::{Image, Picture, Viewer};
 use artoo_plugin_sdk::kit::composer::{Compose, ComposeAct, Look, Target, Typed as Written};
 use artoo_plugin_sdk::kit::hover::Hover;
 use artoo_plugin_sdk::kit::{controls, icons, input, markdown, px, theme};
@@ -50,8 +51,6 @@ pub struct IssueState {
     pub pending_edit: Option<u64>,
     /// The Link popover: the relation picked (`(type, words, outward)`), what is typed, the issues found.
     pub link: Option<LinkPick>,
-    /// The image open over the window: the attachment's id.
-    pub viewing: Option<String>,
     /// Drawings left that go to the page's foot: the composer opened there grows as its text is laid out.
     pub to_foot: u8,
     /// Where the Link button was drawn, and the drawings left that bring it into view: L opens its card under it,
@@ -272,11 +271,6 @@ impl Page {
             })
             .child(self.comments(&issue, cx));
         let details = self.details(&issue, cx);
-        let viewer = self
-            .issue
-            .viewing
-            .clone()
-            .and_then(|id| self.viewer(&issue, &id, cx));
         frame()
             .child(
                 div()
@@ -299,7 +293,6 @@ impl Page {
                             .child(div().w(px(260.)).flex_none().child(details)),
                     ),
             )
-            .children(viewer)
             .into_any_element()
     }
 
@@ -1034,9 +1027,10 @@ impl Page {
     }
 
     /// A picture from the attachments, read with the site's token, at its own size up to the column's; a click
-    /// opens it whole.
+    /// opens it whole in the app's viewer, which it is ringed in while it is open there.
     fn picture(&mut self, a: &Attachment, cx: &mut Context<Self>) -> AnyElement {
         let image = self.store.read(cx).images.get(&a.id).cloned();
+        let shown = self.shown_whole(cx).as_deref() == Some(a.id.as_str());
         let id = a.id.clone();
         let body: AnyElement = match image {
             Some(Read::Done(image)) => img(image)
@@ -1044,6 +1038,7 @@ impl Page {
                 .max_h(px(320.))
                 .object_fit(ObjectFit::Contain)
                 .rounded(px(6.))
+                .when(shown, |d| d.border_2().border_color(theme::accent()))
                 .into_any_element(),
             Some(Read::Failed(why)) => div()
                 .text_size(px(12.))
@@ -1079,11 +1074,53 @@ impl Page {
                     .child(a.name.clone()),
             )
             .tip(format!("{} · click to open", a.name))
-            .on_click(cx.listener(move |this, _: &ClickEvent, _, cx| {
-                this.issue.viewing = Some(id.clone());
-                cx.notify();
-            }))
+            .on_click(cx.listener(move |this, _: &ClickEvent, _, cx| this.open_whole(&id, cx)))
             .into_any_element()
+    }
+
+    /// The app's image viewer, which the tab offers its parts.
+    fn viewer(&self) -> Option<Rc<dyn Viewer>> {
+        self.frame.services().get::<Rc<dyn Viewer>>()
+    }
+
+    /// The attachment open whole in the app's viewer, by its id.
+    fn shown_whole(&self, cx: &App) -> Option<String> {
+        self.viewer()?.shown(cx)
+    }
+
+    /// Picture `id` opened whole in the app's viewer, among the issue's pictures in the order the page shows them,
+    /// each with who added it and when; one not read yet is left out.
+    pub fn open_whole(&mut self, id: &str, cx: &mut Context<Self>) {
+        let (Some(viewer), Some(key)) = (self.viewer(), self.issue_key()) else {
+            return;
+        };
+        let s = self.store.read(cx);
+        let Some(issue) = s.issue(&key) else {
+            return;
+        };
+        let images: Vec<Image> = (page_pictures(issue).into_iter())
+            .filter_map(|a| {
+                let picture = s.images.get(&a.id)?.done()?.clone();
+                let image = Image {
+                    key: a.id.clone(),
+                    name: a.name.clone(),
+                    picture: Picture::Decoded(picture),
+                    added: None,
+                    source: None,
+                };
+                let image = match (&a.author, model::stamp(&a.created)) {
+                    (who, Some(at)) => image.added(who.as_ref().map_or("", |p| &p.name), at),
+                    (_, None) => image,
+                };
+                Some(match a.content.is_empty() {
+                    true => image,
+                    false => image.source(crate::trackers::tracker_of(&a.content), &a.content),
+                })
+            })
+            .collect();
+        if let Some(at) = images.iter().position(|i| i.key == id) {
+            viewer.open(images, at, cx);
+        }
     }
 
     /// Sub-tasks: how many done, each with its state; the empty row last, always there.
@@ -1840,9 +1877,11 @@ impl Page {
             );
         let (pictures, files): (Vec<&Attachment>, Vec<&Attachment>) =
             issue.attachments.iter().partition(|a| a.image());
+        let open = self.shown_whole(cx);
         let mut tiles = div().flex().flex_wrap().gap(px(10.)).p(px(12.));
         for a in pictures {
             let image = self.store.read(cx).images.get(&a.id).cloned();
+            let shown = open.as_deref() == Some(a.id.as_str());
             let id = a.id.clone();
             tiles = tiles.child(
                 div()
@@ -1860,7 +1899,11 @@ impl Page {
                             .overflow_hidden()
                             .bg(theme::base())
                             .border_1()
-                            .border_color(theme::border())
+                            .border_color(if shown {
+                                theme::accent()
+                            } else {
+                                theme::border()
+                            })
                             .children(
                                 image
                                     .and_then(|i| i.done().cloned())
@@ -1874,10 +1917,9 @@ impl Page {
                             .text_color(theme::muted())
                             .child(a.name.clone()),
                     )
-                    .on_click(cx.listener(move |this, _: &ClickEvent, _, cx| {
-                        this.issue.viewing = Some(id.clone());
-                        cx.notify();
-                    })),
+                    .on_click(
+                        cx.listener(move |this, _: &ClickEvent, _, cx| this.open_whole(&id, cx)),
+                    ),
             );
         }
         let mut rows = div().flex().flex_col();
@@ -1951,115 +1993,6 @@ impl Page {
             .ok();
         })
         .detach();
-    }
-
-    /// The picture open over the window: its name, size, who and when; ← → through the issue's pictures; esc.
-    fn viewer(&mut self, issue: &Issue, id: &str, cx: &mut Context<Self>) -> Option<AnyElement> {
-        let pictures: Vec<&Attachment> = issue.attachments.iter().filter(|a| a.image()).collect();
-        let at = pictures.iter().position(|a| a.id == id)?;
-        let a = pictures[at];
-        let image = self
-            .store
-            .read(cx)
-            .images
-            .get(&a.id)
-            .and_then(|r| r.done().cloned());
-        let step = |by: isize| {
-            let n = pictures.len() as isize;
-            pictures[((at as isize + by).rem_euclid(n)) as usize]
-                .id
-                .clone()
-        };
-        let (prev, next) = (step(-1), step(1));
-        let url = a.content.clone();
-        let who = a
-            .author
-            .as_ref()
-            .map(|p| p.name.clone())
-            .unwrap_or_default();
-        Some(
-            div()
-                .id("tasks-viewer")
-                .absolute()
-                .inset_0()
-                .flex()
-                .flex_col()
-                .bg(gpui::black().opacity(0.85))
-                .occlude()
-                .child(
-                    div()
-                        .flex()
-                        .items_center()
-                        .gap(px(10.))
-                        .h(px(44.))
-                        .px(px(16.))
-                        .text_size(px(12.))
-                        .text_color(gpui::white())
-                        .child(
-                            div()
-                                .font_weight(FontWeight::SEMIBOLD)
-                                .child(a.name.clone()),
-                        )
-                        .child(div().opacity(0.7).child(format!(
-                            "{} · {who} · {}",
-                            artoo_plugin_sdk::kit::format::bytes(a.size as usize),
-                            model::ago(&a.created)
-                        )))
-                        .child(div().flex_1())
-                        .child(div().opacity(0.7).child(format!(
-                            "{} of {}",
-                            at + 1,
-                            pictures.len()
-                        )))
-                        .child(
-                            look::small_button("viewer-prev", "←")
-                                .tip("Previous  ←")
-                                .on_click(cx.listener(move |this, _: &ClickEvent, _, cx| {
-                                    this.issue.viewing = Some(prev.clone());
-                                    cx.notify();
-                                })),
-                        )
-                        .child(
-                            look::small_button("viewer-next", "→")
-                                .tip("Next  →")
-                                .on_click(cx.listener(move |this, _: &ClickEvent, _, cx| {
-                                    this.issue.viewing = Some(next.clone());
-                                    cx.notify();
-                                })),
-                        )
-                        .child(
-                            look::small_button(
-                                "viewer-jira",
-                                format!("Open in {}", crate::trackers::tracker_of(&url)),
-                            )
-                            .on_click(move |_, _, cx| cx.open_url(&url)),
-                        )
-                        .child(
-                            look::small_button("viewer-close", "Close")
-                                .tip("Close  esc")
-                                .on_click(cx.listener(|this, _: &ClickEvent, _, cx| {
-                                    this.issue.viewing = None;
-                                    cx.notify();
-                                })),
-                        ),
-                )
-                .child(
-                    div()
-                        .flex_1()
-                        .min_h_0()
-                        .flex()
-                        .items_center()
-                        .justify_center()
-                        .p(px(24.))
-                        .children(image.map(|i| {
-                            img(i)
-                                .max_w_full()
-                                .max_h_full()
-                                .object_fit(ObjectFit::Contain)
-                        })),
-                )
-                .into_any_element(),
-        )
     }
 
     /// Comments: each with who and when, yours with Edit and Delete, others' with Reply; an agent's waiting for
@@ -3203,6 +3136,22 @@ fn picture_of(para: &str, attachments: &[Attachment]) -> Option<Attachment> {
         .cloned()
 }
 
+/// An issue's pictures in the order its page shows them: those standing in its description, then the rest of its
+/// attachments' as Attachments tiles them; each once.
+fn page_pictures(issue: &Issue) -> Vec<Attachment> {
+    let standing = (model::paragraphs(&issue.description).iter())
+        .filter_map(|p| picture_of(p, &issue.attachments))
+        .collect::<Vec<_>>();
+    let tiled = issue.attachments.iter().filter(|a| a.image()).cloned();
+    let mut out: Vec<Attachment> = Vec::new();
+    for a in standing.into_iter().chain(tiled) {
+        if !out.iter().any(|x| x.id == a.id) {
+            out.push(a);
+        }
+    }
+    out
+}
+
 /// Two texts line by line: what is only theirs struck red, what is only yours green.
 fn diff_lines(theirs: &str, mine: &str) -> Div {
     let a: Vec<&str> = theirs.lines().collect();
@@ -3280,6 +3229,27 @@ mod tests {
         assert_eq!(value_words(&json!(3.0)), Some("3.0".into()));
         assert_eq!(value_words(&json!("2026-11-13")), Some("Fri 13 Nov".into()));
         assert_eq!(value_words(&Value::Null), None);
+    }
+
+    #[test]
+    fn the_pages_pictures_are_the_descriptions_first_then_the_rest_once_each() {
+        let file = |id: &str, name: &str, mime: &str| Attachment {
+            id: id.into(),
+            name: name.into(),
+            mime: mime.into(),
+            ..Default::default()
+        };
+        let issue = Issue {
+            description: "Before.\n\n!ledger.png|thumbnail!\n\nAfter.\n\n!ledger.png!".into(),
+            attachments: vec![
+                file("1", "replay.png", "image/png"),
+                file("2", "ledger.png", "image/png"),
+                file("3", "refund-log.txt", "text/plain"),
+            ],
+            ..Default::default()
+        };
+        let ids: Vec<String> = page_pictures(&issue).into_iter().map(|a| a.id).collect();
+        assert_eq!(ids, ["2", "1"]);
     }
 }
 

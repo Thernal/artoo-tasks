@@ -11,9 +11,9 @@ your own).
 - **An issue's page**: its facts as controls (state by the workflow, the fields a move asks, assignee, priority,
   type, epic, sprint); the title and the description edited in place, kept on this Mac until saved, a change someone
   else saved meanwhile compared before yours goes; sub-tasks with an empty row (`N`), linked issues (`L`),
-  attachments and pictures where they stand, details from the edit screen. Comments: yours to everyone, edited and
-  deleted, a reply mentioning who wrote last (`R`), people mentioned by name (`@Juniper.Hale`); `⇥` sends it to your
-  agent instead.
+  attachments and pictures where they stand (a click opens one whole in Artoo's viewer), details from the edit
+  screen. Comments: yours to everyone, edited and deleted, a reply mentioning who wrote last (`R`), people mentioned
+  by name (`@Juniper.Hale`); `⇥` sends it to your agent instead.
 - **Someone else's change**: what is on screen is read again each minute; a line over the title says who changed
   what, dots mark it.
 - **New task** (`⌥⌘N`): a sheet over the window — project, type, epic, summary, description, assignee, priority,
