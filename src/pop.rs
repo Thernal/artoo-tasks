@@ -15,7 +15,6 @@ use artoo_plugin_sdk::gpui::{
 use artoo_plugin_sdk::kit::{icons, input, px, theme};
 use artoo_plugin_sdk::serde_json::{Value, json};
 use artoo_plugin_sdk::shell::{Toast, Typed};
-use std::time::{Duration, Instant};
 
 /// What a row of a popover shows first.
 #[derive(Clone)]
@@ -107,14 +106,10 @@ fn numbered(rows: &mut [PopRow]) {
     }
 }
 
-/// How long a toast shows, as the app's do: ⌘Z undoes a reassignment while its toast is there.
-const TOAST_SHOWN: Duration = Duration::from_secs(6);
-
-/// The reassignment a toast offers to undo: the issue, whom it was assigned to before, when.
+/// The reassignment a toast offers to undo: the issue, and whom it was assigned to before.
 pub struct Undo {
     pub key: String,
     pub before: Option<Person>,
-    pub at: Instant,
 }
 
 /// What the toast of a reassignment says, from whom to whom, `me` as you: `Reassigned from you to Juniper Hale`.
@@ -1047,15 +1042,6 @@ impl Page {
         self.assign_to(&undo.key, undo.before, false, cx);
     }
 
-    /// ⌘Z in the Tasks space: the reassignment whose toast still shows, undone; false when there is none.
-    pub fn undo_key(&mut self, cx: &mut Context<Self>) -> bool {
-        let shown = (self.undo_assign.as_ref()).is_some_and(|u| u.at.elapsed() < TOAST_SHOWN);
-        if shown {
-            self.undo_assign(cx);
-        }
-        shown
-    }
-
     /// Issue `key` given to `who`, a toast with Undo after it when `told`.
     fn assign_to(&mut self, key: &str, who: Option<Person>, told: bool, cx: &mut Context<Self>) {
         let s = self.store.read(cx);
@@ -1085,7 +1071,6 @@ impl Page {
                     let undo = Undo {
                         key: key_told,
                         before,
-                        at: Instant::now(),
                     };
                     page.update(cx, |p, _| p.undo_assign = Some(undo)).ok();
                     frame.toast(

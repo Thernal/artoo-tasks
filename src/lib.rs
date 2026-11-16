@@ -66,7 +66,6 @@ gpui::actions!(
         OpenNews,
         SearchTasks,
         UndoAssign,
-        UndoInTasks,
         FilterBoards,
     ]
 );
@@ -233,13 +232,6 @@ fn commands() -> Vec<Action> {
         .words("Filter boards")
         .key("cmd-p", SPACE_KEYS)
         .order(53),
-        // ⌘Z presses the app's toasts' Undo alone, not a plugin's: in the Tasks space it undoes the reassignment
-        // whose toast shows, else it goes on to the app's.
-        Action {
-            act: Box::new(UndoInTasks),
-            ..Action::new("tasks.undo", GoToTasks)
-        }
-        .key("cmd-z", HERE),
     ]
 }
 
@@ -376,20 +368,12 @@ fn install(cx: &mut App) {
             (Box::new(Reply), on(Page::key_reply)),
             (Box::new(CopyBranch), on(Page::copy_branch)),
             (Box::new(UndoAssign), on(Page::undo_assign)),
-            // ⌘P with no side panel to filter, and ⌘Z with no reassignment to undo, go on to whatever the app binds
-            // to the key (Search files, a toast's Undo), whichever key a preset gives it.
+            // ⌘P with no boards to filter goes on to whatever the app binds to the key (Search files), whichever key a
+            // preset gives it.
             (Box::new(FilterBoards), {
                 let page = view.clone();
                 Rc::new(move |_, cx| {
                     if !page.update(cx, |p, cx| p.filter_boards(cx)) {
-                        cx.propagate();
-                    }
-                })
-            }),
-            (Box::new(UndoInTasks), {
-                let page = view.clone();
-                Rc::new(move |_, cx| {
-                    if !page.update(cx, |p, cx| p.undo_key(cx)) {
                         cx.propagate();
                     }
                 })
