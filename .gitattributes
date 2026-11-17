@@ -1,0 +1,6 @@
+# Text is LF on every system. A Windows checkout gave CRLF, and Git Bash's $(cat artoo-versions.txt) keeps the CR of
+# every line but the last: v0.1.1's Windows build asked for `artoo-sdk-2.0.0\r`.
+* text=auto eol=lf
+*.png binary
+# A fixture's attachments are served as they are.
+fixtures/*/files/** binary
