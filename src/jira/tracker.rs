@@ -321,12 +321,23 @@ fn read_issue(site: &Site, key: &str) -> Result<Issue, String> {
     Ok(issue(site, &v))
 }
 
+/// Where `site` searches by JQL: Jira Cloud's `/search/jql`, its older `/search` answering 410 Gone there; Server
+/// and Data Center have only `/search`.
+fn search_path(site: &Site) -> &'static str {
+    if site.cloud() {
+        "/rest/api/2/search/jql"
+    } else {
+        "/rest/api/2/search"
+    }
+}
+
 /// The issues `jql` finds, at most `max`, for `purpose` (`find`) as `jira::get_for` reads it.
 fn search_for(site: &Site, jql: &str, max: usize, purpose: &str) -> Result<Vec<Row>, String> {
     let v = jira::get_for(
         site,
         &format!(
-            "/rest/api/2/search?maxResults={max}&fields={ROW_FIELDS}&jql={}",
+            "{}?maxResults={max}&fields={ROW_FIELDS}&jql={}",
+            search_path(site),
             jira::encode(jql)
         ),
         purpose,
@@ -347,7 +358,8 @@ fn news(site: &Site, me: &Person) -> Result<Vec<News>, String> {
     let v = jira::get_for(
         site,
         &format!(
-            "/rest/api/2/search?maxResults=30&expand=changelog&fields={ROW_FIELDS},reporter&jql={}",
+            "{}?maxResults=30&expand=changelog&fields={ROW_FIELDS},reporter&jql={}",
+            search_path(site),
             jira::encode(jql)
         ),
         "news",
@@ -969,5 +981,17 @@ mod tests {
         assert!(!more_boards(&json!({"values": []}), 3, 3));
         assert!(!more_boards(&page(json!(false)), 0, 50));
         assert!(!more_boards(&page(json!(false)), 50, BOARDS_MAX));
+    }
+
+    #[test]
+    fn jira_cloud_searches_by_jql_where_a_server_searches() {
+        let cloud = Site {
+            url: "https://acme.atlassian.net".into(),
+            user: Some("you@acme.example".into()),
+            kind: "jira".into(),
+            ..Default::default()
+        };
+        assert_eq!(search_path(&cloud), "/rest/api/2/search/jql");
+        assert_eq!(search_path(&site()), "/rest/api/2/search");
     }
 }

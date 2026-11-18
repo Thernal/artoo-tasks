@@ -301,8 +301,9 @@ def jira(folder):
             i['fields']['comment']['comments'] = [{'id': '9001', 'author': person(who), 'body': 'Use the ISO table we already ship.', 'created': at, 'updated': at}]
             i['changelog'] = {'histories': []}
         news.append(i)
-    write(folder, '/rest/api/2/search@news', {'issues': news})
-    write(folder, '/rest/api/2/search', {'issues': [issue(k, False) for k in ('PAY-412', 'PAY-415', 'PAY-416', 'PAY-418')]})
+    # The site is Jira Cloud's, which searches at /search/jql.
+    write(folder, '/rest/api/2/search/jql@news', {'issues': news})
+    write(folder, '/rest/api/2/search/jql', {'issues': [issue(k, False) for k in ('PAY-412', 'PAY-415', 'PAY-416', 'PAY-418')]})
     write(folder, 'POST/rest/api/2/issue', {'id': '30427', 'key': 'PAY-427', 'self': SITE + '/rest/api/2/issue/30427'})
     # A move PAY-412's validator refuses: Done while a sub-task is open.
     write(folder, 'POST/rest/api/2/issue/PAY-412/transitions', {'answers': [
