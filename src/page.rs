@@ -181,6 +181,8 @@ pub struct Page {
     /// Whether the boards' filter has the keyboard, as the page last drew it: the side panel, drawn by the tab, may
     /// not read the tab to ask.
     pub boards_typing: bool,
+    /// Where the side panel's boards are scrolled to: back at the top for the filter (⌘P).
+    pub boards_scroll: ScrollHandle,
     /// The kind whose form the connect card had open when last drawn: its folds move when it changes.
     pub connect_open: Option<String>,
     /// What last folded or opened, and how tall each fold was drawn: every fold moves, in size and alpha (#110).
@@ -256,6 +258,7 @@ impl Page {
             boards_filter: String::new(),
             boards_filter_edit: TextEdit::new(String::new()),
             boards_typing: false,
+            boards_scroll: ScrollHandle::new(),
             connect_open: None,
             motion: motion::Marks::default(),
             folds: motion::Folds::default(),

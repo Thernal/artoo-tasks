@@ -34,6 +34,8 @@ pub fn side(page: &Entity<Page>, width: f32, cx: &mut App) -> Option<AnyElement>
     let mut list = div()
         .w(px(width))
         .min_w_0()
+        .h_full()
+        .min_h_0()
         .flex()
         .flex_col()
         .gap(px(2.))
@@ -249,7 +251,17 @@ pub fn side(page: &Entity<Page>, width: f32, cx: &mut App) -> Option<AnyElement>
             )
         }
     }
-    list = list.children(page.read(cx).folding(BOARDS, !folded, body));
+    // Only the boards scroll: as tall as they are while they fit, the panel's head and Drafts staying in sight.
+    let p = page.read(cx);
+    list = list.child(
+        div()
+            .id("tasks-side-boards")
+            .flex_shrink(1.)
+            .min_h_0()
+            .overflow_y_scroll()
+            .track_scroll(&p.boards_scroll)
+            .children(p.folding(BOARDS, !folded, body)),
+    );
     let n = s.kept.drafts.len();
     if !sites.is_empty() {
         let (page, frame) = (page.clone(), frame.clone());
@@ -385,6 +397,8 @@ impl Page {
         if !self.frame.side_shown(cx) {
             self.frame.show_side(cx);
         }
+        // The filter heads the boards, so it is scrolled away with them.
+        self.boards_scroll.set_offset(gpui::point(px(0.), px(0.)));
         self.frame.take_keyboard(INPUT_BOARDS, cx);
         cx.notify();
         true
