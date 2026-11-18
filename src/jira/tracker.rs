@@ -215,18 +215,44 @@ fn myself(site: &Site) -> Result<Person, String> {
     person(&v).ok_or_else(|| format!("{} did not say who the token is", site.host()))
 }
 
-/// The boards of `site`.
+/// A page of boards as Jira gives it: at most 50, whatever is asked.
+const BOARDS_PAGE: usize = 50;
+
+/// How many boards a site is read up to: a guard against a server that never says its last page is.
+const BOARDS_MAX: usize = 5000;
+
+/// The boards of `site`, every page of them, oldest first as Jira lists them.
 fn boards(site: &Site) -> Result<Vec<Board>, String> {
-    let v = jira::get(site, "/rest/agile/1.0/board?maxResults=100")?;
-    Ok((v["values"].as_array().into_iter().flatten())
-        .map(|b| Board {
-            // Jira's board id is a number.
-            id: (b["id"].as_u64()).map_or_else(|| text(&b["id"]), |n| n.to_string()),
-            name: text(&b["name"]),
-            site: site.host().to_owned(),
-            project: b["location"]["projectKey"].as_str().map(str::to_owned),
-        })
-        .collect())
+    let mut boards = Vec::new();
+    loop {
+        let v = jira::get(
+            site,
+            &format!(
+                "/rest/agile/1.0/board?maxResults={BOARDS_PAGE}&startAt={}",
+                boards.len()
+            ),
+        )?;
+        let page = v["values"].as_array().cloned().unwrap_or_default();
+        boards.extend(page.iter().map(|b| board(site, b)));
+        if !more_boards(&v, page.len(), boards.len()) {
+            return Ok(boards);
+        }
+    }
+}
+
+/// Whether a page of `got` boards (`v`), `read` so far, leaves more to read: only when it says it is not the last.
+fn more_boards(v: &Value, got: usize, read: usize) -> bool {
+    v["isLast"] == Value::Bool(false) && got > 0 && read < BOARDS_MAX
+}
+
+fn board(site: &Site, b: &Value) -> Board {
+    Board {
+        // Jira's board id is a number.
+        id: (b["id"].as_u64()).map_or_else(|| text(&b["id"]), |n| n.to_string()),
+        name: text(&b["name"]),
+        site: site.host().to_owned(),
+        project: b["location"]["projectKey"].as_str().map(str::to_owned),
+    }
 }
 
 /// Board `id`'s columns, epics and sprints; a board without epics or sprints (kanban) has none, not a failure.
@@ -932,5 +958,16 @@ mod tests {
         );
         assert_eq!(news[0].text, "@Avery.Quinn can you look?");
         assert_eq!(news[1].was.as_deref(), Some("Juniper Hale"));
+    }
+
+    #[test]
+    fn boards_are_read_on_while_a_page_says_it_is_not_the_last() {
+        let page = |last: Value| json!({"isLast": last, "values": []});
+        assert!(more_boards(&page(json!(false)), 50, 50));
+        assert!(!more_boards(&page(json!(true)), 7, 307));
+        // An older server's page, or a fixture's, says nothing: it is the last.
+        assert!(!more_boards(&json!({"values": []}), 3, 3));
+        assert!(!more_boards(&page(json!(false)), 0, 50));
+        assert!(!more_boards(&page(json!(false)), 50, BOARDS_MAX));
     }
 }
