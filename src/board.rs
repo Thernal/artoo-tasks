@@ -9,7 +9,8 @@ use crate::model::{self, BoardInfo, Epic, Issue, Person, Row, State};
 use crate::page::{Anchor, Page, PopKind};
 use crate::store::Read;
 use artoo_plugin_sdk::gpui::{
-    AnyElement, App, ClickEvent, Context, Div, FontWeight, SharedString, div, prelude::*,
+    AnyElement, App, ClickEvent, Context, Div, FontWeight, IntoElement, Render, SharedString,
+    Window, div, prelude::*,
 };
 use artoo_plugin_sdk::kit::hover::Hover;
 use artoo_plugin_sdk::kit::{controls, icons, markdown, px, theme};
@@ -17,6 +18,31 @@ use std::collections::HashSet;
 
 /// Who the people filter picks, by person id; `NONE` for Unassigned.
 pub const NONE: &str = "-";
+
+/// A card on its way between columns: its key and summary, what follows the pointer.
+#[derive(Clone)]
+struct Dragged {
+    key: String,
+    summary: String,
+}
+
+impl Render for Dragged {
+    fn render(&mut self, _: &mut Window, _: &mut Context<Self>) -> impl IntoElement {
+        div()
+            .w(px(220.))
+            .px(px(10.))
+            .py(px(8.))
+            .rounded(px(6.))
+            .bg(theme::panel())
+            .border_1()
+            .border_color(theme::accent())
+            .shadow_lg()
+            .text_size(px(12.))
+            .text_color(theme::text())
+            .opacity(0.9)
+            .child(format!("{} {}", self.key, self.summary))
+    }
+}
 
 /// A time as the preview says it at a row's end: `3h`, `11d`.
 fn short_ago(at: &str) -> String {
@@ -973,6 +999,10 @@ impl Page {
                 .rounded(px(8.))
                 .bg(theme::base())
                 .overflow_y_scroll()
+                .drag_over::<Dragged>(|d, _, _, _| d.bg(theme::hover()))
+                .on_drop(
+                    cx.listener(move |this, d: &Dragged, _, cx| this.drop_card(&d.key, ix, cx)),
+                )
                 .child(self.column_head(ix, name, state, shelf.rows.len(), cx));
             for r in &shelf.rows {
                 col = col.child(self.card(r, state.done(), shown, cx));
@@ -1245,6 +1275,12 @@ impl Page {
             .is_some_and(|me| r.assignee.as_ref().is_some_and(|p| p.id == me.id));
         let epic = r.epic.as_ref().map(|e| s.epic(e));
         let key = r.key.clone();
+        let anchor = Anchor::Row(r.key.clone());
+        let drag = Dragged {
+            key: r.key.clone(),
+            summary: r.summary.clone(),
+        };
+        let store = self.store.clone();
         let mut meta = div()
             .flex()
             .items_center()
@@ -1282,6 +1318,7 @@ impl Page {
             .flatten();
         div()
             .id(SharedString::from(format!("card-{}", r.key)))
+            .relative()
             .flex_none()
             .flex()
             .flex_col()
@@ -1309,6 +1346,13 @@ impl Page {
             )
             .children(lozenge)
             .child(meta)
+            .children(self.pop_here(&anchor, PopKind::Ask, cx))
+            .children(self.refusal_here(&anchor, &r.key, cx))
+            .on_drag(drag, move |d, _, _, cx| {
+                // Its moves are read as it is lifted, so they are known where it lands.
+                store.update(cx, |s, cx| s.read_moves(&d.key, cx));
+                cx.new(|_| d.clone())
+            })
             .tip(format!("{} {}", r.key, r.summary))
             .on_click(cx.listener(move |this, e: &ClickEvent, _, cx| {
                 this.pick_row(&key, cx);
@@ -1317,6 +1361,61 @@ impl Page {
                 }
             }))
             .into_any_element()
+    }
+
+    /// Card `key` dropped on column `ix`: the move the tracker offers into it, made; one that asks for values asks
+    /// them where the card is; no way there said in a sentence.
+    pub(crate) fn drop_card(&mut self, key: &str, ix: usize, cx: &mut Context<Self>) {
+        let s = self.store.read(cx);
+        let Some(column) = s.board_info().and_then(|i| i.columns.get(ix)).cloned() else {
+            return;
+        };
+        let Some(row) = s
+            .board_rows()
+            .and_then(|rows| rows.iter().find(|r| r.key == key))
+        else {
+            return;
+        };
+        if column.states.contains(&row.state.id) {
+            return;
+        }
+        let from = look::display_state(&row.state.name);
+        let anchor = Anchor::Row(key.to_owned());
+        let found = match s.moves.get(key) {
+            Some(Read::Done(moves)) => moves
+                .iter()
+                .find(|m| column.states.contains(&m.to.id))
+                .cloned()
+                .ok_or(format!(
+                    "{from} has no way to {} in its workflow",
+                    column.name
+                )),
+            _ => Err("Its moves were still being read; try again".to_owned()),
+        };
+        match found {
+            Ok(m) if m.asks.is_empty() => {
+                self.make_move(key, &m, artoo_plugin_sdk::serde_json::json!({}), anchor, cx)
+            }
+            Ok(m) => {
+                self.refused_to = Some(look::display_state(&m.to.name));
+                self.open_pop(PopKind::Move, anchor, key, cx);
+                if let Some(p) = self.pop.as_mut() {
+                    p.kind = PopKind::Ask;
+                    p.asked = vec![0; m.asks.len()];
+                    p.ask = Some(m);
+                }
+                cx.notify();
+            }
+            Err(why) => {
+                self.refused_to = Some(look::display_state(&column.name));
+                self.store.update(cx, |s, cx| {
+                    s.refused.insert((key.to_owned(), "state".into()), why);
+                    cx.notify();
+                });
+                self.refusal = Some((anchor, key.to_owned()));
+                cx.notify();
+            }
+        }
     }
 
     /// The picked issue beside the list: its kind and key, its title, its facts, its description's first part,

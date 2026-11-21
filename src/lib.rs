@@ -449,6 +449,23 @@ fn install(cx: &mut App) {
             if let Some(key) = arg.strip_prefix("sel=") {
                 snap_view.update(cx, |p, cx| p.pick_row(key, cx));
             }
+            // `tasks:drop=<key>:<column>` that card dropped on that column (0-based) once its moves are read.
+            if let Some((key, ix)) = arg.strip_prefix("drop=").and_then(|d| d.split_once(':')) {
+                let (key, ix) = (key.to_owned(), ix.parse().unwrap_or(0));
+                let view = snap_view.clone();
+                snap_view.update(cx, |p, cx| p.set_columns(true, cx));
+                cx.spawn(async move |cx| {
+                    let wait = cx.background_executor().clone();
+                    let wait = move || wait.timer(std::time::Duration::from_millis(1200));
+                    wait().await;
+                    view.update(cx, |p, cx| {
+                        p.store.update(cx, |s, cx| s.read_moves(&key, cx))
+                    });
+                    wait().await;
+                    view.update(cx, |p, cx| p.drop_card(&key, ix, cx));
+                })
+                .detach();
+            }
             if let Some(rest) = arg.strip_prefix("connect") {
                 // `connect-jira?site=…&email=…&label=…&token=…&save` fills the form and, with `save`, presses Connect.
                 let (rest, fill) = rest.split_once('?').unwrap_or((rest, ""));
