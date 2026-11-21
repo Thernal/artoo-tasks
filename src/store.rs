@@ -388,6 +388,29 @@ impl Store {
         })
     }
 
+    /// The projects whose space reads account `host`, named by their folders' names (Artoo gives a plugin no project
+    /// marks in 2.0.0), in order.
+    pub fn readers(&self, host: &str) -> Vec<String> {
+        let mut names: Vec<String> = (self.links.iter())
+            .filter(|(_, hosts)| hosts.iter().any(|h| h == host))
+            .map(|(project, _)| {
+                let folder = project.trim_end_matches('/');
+                folder.rsplit('/').next().unwrap_or(folder).to_owned()
+            })
+            .collect();
+        names.sort();
+        names.dedup();
+        names
+    }
+
+    /// When the boards of `host` shown were last read, for a host not reached now: the oldest of the boards kept.
+    pub fn last_reached(&self, host: &str) -> Option<i64> {
+        (self.stale.keys())
+            .filter(|b| b.0 == host)
+            .filter_map(|b| self.read_at.get(b).copied())
+            .min()
+    }
+
     /// The accounts project `project`'s space reads.
     pub fn sites_in(&self, project: &str) -> Vec<Site> {
         let hosts = self.links.get(project);

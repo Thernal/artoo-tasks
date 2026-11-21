@@ -915,21 +915,18 @@ impl Accounts {
             _ => None,
         };
         let kind = trackers::kind(&site.kind);
-        let tracker = kind.name.clone();
         // Trello's projects are its boards.
-        let unit = kind.unit.as_str();
-        let what = match projects {
-            Some(n) => format!(
-                "{tracker} · {}",
-                artoo_plugin_sdk::kit::format::plural(n, unit)
-            ),
-            None => tracker.clone(),
-        };
-        let how = match (&site.user, &kind.user) {
-            (Some(email), _) if site.cloud() => format!("API token · {email}"),
-            (Some(_), Some((label, _))) => format!("{label} and token"),
-            _ if kind.id == trackers::JIRA => "Personal access token".to_owned(),
-            _ => "Token".to_owned(),
+        let unit = kind.unit.clone();
+        let readers = s.readers(&host);
+        let since = s
+            .last_reached(&host)
+            .map(artoo_plugin_sdk::kit::format::clock);
+        // The sign-in: what it is, then who.
+        let (how, who) = match (&site.user, &kind.user) {
+            (Some(email), _) if site.cloud() => ("API token".to_owned(), Some(email.clone())),
+            (Some(_), Some((label, _))) => (format!("{label} and token"), None),
+            _ if kind.id == trackers::JIRA => ("Personal access token".to_owned(), None),
+            _ => ("Token".to_owned(), None),
         };
         let tested = self.tested.get(&host).cloned();
         let open = self
@@ -941,11 +938,48 @@ impl Accounts {
             (_, Some(Read::Done(who))) => div().text_color(theme::added()).child(who.clone()),
             (_, Some(Read::Failed(why))) => div().text_color(theme::removed()).child(why.clone()),
             (_, Some(Read::Reading)) => div().text_color(theme::faint()).child("Testing…"),
-            (Some(why), None) => div()
-                .text_color(theme::removed())
-                .child(format!("Can’t reach {host} · {why}")),
-            (None, None) => div().text_color(theme::muted()).child(how),
+            (Some(_), None) => div()
+                .flex()
+                .items_center()
+                .gap(px(5.))
+                .text_color(theme::warning())
+                .child(
+                    icons::icon("alert")
+                        .size(px(12.))
+                        .text_color(theme::warning()),
+                )
+                .child("Can’t reach")
+                .children(since.clone()),
+            (None, None) => div()
+                .flex()
+                .items_center()
+                .gap(px(8.))
+                .child(div().text_color(theme::faint()).child(how))
+                .children(who.map(|w| div().text_color(theme::muted()).child(w))),
         };
+        let why = bad.clone().map(|why| match &since {
+            Some(at) => format!(
+                "Can’t reach {host} · {why}\nIts boards as read at {at}; Retry reads them again"
+            ),
+            None => format!("Can’t reach {host} · {why}"),
+        });
+        let chips = (bad.is_none() && !readers.is_empty()).then(|| {
+            let extra = readers.len().saturating_sub(3);
+            div()
+                .id(SharedString::from(format!("tracker-reads-{host}")))
+                .flex_none()
+                .flex()
+                .items_center()
+                .gap(px(4.))
+                .children(readers.iter().take(3).map(|name| project_chip(name)))
+                .children((extra > 0).then(|| {
+                    div()
+                        .text_size(px(11.))
+                        .text_color(theme::faint())
+                        .child(format!("+{extra}"))
+                }))
+                .tip(format!("Read in\n{}", readers.join("\n")))
+        });
         div()
             .flex()
             .flex_col()
@@ -976,21 +1010,47 @@ impl Accounts {
                                         div()
                                             .font_weight(FontWeight::MEDIUM)
                                             .text_color(theme::text())
-                                            .child(host.clone()),
+                                            .child(site.named()),
                                     )
-                                    .child(
+                                    .children((!site.label.is_empty()).then(|| {
                                         div()
                                             .text_size(px(12.))
                                             .text_color(theme::faint())
-                                            .child(what),
-                                    ),
+                                            .child(site.host().to_owned())
+                                    }))
+                                    .children(projects.map(|n| {
+                                        div()
+                                            .id(SharedString::from(format!("tracker-count-{host}")))
+                                            .flex()
+                                            .items_center()
+                                            .gap(px(3.))
+                                            .text_size(px(12.))
+                                            .text_color(theme::faint())
+                                            .child(
+                                                icons::icon("layers")
+                                                    .size(px(11.))
+                                                    .text_color(theme::faint()),
+                                            )
+                                            .child(n.to_string())
+                                            .tip(artoo_plugin_sdk::kit::format::plural(n, &unit))
+                                    })),
                             )
-                            .child(detail.text_size(px(12.)).truncate()),
+                            .child(
+                                div()
+                                    .id(SharedString::from(format!("tracker-detail-{host}")))
+                                    .child(detail.text_size(px(12.)).truncate())
+                                    .when_some(why, |d, why| d.tip(why)),
+                            ),
+                    )
+                    .children(chips)
+                    .children(
+                        bad.is_some()
+                            .then(|| div().text_color(theme::faint()).child("–")),
                     )
                     .child(
-                        crate::look::small_button(
+                        test_button(
                             SharedString::from(format!("tracker-test-{host}")),
-                            if bad.is_some() { "Retry" } else { "Test" },
+                            bad.is_some(),
                         )
                         .on_click(cx.listener(
                             move |this, _: &ClickEvent, _, cx| {
@@ -1128,6 +1188,49 @@ pub fn mark(kind: &TrackerKind) -> impl IntoElement {
         .text_color(theme::code(hue))
         .font_weight(FontWeight::BOLD)
         .child(letter)
+}
+
+/// A project in an account's row: its first letters in a tile, until Artoo lends a plugin the project's own mark.
+fn project_chip(name: &str) -> impl IntoElement {
+    let letters: String = name.chars().take(2).collect::<String>().to_uppercase();
+    div()
+        .flex_none()
+        .size(px(20.))
+        .rounded(px(5.))
+        .flex()
+        .items_center()
+        .justify_center()
+        .bg(crate::look::tint(
+            theme::code((name.len() % 6 + 1) as u32),
+            0.25,
+        ))
+        .text_color(theme::muted())
+        .text_size(px(9.))
+        .font_weight(FontWeight::BOLD)
+        .child(letters)
+}
+
+/// Test as a glyph with its sentence for a tooltip; a host not reached keeps its word, Retry.
+fn test_button(id: SharedString, unreached: bool) -> gpui::Stateful<gpui::Div> {
+    match unreached {
+        true => crate::look::small_button(id, "Retry").tip("Read its boards again"),
+        false => div()
+            .id(id)
+            .flex_none()
+            .size(px(24.))
+            .flex()
+            .items_center()
+            .justify_center()
+            .rounded(px(6.))
+            .cursor_pointer()
+            .hover(|s| s.bg(theme::hover()))
+            .child(
+                icons::icon("user-check")
+                    .size(px(14.))
+                    .text_color(theme::muted()),
+            )
+            .tip("Test: who the token is, read now"),
+    }
 }
 
 /// `trackers.txt` with the line of `old` (a host) replaced by `line`, or `line` added, or the host's line taken out
