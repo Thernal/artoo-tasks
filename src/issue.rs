@@ -3129,6 +3129,7 @@ impl Page {
             _ => Vec::new(),
         };
         let board = s.picked().map(|b| b.name.clone()).unwrap_or_default();
+        let read_at = s.moves_at.get(key).copied();
         let url = s.site_for(key).map(|site| site.url.clone());
         let here = row.as_ref().map(|r| info.column_of(&r.state));
         let current = row.as_ref().map(|r| r.state.id.clone()).unwrap_or_default();
@@ -3144,7 +3145,22 @@ impl Page {
                 .find(|m| c.states.contains(&m.to.id))
                 .is_some_and(|m| !m.asks.is_empty());
             if ix > 0 {
-                boxes = boxes.child(div().text_color(theme::faint()).child("→"));
+                let moves_at =
+                    |c: &model::Column| numbered.iter().any(|m| c.states.contains(&m.to.id));
+                let (forward, back) = (
+                    here == Some(ix - 1) && moves_at(c),
+                    here == Some(ix) && moves_at(&info.columns[ix - 1]),
+                );
+                boxes = boxes.child(
+                    div()
+                        .text_size(px(16.))
+                        .text_color(if forward || back {
+                            theme::accent()
+                        } else {
+                            theme::faint()
+                        })
+                        .child(if back { "←" } else { "→" }),
+                );
             }
             boxes = boxes.child(
                 div()
@@ -3233,12 +3249,15 @@ impl Page {
                                     .text_color(theme::text())
                                     .child("Workflow"),
                             )
-                            .child(
-                                div()
-                                    .text_size(px(12.))
-                                    .text_color(theme::faint())
-                                    .child(format!("{board} · Jira")),
-                            )
+                            .child(div().text_size(px(12.)).text_color(theme::faint()).child(
+                                match read_at {
+                                    Some(at) => format!(
+                                        "{board} · Jira · read {}",
+                                        artoo_plugin_sdk::kit::format::ago(at)
+                                    ),
+                                    None => format!("{board} · Jira"),
+                                },
+                            ))
                             .child(div().flex_1()),
                     )
                     .child(boxes)

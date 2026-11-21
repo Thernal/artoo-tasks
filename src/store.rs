@@ -86,6 +86,8 @@ pub struct Store {
     pub stale: HashMap<BoardId, String>,
     pub issues: HashMap<String, Read<Issue>>,
     pub moves: HashMap<String, Read<Vec<Move>>>,
+    /// When each issue's moves were read, for its workflow's head.
+    pub moves_at: HashMap<String, i64>,
     pub screens: HashMap<String, Read<Vec<Field>>>,
     pub people: HashMap<String, Read<Vec<Person>>>,
     pub link_kinds: HashMap<String, Read<Vec<LinkKind>>>,
@@ -161,6 +163,7 @@ impl Store {
             stale: HashMap::new(),
             issues: HashMap::new(),
             moves: HashMap::new(),
+            moves_at: HashMap::new(),
             screens: HashMap::new(),
             people: HashMap::new(),
             link_kinds: HashMap::new(),
@@ -736,6 +739,7 @@ impl Store {
             cx,
             move || model::moves(&site, &k),
             move |this, read, _| {
+                this.moves_at.insert(put.clone(), now());
                 this.moves.insert(put, read_of(read));
             },
         );
