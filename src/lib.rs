@@ -429,12 +429,18 @@ fn install(cx: &mut App) {
             accounts_input,
         ];
         // `tasks:` the space; `tasks:connect` its connect card, `tasks:connect-<kind>` with that kind's form open;
-        // `tasks:issue=<key>` an issue's page.
+        // `tasks:issue=<key>` an issue's page, `tasks:drafts` the Drafts.
         let (snap_frame, snap_view) = (frame.clone(), view.clone());
         let snapshot: artoo_plugin_sdk::shell::Snap = Rc::new(move |arg, cx| {
             snap_frame.go_space(page::SPACE, cx);
             if let Some(key) = arg.strip_prefix("issue=") {
                 snap_view.update(cx, |p, cx| p.open_issue(key, cx));
+            }
+            if arg == "drafts" {
+                snap_view.update(cx, |p, cx| {
+                    p.drafts = true;
+                    cx.notify();
+                });
             }
             if let Some(rest) = arg.strip_prefix("connect") {
                 // `connect-jira?site=…&email=…&label=…&token=…&save` fills the form and, with `save`, presses Connect.

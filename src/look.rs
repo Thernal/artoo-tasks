@@ -343,6 +343,18 @@ pub fn chevron(id: impl Into<gpui::ElementId>, open: bool, size: f32) -> impl In
     )
 }
 
+/// A time as the design's lists say it, short: `now`, `2m`, `1h`, `1d`, then the date.
+pub fn short_ago(time: i64) -> String {
+    let secs = (artoo_plugin_sdk::kit::format::now() - time).max(0);
+    match secs {
+        0..60 => "now".to_owned(),
+        60..3600 => format!("{}m", secs / 60),
+        3600..86400 => format!("{}h", secs / 3600),
+        86400..2_592_000 => format!("{}d", secs / 86400),
+        _ => artoo_plugin_sdk::kit::format::date(time),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

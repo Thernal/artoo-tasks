@@ -1542,9 +1542,9 @@ impl Page {
 
     /// Drafts: kept on this Mac until created, a list beside the one picked.
     pub fn drafts_page(&mut self, cx: &mut Context<Self>) -> AnyElement {
-        // Whose a draft is, and when it was kept: `Your agent · 2 m`; yours, when alone.
+        // Whose a draft is, and when it was kept: `Your agent · 2m`; yours, when alone.
         let by_when = |d: &Draft| {
-            let when = artoo_plugin_sdk::kit::format::ago(d.at);
+            let when = look::short_ago(d.at);
             match d.by.is_empty() {
                 true => when,
                 false => format!("{} · {when}", d.by),
@@ -1665,7 +1665,32 @@ impl Page {
             .gap(px(8.))
             .child(kv(
                 "Where",
-                div().child(d.project.clone()).into_any_element(),
+                div()
+                    .flex_1()
+                    .flex()
+                    .items_center()
+                    .justify_between()
+                    .child(div().child(d.project.clone()))
+                    .child(
+                        div()
+                            .id("draft-kept")
+                            .flex_none()
+                            .flex()
+                            .items_center()
+                            .gap(px(6.))
+                            .text_color(theme::faint())
+                            .child(
+                                icons::icon("pencil")
+                                    .size(px(12.))
+                                    .text_color(theme::muted()),
+                            )
+                            .child(look::short_ago(d.at))
+                            .tip(format!(
+                                "Draft  ·  kept on this Mac until it is created  ·  saved {}",
+                                artoo_plugin_sdk::kit::format::ago(d.at)
+                            )),
+                    )
+                    .into_any_element(),
             ))
             .child(kv(
                 "Type",
@@ -1692,25 +1717,6 @@ impl Page {
             .gap(px(14.))
             .p(px(20.))
             .bg(theme::editor())
-            .child(
-                div()
-                    .flex()
-                    .items_center()
-                    .gap(px(6.))
-                    .text_size(px(12.))
-                    .text_color(theme::muted())
-                    .child(
-                        icons::icon("pencil")
-                            .size(px(12.))
-                            .text_color(theme::muted()),
-                    )
-                    .child("Draft")
-                    .child(
-                        div()
-                            .text_color(theme::faint())
-                            .child(format!("· {}", by_when(&d))),
-                    ),
-            )
             .child(
                 div()
                     .text_size(px(18.))
