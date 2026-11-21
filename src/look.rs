@@ -377,6 +377,17 @@ pub fn icon_button(
         .tip(tip)
 }
 
+/// The face of nobody: a dashed ring in a face's place.
+pub fn nobody(size: f32) -> Div {
+    div()
+        .flex_none()
+        .size(px(size))
+        .rounded_full()
+        .border_1()
+        .border_dashed()
+        .border_color(theme::faint())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

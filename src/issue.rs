@@ -137,24 +137,8 @@ fn empty_row(text: &'static str) -> Div {
         .child(text)
 }
 
-/// A fact of the facts row: its label over its value.
-fn fact(label: &'static str, value: impl IntoElement) -> Div {
-    div()
-        .flex()
-        .flex_col()
-        .gap(px(4.))
-        .child(
-            div()
-                .text_size(px(11.))
-                .font_weight(FontWeight::SEMIBOLD)
-                .text_color(theme::muted())
-                .child(label.to_uppercase()),
-        )
-        .child(value)
-}
-
 /// A control: its value and ▾, ringed while its list is open.
-fn ctl(id: impl Into<SharedString>, on: bool, tip: &'static str) -> gpui::Stateful<Div> {
+fn ctl(id: impl Into<SharedString>, on: bool, tip: impl Into<SharedString>) -> gpui::Stateful<Div> {
     div()
         .id(id.into())
         .relative()
@@ -171,12 +155,6 @@ fn ctl(id: impl Into<SharedString>, on: bool, tip: &'static str) -> gpui::Statef
         .hover(|s| s.bg(theme::hover()))
         .when(on, |d| d.border_1().border_color(theme::accent()))
         .tip(tip)
-}
-
-fn chevron() -> impl IntoElement {
-    icons::icon("chevron")
-        .size(px(11.))
-        .text_color(theme::faint())
 }
 
 /// A changed field's dot, until it is seen.
@@ -476,7 +454,14 @@ impl Page {
         // Assignee.
         let who_open = self.pop_at(&Anchor::Issue, PopKind::Assign);
         let k = key.clone();
-        let assignee = ctl("tasks-ctl-who", who_open, "Assign  A · to me  I")
+        let who_tip = match &r.assignee {
+            Some(p) => format!(
+                "Assignee · {}  A · to me  I",
+                if me { "You" } else { p.name.as_str() }
+            ),
+            None => "Assignee · nobody  A · to me  I".to_owned(),
+        };
+        let assignee = ctl("tasks-ctl-who", who_open, who_tip)
             .child(match &r.assignee {
                 Some(p) => div()
                     .flex()
@@ -484,9 +469,8 @@ impl Page {
                     .gap(px(6.))
                     .child(look::face(&p.name, me, 16.))
                     .child(if me { "You".to_owned() } else { p.name.clone() }),
-                None => div().text_color(theme::faint()).child("Unassigned"),
+                None => look::nobody(16.),
             })
-            .child(chevron())
             .children(dot(unseen.contains("Assignee")))
             .on_click(cx.listener(move |this, _: &ClickEvent, _, cx| {
                 this.open_pop(PopKind::Assign, Anchor::Issue, &k, cx)
@@ -497,14 +481,14 @@ impl Page {
                          id: &'static str,
                          field: &'static str,
                          body: AnyElement,
+                         tip: String,
                          cx: &mut Context<Page>| {
             let anchor = anchor_of(field);
             let open = this.pop_at(&anchor, PopKind::Field(field.into()));
             let k = key.clone();
             let a = anchor.clone();
-            ctl(id, open, "Change")
+            ctl(id, open, tip)
                 .child(body)
-                .child(chevron())
                 .on_click(cx.listener(move |this, _: &ClickEvent, _, cx| {
                     this.open_pop(PopKind::Field(field.into()), a.clone(), &k, cx)
                 }))
@@ -521,6 +505,7 @@ impl Page {
                     .child("None")
                     .into_any_element(),
             },
+            "Priority · Change".into(),
             cx,
         )
         .children(dot(unseen.contains("Priority")));
@@ -535,6 +520,7 @@ impl Page {
                 .child(look::kind_mark(&r.kind, r.subtask))
                 .child(r.kind.clone())
                 .into_any_element(),
+            "Type · Change".into(),
             cx,
         );
         let sprint_field = if issue.fields.get("customfield_10020").is_some() {
@@ -553,6 +539,10 @@ impl Page {
                     .child("Backlog")
                     .into_any_element(),
             },
+            format!(
+                "Sprint · {} · Change",
+                r.sprint.as_ref().map_or("Backlog", |sp| sp.name.as_str())
+            ),
             cx,
         )
         .children(dot(unseen.contains("Sprint")));
@@ -561,7 +551,11 @@ impl Page {
             let open = self.pop_at(&anchor, PopKind::Epic);
             let k = key.clone();
             let a = anchor.clone();
-            ctl("tasks-ctl-epic", open, "Change the epic  ⇧E")
+            let epic_tip = match &epic {
+                Some(e) => format!("Epic · {}  ⇧E", e.name),
+                None => "Epic · none  ⇧E".to_owned(),
+            };
+            ctl("tasks-ctl-epic", open, epic_tip)
                 .child(match &epic {
                     Some(e) => div()
                         .flex()
@@ -575,7 +569,6 @@ impl Page {
                         .child("No epic")
                         .into_any_element(),
                 })
-                .child(chevron())
                 .children(dot(unseen.contains("Epic")))
                 .on_click(cx.listener(move |this, _: &ClickEvent, _, cx| {
                     this.open_pop(PopKind::Epic, a.clone(), &k, cx)
@@ -585,21 +578,22 @@ impl Page {
         let mut facts = div()
             .flex()
             .flex_wrap()
-            .gap(px(28.))
-            .child(fact("State", state))
-            .child(fact("Assignee", assignee));
+            .items_center()
+            .gap(px(16.))
+            .child(state);
         if caps.priority {
-            facts = facts.child(fact("Priority", priority));
+            facts = facts.child(priority);
         }
         if caps.kinds {
-            facts = facts.child(fact("Type", kind));
-        }
-        if let Some(e) = epic_ctl {
-            facts = facts.child(fact("Epic", e));
+            facts = facts.child(kind);
         }
         if caps.sprints {
-            facts = facts.child(fact("Sprint", sprint));
+            facts = facts.child(sprint);
         }
+        if let Some(e) = epic_ctl {
+            facts = facts.child(e);
+        }
+        facts = facts.child(assignee);
         div()
             .flex()
             .flex_col()
@@ -1261,9 +1255,11 @@ impl Page {
             .when(all > 0, |d| {
                 d.child(
                     div()
+                        .id("tasks-sub-count")
                         .text_size(px(12.))
                         .text_color(theme::muted())
-                        .child(format!("{done} of {all}")),
+                        .child(format!("{done}/{all}"))
+                        .tip(format!("{done} of {all} sub-tasks done")),
                 )
                 .child(look::progress(done, all))
             });
@@ -1282,10 +1278,7 @@ impl Page {
             let open_key = key.clone();
             let face = match &s.assignee {
                 Some(p) => look::face(&p.name, me, 16.).into_any_element(),
-                None => icons::icon("user")
-                    .size(px(13.))
-                    .text_color(theme::faint())
-                    .into_any_element(),
+                None => look::nobody(16.).into_any_element(),
             };
             list = list.child(
                 div()

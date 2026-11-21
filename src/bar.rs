@@ -18,10 +18,19 @@ fn in_jira(url: String) -> BarAction {
     let words = format!("Open in {}", crate::trackers::tracker_of(&url));
     BarAction::new(
         "tasks-jira",
-        controls::bar_button("tasks-jira", &words, "", false)
+        div()
+            .id("tasks-jira")
+            .flex_none()
+            .flex()
+            .items_center()
+            .justify_center()
+            .size(px(28.))
+            .rounded(px(6.))
+            .cursor_pointer()
+            .hover(|s| s.bg(theme::hover()))
             .child(
                 icons::icon("external")
-                    .size(px(12.))
+                    .size(px(14.))
                     .text_color(theme::muted()),
             )
             .tip(format!("{words}  ⌥⌘J"))
