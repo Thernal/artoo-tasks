@@ -44,6 +44,15 @@ impl Render for Dragged {
     }
 }
 
+/// What a tracker calls the things on its boards: Trello's cards, everyone else's issues.
+fn item_word(host: &str) -> &'static str {
+    if crate::trackers::kind_of(host) == crate::trackers::TRELLO {
+        "card"
+    } else {
+        "issue"
+    }
+}
+
 /// A time as the preview says it at a row's end: `3h`, `11d`.
 fn short_ago(at: &str) -> String {
     let ago = model::ago(at);
@@ -429,8 +438,15 @@ impl Page {
                     .child(shown.board_name.clone()),
             ),
         };
-        let mut tip = artoo_plugin_sdk::kit::format::plural(shown.count, "issue");
-        let count = shown.count.to_string();
+        let unit = item_word(&shown.host);
+        let all = shown.all.iter().filter(|r| r.parent.is_none()).count();
+        let nothing = shown.count == 0 && all > 0;
+        let mut tip = artoo_plugin_sdk::kit::format::plural(shown.count, unit);
+        let count = if nothing {
+            format!("0 of {}", artoo_plugin_sdk::kit::format::plural(all, unit))
+        } else {
+            shown.count.to_string()
+        };
         if shown.group == Group::Story {
             tip.push_str(&format!(
                 ", {}",
@@ -460,6 +476,9 @@ impl Page {
             line = line
                 .child(sep())
                 .child(div().id("tasks-picked").child(words).tip(names.join(", ")));
+        }
+        if nothing {
+            return line.child(div().flex_1()).child(shown.host.clone());
         }
         let group = shown.group;
         let ends = shown.info.active().and_then(|s| s.end.as_ref());
@@ -1779,6 +1798,7 @@ impl Page {
         let play = in_play(rows, info.as_ref());
         let all = team(&play, me.as_ref());
         let picked: HashSet<String> = s.faces.iter().cloned().collect();
+        let unit = item_word(&board.site);
         let id_of = |p: &Option<Person>| p.as_ref().map_or(NONE.to_owned(), |p| p.id.clone());
         let many = all.len() > 5;
         let mut row: Vec<&(Option<Person>, usize)> = Vec::new();
@@ -1848,7 +1868,7 @@ impl Page {
                     .child(face)
                     .tip(format!(
                         "{name} · {}",
-                        artoo_plugin_sdk::kit::format::plural(*n, "issue")
+                        artoo_plugin_sdk::kit::format::plural(*n, unit)
                     ))
                     .on_click(
                         cx.listener(move |this, _: &ClickEvent, _, cx| this.toggle_face(&pick, cx)),
