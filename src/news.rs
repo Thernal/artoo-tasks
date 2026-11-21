@@ -38,6 +38,8 @@ fn kind_of(told: Told) -> &'static str {
 }
 
 /// A news as the Inbox lists it: what happened, the issue, its state and who has it.
+// Artoo after 2.0.0 adds fields to `Listed` (`who`, `badge`); the update fills them there and is needless on 2.0.0.
+#[allow(clippy::needless_update)]
 fn listed(host: &str, n: &News, s: &Store) -> Listed {
     let me = s.me.get(host);
     let assignee = match &n.row.assignee {
@@ -70,6 +72,7 @@ fn listed(host: &str, n: &News, s: &Store) -> Listed {
             ("Assignee".into(), assignee),
         ],
         open: format!("Open {}", n.row.key),
+        ..Default::default()
     }
 }
 
