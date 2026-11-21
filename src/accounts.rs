@@ -31,11 +31,16 @@ const EMAIL: &str = "tracker-email";
 struct Form {
     /// The host it was opened for; None for a new one.
     host: Option<String>,
-    fields: [String; 3],
-    edits: [TextEdit; 3],
-    /// The field with the keyboard: the site, the email, the token.
+    /// The site, the email, the token, the label.
+    fields: [String; 4],
+    edits: [TextEdit; 4],
+    /// The field with the keyboard.
     at: usize,
     why: Option<String>,
+    /// The fields the site's answer marked: the site not reached, the email and token refused.
+    marked: Vec<usize>,
+    /// The site is being read before it is kept.
+    reading: bool,
     /// The project whose space opened it: what it saves, that project reads.
     project: Option<String>,
     /// The site is the kind's own (Trello's): not asked.
@@ -51,16 +56,20 @@ impl Form {
     /// A new site's form with `url` typed: a kind's own host, its first run's Connect… asked for it.
     fn filled(site: Option<&Site>, url: String) -> Self {
         let email = site.and_then(|s| s.user.clone()).unwrap_or_default();
+        let label = site.map(|s| s.label.clone()).unwrap_or_default();
         Form {
             host: site.map(|s| s.host().to_owned()),
             edits: [
                 TextEdit::new(url.clone()),
                 TextEdit::new(email.clone()),
                 TextEdit::new(String::new()),
+                TextEdit::new(label.clone()),
             ],
-            fields: [url, email, String::new()],
+            fields: [url, email, String::new(), label],
             at: 0,
             why: None,
+            marked: Vec::new(),
+            reading: false,
             project: None,
             fixed: false,
         }
@@ -76,6 +85,7 @@ impl Form {
                 kind.user.is_some()
                     && (kind.id != trackers::JIRA || trackers::cloud_host(&self.host()))
             }
+            3 => self.kind().id == trackers::JIRA && !self.fixed,
             _ => true,
         }
     }
@@ -94,13 +104,24 @@ impl Form {
         site.host().to_owned()
     }
 
-    /// The field after `at` (before it, `back`), round, skipping what is not asked.
+    /// The field after `at` (before it, `back`), round, skipping what is not asked: the label, the site, the email,
+    /// the token, as they are drawn.
     fn step(&mut self, back: bool) {
-        for _ in 0..3 {
-            self.at = (self.at + if back { 2 } else { 1 }) % 3;
+        const ORDER: [usize; 4] = [3, 0, 1, 2];
+        for _ in 0..4 {
+            let now = ORDER.iter().position(|&f| f == self.at).unwrap_or(0);
+            self.at = ORDER[(now + if back { 3 } else { 1 }) % 4];
             if self.asks(self.at) {
                 break;
             }
+        }
+    }
+
+    /// What the label field shows when empty: the site typed, which is what the account is called then.
+    fn label_hint(&self) -> String {
+        match self.host() {
+            h if h.is_empty() => "Optional, to tell accounts apart".into(),
+            h => h,
         }
     }
 
@@ -241,6 +262,30 @@ impl Accounts {
         cx.notify();
     }
 
+    /// The form filled for a picture: `site=…&email=…&label=…&token=…`, and `save` presses Connect.
+    pub fn snapshot_fill(&mut self, fill: &str, cx: &mut Context<Self>) {
+        let Some(form) = self.form.as_mut() else {
+            return;
+        };
+        for pair in fill.split('&').filter(|p| !p.is_empty()) {
+            let (key, value) = pair.split_once('=').unwrap_or((pair, ""));
+            let ix = match key {
+                "site" => 0,
+                "email" => 1,
+                "token" => 2,
+                "label" => 3,
+                _ => continue,
+            };
+            form.fields[ix] = value.to_owned();
+            form.edits[ix] = TextEdit::new(value.to_owned());
+            form.at = ix;
+        }
+        if fill.split('&').any(|p| p == "save") {
+            self.save(cx);
+        }
+        cx.notify();
+    }
+
     /// The space's form closed, if it is open there.
     pub fn close_in_space(&mut self, cx: &mut Context<Self>) {
         if self.form.as_ref().is_some_and(|f| f.project.is_some()) {
@@ -281,12 +326,8 @@ impl Accounts {
         cx.notify();
     }
 
-    /// Save: the site kept in `trackers.txt`, its token (when one is typed) in `~/.config/tokens/<host>`; the boards
-    /// read again.
-    fn save(&mut self, cx: &mut Context<Self>) {
-        let Some(form) = self.form.as_mut() else {
-            return;
-        };
+    /// What the form holds as a site: the address, the email when asked, the token typed and the label.
+    fn entered(form: &Form) -> (Site, String) {
         let url = form.fields[0].trim().trim_end_matches('/').to_owned();
         let url = if url.is_empty() || url.contains("://") {
             url
@@ -298,33 +339,106 @@ impl Accounts {
             true => form.fields[1].trim().to_owned(),
             false => String::new(),
         };
-        let token = form.fields[2].trim().to_owned();
+        let label = match form.asks(3) {
+            true => form.fields[3].trim().to_owned(),
+            false => String::new(),
+        };
         let mut site = Site {
-            url: url.clone(),
-            user: (!email.is_empty()).then_some(email.clone()),
+            url,
+            user: (!email.is_empty()).then_some(email),
+            label,
             ..Default::default()
         };
         site.kind = trackers::kind_of(site.host());
+        (site, form.fields[2].trim().to_owned())
+    }
+
+    /// Save: the site is read with the token first (`jira::probe`), and kept only when it answers; a site not reached
+    /// marks its field, a token refused the email and token.
+    fn save(&mut self, cx: &mut Context<Self>) {
+        let Some(form) = self.form.as_mut() else {
+            return;
+        };
+        if form.reading {
+            return;
+        }
+        let (mut site, token) = Self::entered(form);
         let host = site.host().to_owned();
+        form.marked.clear();
         if host.is_empty() {
             form.why =
                 Some("A site is needed: jira.example.com, or your-team.atlassian.net".into());
+            form.marked.push(0);
             return cx.notify();
         }
         if token.is_empty() && form.host.as_deref() != Some(host.as_str()) {
             form.why = Some("A token is needed for a new site".into());
+            form.marked.push(2);
             return cx.notify();
         }
+        form.why = None;
+        form.reading = true;
+        site.token = match token.is_empty() {
+            true => (self.store.read(cx).site_of(&host)).map_or_else(String::new, |s| s.token),
+            false => token,
+        };
+        let read = cx.background_spawn(async move { jira::probe(&site) });
+        cx.spawn(async move |this, cx| {
+            let read = read.await;
+            this.update(cx, |a, cx| a.probed(read, cx)).ok();
+        })
+        .detach();
+        cx.notify();
+    }
+
+    /// The site's answer to the first read: kept when it answered, else said on the form.
+    fn probed(&mut self, read: Result<(), jira::Probe>, cx: &mut Context<Self>) {
+        let Some(form) = self.form.as_mut() else {
+            return;
+        };
+        form.reading = false;
+        match read {
+            Ok(()) => self.keep(cx),
+            Err(jira::Probe::Reach(said)) => {
+                form.why = Some(format!("Can’t reach the site · {said}"));
+                form.marked = vec![0];
+                cx.notify();
+            }
+            Err(jira::Probe::Refused) => {
+                let asked = form.asks(1);
+                form.why = Some("The site refused this email and token".into());
+                form.marked = if asked { vec![1, 2] } else { vec![2] };
+                cx.notify();
+            }
+            Err(jira::Probe::Other(why)) => {
+                form.why = Some(why);
+                cx.notify();
+            }
+        }
+    }
+
+    /// The site, answered, kept in `trackers.txt`, its token (when one is typed) in `~/.config/tokens/<host>`; the
+    /// boards read again.
+    fn keep(&mut self, cx: &mut Context<Self>) {
+        let Some(form) = self.form.as_mut() else {
+            return;
+        };
+        let (site, token) = Self::entered(form);
+        let (url, host) = (site.url.clone(), site.host().to_owned());
+        let email = site.user.clone().unwrap_or_default();
         if jira::fixture().is_some() {
             form.why = Some("The fixture's trackers are its trackers.txt".into());
             return cx.notify();
         }
         // A kind other than Jira is said on the line, so a site whose plugin is gone is not read as Jira.
         let kind = (site.kind != trackers::JIRA).then(|| format!(" kind={}", site.kind));
-        let line = match email.is_empty() {
+        let mut line = match email.is_empty() {
             true => format!("{url}{}", kind.unwrap_or_default()),
             false => format!("{url} {email}{}", kind.unwrap_or_default()),
         };
+        if !site.label.is_empty() {
+            line.push_str(&format!(" # {}", site.label));
+        }
         let replaced = form.host.clone();
         if let Err(why) = keep_site(
             replaced.as_deref(),
@@ -375,13 +489,14 @@ impl Accounts {
             return Typed::Kept;
         }
         let at = form.at;
+        form.marked.retain(|&m| m != at);
         match input::edit(&mut form.fields[at], &mut form.edits[at], key, cx) {
             input::Edit::Escape => {
                 self.close(cx);
                 return Typed::Leave;
             }
             input::Edit::Enter { .. } => {
-                if at < 2 {
+                if at != 2 {
                     form.step(false);
                 } else {
                     self.save(cx);
@@ -410,6 +525,7 @@ impl Accounts {
             return div().into_any_element();
         };
         let active = form.at == ix && self.frame.typing(cx) == Some(INPUT);
+        let marked = form.marked.contains(&ix);
         let text = form.fields[ix].clone();
         let look = input::Look {
             mask: ix == 2,
@@ -431,14 +547,19 @@ impl Accounts {
                 .rounded(px(6.))
                 .bg(theme::base())
                 .border_1()
-                .border_color(if active {
-                    theme::focus()
-                } else {
-                    theme::island_border()
+                .border_color(match (marked, active) {
+                    (true, _) => theme::removed(),
+                    (_, true) => theme::focus(),
+                    _ => theme::island_border(),
                 })
-                .when(card && active, |d| {
+                .when(card && (active || marked), |d| {
                     d.shadow(vec![gpui::BoxShadow {
-                        color: theme::focus().into(),
+                        color: if marked {
+                            theme::removed()
+                        } else {
+                            theme::focus()
+                        }
+                        .into(),
                         offset: gpui::point(px(0.), px(0.)),
                         blur_radius: px(0.),
                         spread_radius: px(1.),
@@ -472,6 +593,8 @@ impl Accounts {
         let jira = kind.id == trackers::JIRA;
         let page = form.token_page();
         let asks_user = form.asks(1);
+        let (form_asks_label, label_hint) = (form.asks(3), form.label_hint());
+        let reached = form.reading;
         let reaches = host
             .as_ref()
             .map(|h| match self.store.read(cx).projects.get(h) {
@@ -511,6 +634,10 @@ impl Accounts {
             false,
             cx,
         );
+        let named = form_asks_label.then(|| {
+            let field = self.field(3, &label_hint, false, cx);
+            line(label("Label"), field)
+        });
         let user = (kind.user.clone()).map(|(name, hint)| {
             let field = self.field(1, &hint, false, cx);
             line(label(&name), field).into_any_element()
@@ -535,6 +662,7 @@ impl Accounts {
             .bg(theme::base())
             .border_t_1()
             .border_color(theme::island_border())
+            .children(named)
             .child(line(label("Site"), site))
             .children(user)
             .child(line(
@@ -590,6 +718,12 @@ impl Accounts {
                     .text_color(theme::removed())
                     .child(w)
             }))
+            .children(reached.then(|| {
+                div()
+                    .text_size(px(12.))
+                    .text_color(theme::faint())
+                    .child("Reading the site…")
+            }))
             .child(
                 div()
                     .flex()
@@ -622,13 +756,15 @@ impl Accounts {
     /// the token is made beside its label; what went wrong, Cancel and Connect at the foot.
     pub fn space_form(&mut self, cx: &mut Context<Self>) -> Option<AnyElement> {
         let form = self.form.as_ref().filter(|f| f.project.is_some())?;
-        let (why, kind, fixed, page, asks_user) = (
+        let (why, kind, fixed, page, asks_user, reading) = (
             form.why.clone(),
             form.kind(),
             form.fixed,
             form.token_page(),
             form.asks(1),
+            form.reading,
         );
+        let (asks_label, label_hint) = (form.asks(3), form.label_hint());
         let labelled = |label: String, aside: Option<AnyElement>, field: AnyElement| {
             div()
                 .flex()
@@ -668,6 +804,15 @@ impl Accounts {
                 .on_click(move |_, _, cx| cx.open_url(&url))
                 .into_any_element()
         });
+        let named = asks_label.then(|| {
+            let field = self.field(3, &label_hint, true, cx);
+            let optional = div()
+                .text_size(px(12.))
+                .text_color(theme::faint())
+                .child("optional")
+                .into_any_element();
+            labelled("Label".into(), Some(optional), field)
+        });
         let site = (!fixed).then(|| {
             let field = self.field(0, "your-team.atlassian.net or jira.example.com", true, cx);
             labelled("Site".into(), None, field)
@@ -682,6 +827,11 @@ impl Accounts {
             _ => format!("Your {} token", kind.name),
         };
         let token = self.field(2, &hint, true, cx);
+        let token_name = match (kind.id.as_str(), asks_user) {
+            (trackers::JIRA, true) => "API token".to_owned(),
+            (trackers::JIRA, false) => "Personal access token".to_owned(),
+            _ => "Token".to_owned(),
+        };
         Some(
             div()
                 .flex()
@@ -694,9 +844,10 @@ impl Accounts {
                         .px(px(16.))
                         .pt(px(4.))
                         .pb(px(14.))
+                        .children(named)
                         .children(site)
                         .children(user)
-                        .child(labelled("Token".into(), made, token)),
+                        .child(labelled(token_name, made, token)),
                 )
                 .child(
                     div()
@@ -711,9 +862,24 @@ impl Accounts {
                             div()
                                 .flex_1()
                                 .min_w_0()
+                                .flex()
+                                .items_center()
+                                .gap(px(6.))
                                 .text_size(px(12.))
-                                .text_color(theme::removed())
-                                .children(why),
+                                .text_color(if reading {
+                                    theme::faint()
+                                } else {
+                                    theme::removed()
+                                })
+                                .children(why.as_ref().map(|_| {
+                                    icons::icon("alert")
+                                        .size(px(12.))
+                                        .flex_none()
+                                        .text_color(theme::removed())
+                                }))
+                                .children(
+                                    why.or_else(|| reading.then(|| "Reading the site…".into())),
+                                ),
                         )
                         .child(
                             crate::look::small_button("tracker-space-cancel", "Cancel")

@@ -155,7 +155,7 @@ pub fn side(page: &Entity<Page>, width: f32, cx: &mut App) -> Option<AnyElement>
                             unreached
                                 .then(|| div().size(px(6.)).rounded_full().bg(theme::warning())),
                         )
-                        .child(div().flex_1().truncate().child(host.clone()))
+                        .child(div().flex_1().truncate().child(site.named()))
                         .children(since.clone().map(|at| div().flex_none().child(at)))
                         .tip(match (&since, &bad) {
                             (Some(at), _) => format!("Can’t reach {host} · boards from {at}"),

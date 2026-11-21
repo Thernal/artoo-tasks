@@ -437,11 +437,16 @@ fn install(cx: &mut App) {
                 snap_view.update(cx, |p, cx| p.open_issue(key, cx));
             }
             if let Some(rest) = arg.strip_prefix("connect") {
+                // `connect-jira?site=…&email=…&label=…&token=…&save` fills the form and, with `save`, presses Connect.
+                let (rest, fill) = rest.split_once('?').unwrap_or((rest, ""));
                 snap_view.update(cx, |p, cx| {
                     p.connect(cx);
                     let project = p.project().to_owned();
                     if let (Some(kind), Some(a)) = (rest.strip_prefix('-'), p.accounts.clone()) {
-                        a.update(cx, |a, cx| a.open_in_space(kind, project, cx));
+                        a.update(cx, |a, cx| {
+                            a.open_in_space(kind, project, cx);
+                            a.snapshot_fill(fill, cx);
+                        });
                     }
                 });
             }

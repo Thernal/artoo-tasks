@@ -436,6 +436,9 @@ def main():
     with open(os.path.join(OUT, 'trackers.txt'), 'w') as f:
         f.write('# The fixture\'s sites, as the plugin\'s trackers.txt names them.\n%s you@acme.example\n' % SITE)
         f.write('https://%s fixture-api-key\n' % TRELLO)
+    # What connecting a new site answers (`jira::probe`): a site that does not answer, one that refuses the sign-in.
+    with open(os.path.join(OUT, 'probes.json'), 'w') as f:
+        json.dump({'jira.acme.dev': 'reach', 'acme-payments.atlassian.net': 'token'}, f, indent=2)
     jira(os.path.join(OUT, JIRA))
     files(os.path.join(OUT, JIRA, 'files'))
     trello(os.path.join(OUT, TRELLO))

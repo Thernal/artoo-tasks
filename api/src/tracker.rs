@@ -18,6 +18,8 @@ pub struct Site {
     pub token: String,
     /// Its kind's id: `jira`, `trello`, the id a plugin's kind has.
     pub kind: String,
+    /// The name the person gave the account, to tell two on one site apart; empty when none.
+    pub label: String,
 }
 
 impl Site {

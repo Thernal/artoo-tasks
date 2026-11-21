@@ -683,6 +683,7 @@ mod tests {
             user: Some("key".into()),
             kind: "trello".into(),
             token: "token".into(),
+            ..Default::default()
         };
         let epic = Write::in_epic("c1aaaaaa", Some("PAY-1"));
         assert_eq!(send(&site, &epic), Err("Trello has no epics".into()));

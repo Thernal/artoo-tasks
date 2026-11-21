@@ -123,6 +123,8 @@ pub trait SiteExt {
     fn cloud(&self) -> bool;
     /// What its tracker is called: `Jira`, `Trello`, `Acme Desk`.
     fn tracker(&self) -> String;
+    /// What the account is called wherever it is named: its label when it has one, else its host.
+    fn named(&self) -> String;
     /// What its tracker has.
     fn caps(&self) -> Caps;
 }
@@ -138,6 +140,13 @@ impl SiteExt for Site {
 
     fn tracker(&self) -> String {
         kind(&self.kind).name
+    }
+
+    fn named(&self) -> String {
+        match self.label.is_empty() {
+            true => self.host().to_owned(),
+            false => self.label.clone(),
+        }
     }
 
     fn caps(&self) -> Caps {

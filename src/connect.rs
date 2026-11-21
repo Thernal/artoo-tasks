@@ -162,7 +162,7 @@ impl Page {
                 yours = yours.child(row(
                     format!("tasks-account-{host}").into(),
                     accounts::mark(&kind).into_any_element(),
-                    host,
+                    site.named(),
                     about,
                     Some(end),
                 ));

@@ -15,7 +15,7 @@ use std::io::Write;
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
 
-/// The plugin's settings file: `<data>/plugins/artoo-tasks/trackers.txt`, a line per site, `url [email]`.
+/// The plugin's settings file: `<data>/plugins/artoo-tasks/trackers.txt`, a line per site, `url [email] [# label]`.
 pub fn settings_file() -> Option<PathBuf> {
     Some(
         artoo_plugin_sdk::core::platform::data_dir()?
@@ -77,7 +77,7 @@ fn named_by(sites: &[Site]) -> &'static str {
     }
 }
 
-/// The sites `text` names, a line each (`url [user] [kind=<id>]`, `#` a comment), each with the token `token` gives
+/// The sites `text` names, a line each (`url [user] [kind=<id>] [# label]`, a line of `#` a comment), each with the token `token` gives
 /// its host; a host named again is read once. A line's kind is the one it says, else the one claiming its host.
 fn named(text: &str, token: impl Fn(&str) -> Option<String>) -> (Vec<Site>, Vec<String>) {
     let (mut sites, mut why) = (Vec::<Site>::new(), Vec::new());
@@ -86,6 +86,7 @@ fn named(text: &str, token: impl Fn(&str) -> Option<String>) -> (Vec<Site>, Vec<
         .map(str::trim)
         .filter(|l| !l.is_empty() && !l.starts_with('#'))
     {
+        let (line, label) = line.split_once(" # ").unwrap_or((line, ""));
         let mut words = line.split_whitespace();
         let url = words
             .next()
@@ -96,6 +97,7 @@ fn named(text: &str, token: impl Fn(&str) -> Option<String>) -> (Vec<Site>, Vec<
         let mut site = Site {
             url,
             user: users.first().map(|u| (*u).to_owned()),
+            label: label.trim().to_owned(),
             ..Default::default()
         };
         site.kind = match kinds.first() {
@@ -308,6 +310,46 @@ fn auth(site: &Site) -> String {
     }
 }
 
+thread_local! {
+    /// How long a read waits for the site, in seconds: 30, 10 for the first read of a site being connected.
+    static LIMIT: std::cell::Cell<u64> = const { std::cell::Cell::new(30) };
+}
+
+/// Why connecting a site stopped: it did not answer, it refused the sign-in, or said something else.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum Probe {
+    /// The site was not reached; what is said after `Can't reach the site ·`.
+    Reach(String),
+    /// The site answered and refused the email and token.
+    Refused,
+    Other(String),
+}
+
+/// The first read of a site being connected, who the token is, within 10 s; a fixture answers from its
+/// `probes.json` (`{"<host>": "reach" | "token"}`), a site it does not name answers.
+pub fn probe(site: &Site) -> Result<(), Probe> {
+    if let Some(dir) = fixture() {
+        let text = std::fs::read_to_string(dir.join("probes.json")).unwrap_or_default();
+        let answers: Value = serde_json::from_str(&text).unwrap_or_default();
+        return match answers[site.host()].as_str() {
+            Some("reach") => Err(Probe::Reach("no answer in 10 s".into())),
+            Some("token") => Err(Probe::Refused),
+            _ => Ok(()),
+        };
+    }
+    LIMIT.with(|l| l.set(10));
+    let read = crate::model::myself(site);
+    LIMIT.with(|l| l.set(30));
+    read.map(|_| ()).map_err(|why| {
+        let reach = format!("Can't reach {}: ", site.host());
+        match why.strip_prefix(&reach) {
+            Some(said) => Probe::Reach(said.to_owned()),
+            None if why.ends_with(" refused the token") => Probe::Refused,
+            None => Probe::Other(why),
+        }
+    })
+}
+
 /// `method` of `path` on the tracker itself.
 fn call(site: &Site, method: &str, path: &str, body: Option<&Value>) -> Result<Value, String> {
     let mut config = format!(
@@ -333,8 +375,17 @@ fn call(site: &Site, method: &str, path: &str, body: Option<&Value>) -> Result<V
 
 /// curl with `config` on its standard input; the answer as JSON, `null` when empty.
 fn run(site: &Site, path: &str, config: String) -> Result<Value, String> {
+    let limit = LIMIT.with(std::cell::Cell::get);
     let mut child = Command::new("curl")
-        .args(["-sS", "--max-time", "30", "-w", "\n%{http_code}", "-K", "-"])
+        .args([
+            "-sS",
+            "--max-time",
+            &limit.to_string(),
+            "-w",
+            "\n%{http_code}",
+            "-K",
+            "-",
+        ])
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
@@ -347,6 +398,12 @@ fn run(site: &Site, path: &str, config: String) -> Result<Value, String> {
         .write_all(config.as_bytes())
         .map_err(|e| e.to_string())?;
     let out = child.wait_with_output().map_err(|e| e.to_string())?;
+    if out.status.code() == Some(28) {
+        return Err(format!(
+            "Can't reach {}: no answer in {limit} s",
+            site.host()
+        ));
+    }
     if !out.status.success() {
         let said = String::from_utf8_lossy(&out.stderr);
         return Err(format!(
@@ -431,6 +488,15 @@ pub fn encode(text: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_line_keeps_its_label_and_an_older_one_has_none() {
+        let text = "https://a.atlassian.net me@example.com # Acme work\nhttps://jira.example.com";
+        let (sites, _) = named(text, |_| Some(String::new()));
+        assert_eq!(sites[0].label, "Acme work");
+        assert_eq!(sites[0].user.as_deref(), Some("me@example.com"));
+        assert_eq!(sites[1].label, "");
+    }
 
     #[test]
     fn basic_takes_base64() {
