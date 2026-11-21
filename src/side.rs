@@ -137,7 +137,11 @@ pub fn side(page: &Entity<Page>, width: f32, cx: &mut App) -> Option<AnyElement>
                                     .update(cx, |s, cx| s.link(&project, &host, false, cx))
                                     .ok();
                             });
-                            leave_frame.menu(e.position, vec![vec![item]], cx);
+                            let frame = leave_frame.clone();
+                            let accounts = MenuItem::new("Settings → Accounts", move |_, cx| {
+                                frame.open_settings(artoo_plugin_sdk::hosts::connect::SETTINGS, cx)
+                            });
+                            leave_frame.menu(e.position, vec![vec![item], vec![accounts]], cx);
                         })
                         .flex()
                         .items_center()
