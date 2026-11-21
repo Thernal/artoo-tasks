@@ -1300,12 +1300,13 @@ impl Page {
             summary: r.summary.clone(),
         };
         let store = self.store.clone();
+        // clip: in a narrow column the last facts give way, never the face at the end.
         let mut meta = div()
+            .flex_1()
+            .min_w_0()
             .flex()
             .items_center()
             .gap(px(5.))
-            .text_size(px(12.))
-            .text_color(theme::muted())
             .whitespace_nowrap()
             .overflow_hidden()
             .child(look::kind_mark(&r.kind, r.subtask))
@@ -1322,16 +1323,23 @@ impl Page {
         if let Some(b) = r.blocked_by.first() {
             meta = meta.child(look::blocked_fact(&r.key, b));
         }
-        meta = meta.child(div().flex_1()).child(
-            div()
-                .id(SharedString::from(format!("face-{}", r.key)))
-                .flex_none()
-                .child(look::assignee(r.assignee.as_ref(), me, 16.))
-                .tip(match &r.assignee {
-                    Some(p) => p.name.clone(),
-                    None => "Unassigned".to_owned(),
-                }),
-        );
+        let meta = div()
+            .flex()
+            .items_center()
+            .gap(px(5.))
+            .text_size(px(12.))
+            .text_color(theme::muted())
+            .child(meta)
+            .child(
+                div()
+                    .id(SharedString::from(format!("face-{}", r.key)))
+                    .flex_none()
+                    .child(look::assignee(r.assignee.as_ref(), me, 16.))
+                    .tip(match &r.assignee {
+                        Some(p) => p.name.clone(),
+                        None => "Unassigned".to_owned(),
+                    }),
+            );
         let lozenge = (shown.group != Group::Epic)
             .then(|| epic.as_ref().map(look::epic_lozenge))
             .flatten();
