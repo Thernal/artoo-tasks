@@ -355,6 +355,28 @@ pub fn short_ago(time: i64) -> String {
     }
 }
 
+/// A 24 px square button with one icon and its tooltip: the design's icon button in a row of facts.
+pub fn icon_button(
+    id: impl Into<SharedString>,
+    icon: &'static str,
+    tip: impl Into<SharedString>,
+) -> gpui::Stateful<Div> {
+    div()
+        .id(id.into())
+        .flex_none()
+        .flex()
+        .items_center()
+        .justify_center()
+        .size(px(24.))
+        .rounded(px(6.))
+        .border_1()
+        .border_color(theme::island_border())
+        .cursor_pointer()
+        .hover(|s| s.bg(theme::hover()))
+        .child(icons::icon(icon).size(px(14.)).text_color(theme::muted()))
+        .tip(tip)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

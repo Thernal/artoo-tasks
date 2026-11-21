@@ -887,14 +887,17 @@ impl Page {
             });
         });
         let conflict = self.issue.conflict.clone();
+        let key_at = (self.issue_key())
+            .and_then(|k| self.store.read(cx).changed.get(&k).map(|c| c.at))
+            .unwrap_or_default();
         let tail = vec![
             div()
-                .text_size(px(11.))
-                .text_color(theme::faint())
-                .child("Kept on this Mac")
+                .id("tasks-desc-kept")
+                .flex_none()
+                .child(icons::icon("app").size(px(14.)).text_color(theme::faint()))
+                .tip("Kept on this Mac: an edit left open stays here until you save or cancel it")
                 .into_any_element(),
-            look::small_button("tasks-desc-cancel", "Cancel")
-                .tip("Cancel  esc")
+            look::icon_button("tasks-desc-cancel", "x", "Cancel  esc")
                 .on_click(cx.listener(|this, _: &ClickEvent, _, cx| this.cancel_description(cx)))
                 .into_any_element(),
             controls::primary_button(
@@ -934,6 +937,7 @@ impl Page {
             conflict.map(|(who, theirs)| {
                 let mine = desc.edit.text().to_owned();
                 let compare = self.issue.compare;
+                let at = key_at;
                 div()
                     .flex()
                     .flex_col()
@@ -947,17 +951,47 @@ impl Page {
                             .flex()
                             .items_center()
                             .gap(px(8.))
-                            .child(div().size(px(6.)).rounded_full().bg(theme::warning()))
-                            .child(div().flex_1().text_color(theme::text()).child(format!(
-                                "{who} changed the description while you edited it"
-                            )))
                             .child(
-                                look::small_button("tasks-desc-compare", "Compare").on_click(
-                                    cx.listener(|this, _: &ClickEvent, _, cx| {
-                                        this.issue.compare = !this.issue.compare;
-                                        cx.notify();
-                                    }),
-                                ),
+                                icons::icon("alert")
+                                    .size(px(14.))
+                                    .text_color(theme::warning()),
+                            )
+                            .child(
+                                div()
+                                    .id("tasks-desc-changed")
+                                    .flex_1()
+                                    .flex()
+                                    .items_center()
+                                    .gap(px(6.))
+                                    .text_color(theme::text())
+                                    .child(look::face(&who, false, 16.))
+                                    .child(who.clone())
+                                    .tip(format!(
+                                        "{who} changed the description after you started editing it  ·  Save mine overwrites it"
+                                    )),
+                            )
+                            .when(at > 0, |r| {
+                                r.child(
+                                    div()
+                                        .text_color(theme::faint())
+                                        .child(look::short_ago(at)),
+                                )
+                            })
+                            .child(
+                                look::icon_button(
+                                    "tasks-desc-compare",
+                                    "pull-request",
+                                    if compare {
+                                        "Compare: both versions as a diff  ·  on"
+                                    } else {
+                                        "Compare: both versions as a diff"
+                                    },
+                                )
+                                .when(compare, |b| b.border_color(theme::accent()))
+                                .on_click(cx.listener(|this, _: &ClickEvent, _, cx| {
+                                    this.issue.compare = !this.issue.compare;
+                                    cx.notify();
+                                })),
                             )
                             .child(
                                 look::small_button("tasks-desc-theirs", "Keep theirs").on_click(
