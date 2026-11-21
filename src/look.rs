@@ -159,33 +159,6 @@ pub fn face(name: &str, me: bool, size: f32) -> Div {
     discussion::avatar(name, me, size)
 }
 
-/// A person as a row's end says it: their face and first name, `You` for you; `Unassigned` quieter with no one.
-pub fn who(person: Option<&Person>, me: bool) -> Div {
-    let row = div()
-        .flex_none()
-        .flex()
-        .items_center()
-        .gap(px(6.))
-        .text_size(px(12.))
-        .whitespace_nowrap();
-    match person {
-        Some(p) => {
-            let name = if me {
-                "You".to_owned()
-            } else {
-                p.first().to_owned()
-            };
-            row.text_color(theme::muted())
-                .child(face(&p.name, me, 16.))
-                .child(name)
-        }
-        None => row
-            .text_color(theme::faint())
-            .child(icons::icon("user").size(px(13.)).text_color(theme::faint()))
-            .child("Unassigned"),
-    }
-}
-
 /// An epic's colour from the tracker's palette (1–14) on the code colours; the first when none is said.
 pub fn epic_color(epic: &Epic) -> Hsla {
     match epic.color {
@@ -377,7 +350,81 @@ pub fn icon_button(
         .tip(tip)
 }
 
-/// The face of nobody: a dashed ring in a face's place.
+/// A fact of a row or a card: a glyph and, where it has one, its figure; its sentence is the tooltip.
+fn fact(id: String, glyph: impl IntoElement, figure: Option<String>, tip: String) -> Stateful<Div> {
+    div()
+        .id(SharedString::from(id))
+        .flex_none()
+        .flex()
+        .items_center()
+        .gap(px(3.))
+        .child(glyph)
+        .children(figure)
+        .tip(tip)
+}
+
+/// A priority as its arrow alone, its name the tooltip.
+pub fn priority_fact(key: &str, name: &str) -> Stateful<Div> {
+    fact(
+        format!("prio-{key}"),
+        priority(name, false),
+        None,
+        format!("{name} priority"),
+    )
+}
+
+/// How many sub-tasks are done of all: `▤ 1/3`.
+pub fn subtasks_fact(key: &str, done: usize, all: usize) -> Stateful<Div> {
+    fact(
+        format!("subs-{key}"),
+        icons::icon("list").size(px(12.)).text_color(theme::muted()),
+        Some(format!("{done}/{all}")),
+        format!("{done} of {all} sub-tasks done"),
+    )
+}
+
+/// How many comments an issue has.
+pub fn comments_fact(key: &str, n: usize) -> Stateful<Div> {
+    fact(
+        format!("cmts-{key}"),
+        icons::icon("message")
+            .size(px(12.))
+            .text_color(theme::muted()),
+        Some(n.to_string()),
+        format!("{n} comment{}", if n == 1 { "" } else { "s" }),
+    )
+}
+
+/// What blocks an issue: the struck ring alone, who blocks it and its state the tooltip.
+pub fn blocked_fact(key: &str, by: &crate::model::Brief) -> Stateful<Div> {
+    fact(
+        format!("blk-{key}"),
+        blocked_mark(),
+        None,
+        format!(
+            "Blocked by {} {} · {}",
+            by.key,
+            by.summary,
+            display_state(&by.state.name)
+        ),
+    )
+}
+
+/// The board layout's glyph: a frame in columns, drawn since the kit has no icon of it.
+pub fn board_glyph(size: f32) -> Div {
+    let line = theme::text();
+    div()
+        .flex_none()
+        .size(px(size - 2.))
+        .rounded(px(3.))
+        .border_1()
+        .border_color(line)
+        .flex()
+        .child(div().w_1_3().h_full().border_r_1().border_color(line))
+        .child(div().w_1_3().h_full().border_r_1().border_color(line))
+}
+
+/// Nobody: a dashed ring with an outline of a person, as the design draws an unassigned issue.
 pub fn nobody(size: f32) -> Div {
     div()
         .flex_none()
@@ -386,6 +433,22 @@ pub fn nobody(size: f32) -> Div {
         .border_1()
         .border_dashed()
         .border_color(theme::faint())
+        .flex()
+        .items_center()
+        .justify_center()
+        .child(
+            icons::icon("user")
+                .size(px(size - 6.))
+                .text_color(theme::faint()),
+        )
+}
+
+/// A row's or card's end: the assignee's face alone, a dashed one for nobody; who it is the tooltip.
+pub fn assignee(person: Option<&Person>, me: bool, size: f32) -> Div {
+    match person {
+        Some(p) => face(&p.name, me, size),
+        None => nobody(size),
+    }
 }
 
 #[cfg(test)]

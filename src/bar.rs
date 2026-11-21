@@ -3,10 +3,11 @@
 //! issue's board and key, `⋯` and Open in its tracker.
 
 use crate::board::in_play;
+use crate::look;
 use crate::model;
 use crate::page::Page;
 use artoo_plugin_sdk::core::route::Route;
-use artoo_plugin_sdk::gpui::{App, Entity, div, prelude::*};
+use artoo_plugin_sdk::gpui::{self, App, Entity, IntoElement, Stateful, div, prelude::*};
 use artoo_plugin_sdk::kit::hover::Hover;
 use artoo_plugin_sdk::kit::{controls, icons, px, theme};
 use artoo_plugin_sdk::shell::bar::BarAction;
@@ -18,16 +19,10 @@ fn in_jira(url: String) -> BarAction {
     let words = format!("Open in {}", crate::trackers::tracker_of(&url));
     BarAction::new(
         "tasks-jira",
-        div()
-            .id("tasks-jira")
-            .flex_none()
-            .flex()
-            .items_center()
+        controls::bar_button("tasks-jira", "", "", false)
+            .w(px(28.))
+            .px_0()
             .justify_center()
-            .size(px(28.))
-            .rounded(px(6.))
-            .cursor_pointer()
-            .hover(|s| s.bg(theme::hover()))
             .child(
                 icons::icon("external")
                     .size(px(14.))
@@ -154,13 +149,18 @@ pub fn bar(page: &Entity<Page>, route: Option<&Route>, cx: &mut App) -> Option<B
         .into_any_element();
     let (v1, v2, v3) = (page.clone(), page.clone(), page.clone());
     let layout = controls::group()
+        .h(px(28.))
         .child(
-            controls::chip("tasks-list", "List", !columns)
-                .tip("List  V")
-                .on_click(move |_, _, cx| v1.update(cx, |p, cx| p.set_columns(false, cx))),
+            layout_chip(
+                "tasks-list",
+                icons::icon("list").size(px(14.)).text_color(theme::text()),
+                !columns,
+            )
+            .tip("List  V")
+            .on_click(move |_, _, cx| v1.update(cx, |p, cx| p.set_columns(false, cx))),
         )
         .child(
-            controls::chip("tasks-board", "Board", columns)
+            layout_chip("tasks-board", look::board_glyph(14.), columns)
                 .tip("Board  V")
                 .on_click(move |_, _, cx| v2.update(cx, |p, cx| p.set_columns(true, cx))),
         );
@@ -197,4 +197,15 @@ fn path(up: Vec<String>, name: &str, count: Option<String>) -> PagePath {
         count,
         title: None,
     }
+}
+
+/// One of the layout pair: a glyph alone on a 24 px square, its word the tooltip.
+fn layout_chip(id: &'static str, glyph: impl IntoElement, on: bool) -> Stateful<gpui::Div> {
+    controls::chip(id, "", on)
+        .size(px(24.))
+        .p_0()
+        .flex()
+        .items_center()
+        .justify_center()
+        .child(glyph)
 }

@@ -18,6 +18,15 @@ use std::collections::HashSet;
 /// Who the people filter picks, by person id; `NONE` for Unassigned.
 pub const NONE: &str = "-";
 
+/// A time as the preview says it at a row's end: `3h`, `11d`.
+fn short_ago(at: &str) -> String {
+    let ago = model::ago(at);
+    match ago.strip_suffix(" ago") {
+        Some(short) => short.replace(' ', ""),
+        None => ago,
+    }
+}
+
 /// How a board is drawn while its site is not reached: as last read, dimmed.
 const STALE: f32 = 0.72;
 
@@ -381,20 +390,12 @@ impl Page {
                 );
         }
         let mut line = match shown.info.active() {
-            Some(sprint) => {
-                let line = line.child(
-                    div()
-                        .font_weight(FontWeight::SEMIBOLD)
-                        .text_color(theme::text())
-                        .child(sprint.name.clone()),
-                );
-                match &sprint.end {
-                    Some(end) => line
-                        .child(sep())
-                        .child(format!("ends {}", model::day_words(end))),
-                    None => line,
-                }
-            }
+            Some(sprint) => line.child(
+                div()
+                    .font_weight(FontWeight::SEMIBOLD)
+                    .text_color(theme::text())
+                    .child(sprint.name.clone()),
+            ),
             None => line.child(
                 div()
                     .font_weight(FontWeight::SEMIBOLD)
@@ -402,14 +403,15 @@ impl Page {
                     .child(shown.board_name.clone()),
             ),
         };
-        let mut count = artoo_plugin_sdk::kit::format::plural(shown.count, "issue");
+        let mut tip = artoo_plugin_sdk::kit::format::plural(shown.count, "issue");
+        let count = shown.count.to_string();
         if shown.group == Group::Story {
-            count.push_str(&format!(
+            tip.push_str(&format!(
                 ", {}",
                 artoo_plugin_sdk::kit::format::plural(shown.subtasks, "sub-task")
             ));
         }
-        line = line.child(sep()).child(count);
+        line = line.child(div().id("tasks-count").child(count).tip(tip));
         if !shown.people_picked.is_empty() {
             let names: Vec<String> = (shown.people_picked.iter())
                 .map(|id| match id.as_str() {
@@ -434,25 +436,42 @@ impl Page {
                 .child(div().id("tasks-picked").child(words).tip(names.join(", ")));
         }
         let group = shown.group;
-        line.child(div().flex_1()).child(
-            look::small_button("tasks-group", "")
-                .child("Group:")
-                .child(
-                    div()
-                        .font_weight(FontWeight::SEMIBOLD)
-                        .text_color(theme::text())
-                        .child(group.word()),
-                )
-                .child(
-                    icons::icon("chevron")
-                        .size(px(12.))
-                        .text_color(theme::muted()),
-                )
-                .tip("Group by state, story or epic  G")
-                .on_click(cx.listener(|this, e: &ClickEvent, _, cx| {
-                    this.group_menu(Some(e.position()), cx)
-                })),
-        )
+        let ends = shown.info.active().and_then(|s| s.end.as_ref());
+        line.child(div().flex_1())
+            .children(ends.map(|end| {
+                let day = model::day_words(end);
+                div()
+                    .id("tasks-ends")
+                    .flex()
+                    .items_center()
+                    .gap(px(4.))
+                    .child(
+                        icons::icon("clock")
+                            .size(px(12.))
+                            .text_color(theme::muted()),
+                    )
+                    .child(day.clone())
+                    .tip(format!("Ends {day}"))
+            }))
+            .child(
+                look::small_button("tasks-group", "")
+                    .child("Group:")
+                    .child(
+                        div()
+                            .font_weight(FontWeight::SEMIBOLD)
+                            .text_color(theme::text())
+                            .child(group.word()),
+                    )
+                    .child(
+                        icons::icon("chevron")
+                            .size(px(12.))
+                            .text_color(theme::muted()),
+                    )
+                    .tip("Group by state, story or epic  G")
+                    .on_click(cx.listener(|this, e: &ClickEvent, _, cx| {
+                        this.group_menu(Some(e.position()), cx)
+                    })),
+            )
     }
 
     /// The board as a list beside the preview, or its columns of cards.
@@ -746,7 +765,7 @@ impl Page {
         let mut facts = div()
             .flex()
             .items_center()
-            .gap(px(6.))
+            .gap(px(8.))
             .min_w_0()
             .text_size(px(12.))
             .text_color(theme::muted())
@@ -754,57 +773,32 @@ impl Page {
             .child(look::kind_mark(&r.kind, r.subtask))
             .child(look::key(&r.key));
         if let Some(p) = &r.priority {
-            facts = facts.child(sep()).child(look::priority(p, true));
+            facts = facts.child(look::priority_fact(&r.key, p));
         }
         if r.subtasks.1 > 0 {
-            facts = facts
-                .child(sep())
-                .child(format!("{} of {}", r.subtasks.0, r.subtasks.1));
+            facts = facts.child(look::subtasks_fact(&r.key, r.subtasks.0, r.subtasks.1));
         }
         if r.comments > 0 {
-            facts = facts.child(sep()).child(
-                div()
-                    .flex()
-                    .items_center()
-                    .gap(px(3.))
-                    .child(
-                        icons::icon("message")
-                            .size(px(12.))
-                            .text_color(theme::muted()),
-                    )
-                    .child(r.comments.to_string()),
-            );
+            facts = facts.child(look::comments_fact(&r.key, r.comments));
         }
         if let Some(b) = r.blocked_by.first() {
-            facts = facts.child(sep()).child(
-                div()
-                    .id(SharedString::from(format!("blk-{}", r.key)))
-                    .flex()
-                    .items_center()
-                    .gap(px(4.))
-                    .text_color(theme::removed())
-                    .child(look::blocked_mark())
-                    .child(format!("Blocked by {}", b.key))
-                    .tip(format!(
-                        "Blocked by {} {} · {}",
-                        b.key,
-                        b.summary,
-                        look::display_state(&b.state.name)
-                    )),
-            );
+            facts = facts.child(look::blocked_fact(&r.key, b));
         }
         if shown.group != Group::Epic
             && let Some(e) = &epic
         {
-            facts = facts.child(sep()).child(look::epic_lozenge(e));
+            facts = facts.child(look::epic_lozenge(e));
         }
         let who = self.who_control(r, me, anchor.clone(), who_open, cx);
         let chip = self.state_control(r, anchor, true, cx);
         let chip = if always || picked || state_open || refused {
             chip.into_any_element()
         } else {
-            // Its room kept: a hover that changes `display` lays out and paints apart, which GPUI refuses.
+            // Beside the face, over the title's end: its room is not kept, so the faces line up at the row's end.
+            // A hover that changes `display` lays out and paints apart, which GPUI refuses; visibility is safe.
             div()
+                .absolute()
+                .right(px(28.))
                 .invisible()
                 .group_hover("tasks-row", |s| s.visible())
                 .child(chip)
@@ -831,6 +825,7 @@ impl Page {
             .when(saving, |d| d.opacity(0.7))
             .child(
                 div()
+                    .relative()
                     .flex()
                     .items_center()
                     .gap(px(8.))
@@ -889,8 +884,14 @@ impl Page {
             .when(refused.is_some(), |d| {
                 d.border_1().border_color(theme::removed())
             })
-            .child(look::who(r.assignee.as_ref(), me))
-            .tip(refused.unwrap_or_else(|| "Assignee  A · to me  I".into()))
+            .child(look::assignee(r.assignee.as_ref(), me, 16.))
+            .tip(refused.unwrap_or_else(|| {
+                let who = r
+                    .assignee
+                    .as_ref()
+                    .map_or("Unassigned", |p| p.name.as_str());
+                format!("{who}  ·  Assignee  A · to me  I")
+            }))
             .on_click(cx.listener(move |this, _: &ClickEvent, _, cx| {
                 cx.stop_propagation();
                 this.pick_row(&key, cx);
@@ -1247,7 +1248,7 @@ impl Page {
         let mut meta = div()
             .flex()
             .items_center()
-            .gap(px(6.))
+            .gap(px(5.))
             .text_size(px(12.))
             .text_color(theme::muted())
             .whitespace_nowrap()
@@ -1255,45 +1256,30 @@ impl Page {
             .child(look::kind_mark(&r.kind, r.subtask))
             .child(look::key(&r.key));
         if let Some(p) = &r.priority {
-            meta = meta.child(look::priority(p, false));
+            meta = meta.child(look::priority_fact(&r.key, p));
         }
         if r.subtasks.1 > 0 {
-            meta = meta.child(format!("{}/{}", r.subtasks.0, r.subtasks.1));
+            meta = meta.child(look::subtasks_fact(&r.key, r.subtasks.0, r.subtasks.1));
         }
         if r.comments > 0 {
-            meta = meta.child(
-                div()
-                    .flex()
-                    .items_center()
-                    .gap(px(3.))
-                    .child(
-                        icons::icon("message")
-                            .size(px(12.))
-                            .text_color(theme::muted()),
-                    )
-                    .child(r.comments.to_string()),
-            );
+            meta = meta.child(look::comments_fact(&r.key, r.comments));
         }
         if let Some(b) = r.blocked_by.first() {
-            meta = meta.child(
-                div()
-                    .flex()
-                    .items_center()
-                    .gap(px(3.))
-                    .text_color(theme::removed())
-                    .child(look::blocked_mark())
-                    .child(b.key.clone()),
-            );
+            meta = meta.child(look::blocked_fact(&r.key, b));
         }
-        if shown.group != Group::Epic
-            && let Some(e) = &epic
-        {
-            meta = meta.child(look::epic_lozenge(e));
-        }
-        meta = meta.child(div().flex_1());
-        if let Some(p) = &r.assignee {
-            meta = meta.child(look::face(&p.name, me, 16.));
-        }
+        meta = meta.child(div().flex_1()).child(
+            div()
+                .id(SharedString::from(format!("face-{}", r.key)))
+                .flex_none()
+                .child(look::assignee(r.assignee.as_ref(), me, 16.))
+                .tip(match &r.assignee {
+                    Some(p) => p.name.clone(),
+                    None => "Unassigned".to_owned(),
+                }),
+        );
+        let lozenge = (shown.group != Group::Epic)
+            .then(|| epic.as_ref().map(look::epic_lozenge))
+            .flatten();
         div()
             .id(SharedString::from(format!("card-{}", r.key)))
             .flex_none()
@@ -1321,6 +1307,7 @@ impl Page {
                     .text_color(if done { theme::muted() } else { theme::text() })
                     .child(r.summary.clone()),
             )
+            .children(lozenge)
             .child(meta)
             .tip(format!("{} {}", r.key, r.summary))
             .on_click(cx.listener(move |this, e: &ClickEvent, _, cx| {
@@ -1438,6 +1425,7 @@ impl Page {
                     .gap(px(6.))
                     .child(look::kind_mark("Epic", false))
                     .child(look::epic_lozenge(e))
+                    .child(look::key(&e.key))
                     .into_any_element(),
             ));
         }
@@ -1452,7 +1440,13 @@ impl Page {
                 .gap(px(6.))
                 .child(look::face(&p.name, me, 16.))
                 .child(if me { "You".to_owned() } else { p.name.clone() }),
-            None => div().text_color(theme::faint()).child("Unassigned"),
+            None => div()
+                .flex()
+                .items_center()
+                .gap(px(6.))
+                .text_color(theme::faint())
+                .child(look::nobody(16.))
+                .child("Unassigned"),
         };
         let key = r.key.clone();
         let who_open = self.pop_at(&anchor, PopKind::Assign);
@@ -1489,20 +1483,33 @@ impl Page {
             rows = rows.child(kv("Priority", look::priority(p, true).into_any_element()));
         }
         if let Some(sp) = &r.sprint {
-            let mut v = div()
-                .flex()
-                .flex_wrap()
-                .items_center()
-                .gap(px(4.))
-                .child(sp.name.clone());
-            if let Some(end) = &sp.end {
-                v = v.child(
-                    div()
-                        .text_color(theme::faint())
-                        .child(format!("· ends {}", model::day_words(end))),
-                );
-            }
-            rows = rows.child(kv("Sprint", v.into_any_element()));
+            let ends = sp.end.as_ref().map(|end| {
+                let day = model::day_words(end);
+                div()
+                    .id("pv-ends")
+                    .flex()
+                    .items_center()
+                    .gap(px(4.))
+                    .text_color(theme::muted())
+                    .child(
+                        icons::icon("clock")
+                            .size(px(12.))
+                            .text_color(theme::muted()),
+                    )
+                    .child(day.clone())
+                    .tip(format!("Ends {day}"))
+            });
+            rows = rows.child(kv(
+                "Sprint",
+                div()
+                    .w_full()
+                    .flex()
+                    .items_center()
+                    .justify_between()
+                    .child(sp.name.clone())
+                    .children(ends)
+                    .into_any_element(),
+            ));
         }
         if !r.labels.is_empty() {
             rows = rows.child(kv(
@@ -1523,25 +1530,33 @@ impl Page {
                     .items_center()
                     .gap(px(8.))
                     .child(look::progress(r.subtasks.0, r.subtasks.1))
-                    .child(format!("{} of {} done", r.subtasks.0, r.subtasks.1))
+                    .child(format!("{}/{}", r.subtasks.0, r.subtasks.1))
                     .into_any_element(),
             ));
         }
         if r.comments > 0 {
             let last = issue.as_ref().and_then(|i| i.comments.last()).map(|c| {
-                let who = c
-                    .author
-                    .as_ref()
-                    .map_or("someone".to_owned(), |p| p.name.clone());
-                format!("· last {who}, {}", model::ago(&c.created))
+                let name = c.author.as_ref().map_or("someone", |p| p.name.as_str());
+                let face = look::face(name, false, 14.);
+                div()
+                    .id("pv-last")
+                    .flex()
+                    .items_center()
+                    .gap(px(4.))
+                    .text_color(theme::muted())
+                    .child(face)
+                    .child(short_ago(&c.created))
+                    .tip(format!("Last from {name}, {}", model::ago(&c.created)))
             });
             rows = rows.child(kv(
                 "Comments",
                 div()
+                    .w_full()
                     .flex()
-                    .gap(px(4.))
+                    .items_center()
+                    .justify_between()
                     .child(r.comments.to_string())
-                    .children(last.map(|l| div().text_color(theme::faint()).child(l)))
+                    .children(last)
                     .into_any_element(),
             ));
         }
@@ -1549,25 +1564,28 @@ impl Page {
             rows = rows.child(kv(
                 "Blocked by",
                 div()
+                    .id("pv-blocked")
+                    .w_full()
+                    .min_w_0()
                     .flex()
-                    .flex_wrap()
                     .items_center()
                     .gap(px(6.))
+                    .child(look::blocked_mark())
                     .child(
                         div()
-                            .flex()
-                            .items_center()
-                            .gap(px(4.))
+                            .flex_none()
+                            .font_family(theme::code_font())
                             .text_color(theme::removed())
-                            .child(look::blocked_mark())
-                            .child(div().font_family(theme::code_font()).child(b.key.clone())),
+                            .child(b.key.clone()),
                     )
-                    .child(b.summary.clone())
-                    .child(
-                        div()
-                            .text_color(theme::faint())
-                            .child(format!("· {}", look::display_state(&b.state.name))),
-                    )
+                    .child(div().flex_1().min_w_0().truncate().child(b.summary.clone()))
+                    .child(look::state_mark(&b.state, 14.))
+                    .tip(format!(
+                        "Blocked by {} {} · {}",
+                        b.key,
+                        b.summary,
+                        look::display_state(&b.state.name)
+                    ))
                     .into_any_element(),
             ));
         }
@@ -1603,8 +1621,10 @@ impl Page {
             )
             .children(url.map(|url| {
                 let words = format!("Open in {}", crate::trackers::tracker_of(&url));
-                look::small_button("tasks-pv-jira", words.clone())
-                    .h(px(28.))
+                look::small_button("tasks-pv-jira", "")
+                    .size(px(28.))
+                    .px_0()
+                    .justify_center()
                     .child(
                         icons::icon("external")
                             .size(px(12.))
@@ -1631,14 +1651,7 @@ impl Page {
                             .text_size(px(12.))
                             .text_color(theme::muted())
                             .child(look::kind_mark(&r.kind, r.subtask))
-                            .child(div().text_color(theme::accent()).child(r.key.clone()))
-                            .child(r.kind.clone())
-                            .child(div().flex_1())
-                            .child(
-                                div()
-                                    .text_color(theme::faint())
-                                    .child(look::display_state(&r.state.name)),
-                            ),
+                            .child(div().text_color(theme::accent()).child(r.key.clone())),
                     )
                     .child(
                         div()

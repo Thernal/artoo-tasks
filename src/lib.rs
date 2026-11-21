@@ -442,6 +442,13 @@ fn install(cx: &mut App) {
                     cx.notify();
                 });
             }
+            // `tasks:columns` the board in columns; `tasks:sel=<key>` that issue picked in the list.
+            if arg == "columns" {
+                snap_view.update(cx, |p, cx| p.set_columns(true, cx));
+            }
+            if let Some(key) = arg.strip_prefix("sel=") {
+                snap_view.update(cx, |p, cx| p.pick_row(key, cx));
+            }
             if let Some(rest) = arg.strip_prefix("connect") {
                 // `connect-jira?site=…&email=…&label=…&token=…&save` fills the form and, with `save`, presses Connect.
                 let (rest, fill) = rest.split_once('?').unwrap_or((rest, ""));
