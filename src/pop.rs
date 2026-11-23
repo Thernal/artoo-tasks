@@ -1047,7 +1047,7 @@ impl Page {
         let s = self.store.read(cx);
         let before = s.row(key).and_then(|r| r.assignee.clone());
         let summary = s.row(key).map(|r| r.summary.clone()).unwrap_or_default();
-        let me = (s.site_for(key)).and_then(|x| s.me.get(x.host()).cloned());
+        let me = (s.site_for(key)).and_then(|x| s.me.get(x.key()).cloned());
         let write = Write::assigned(key, who.as_ref());
         let k = key.to_owned();
         // Reassigned: it had someone, and has another or no one now.

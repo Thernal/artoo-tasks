@@ -20,9 +20,20 @@ pub struct Site {
     pub kind: String,
     /// The name the person gave the account, to tell two on one site apart; empty when none.
     pub label: String,
+    /// What tells the account from another on the same site: its host for the first, `host~name` for a later one;
+    /// empty reads as the host. Boards and issues carry it as their `site`.
+    pub id: String,
 }
 
 impl Site {
+    /// The account's key: its id, else its host.
+    pub fn key(&self) -> &str {
+        match self.id.is_empty() {
+            true => self.host(),
+            false => &self.id,
+        }
+    }
+
     /// Its host: `jira.example.com`.
     pub fn host(&self) -> &str {
         let rest = (self.url.split_once("://")).map_or(self.url.as_str(), |(_, r)| r);
@@ -383,5 +394,12 @@ mod tests {
             ..Default::default()
         };
         assert_eq!(site.host(), "jira.example.com");
+        assert_eq!(site.key(), "jira.example.com");
+        let second = Site {
+            id: "jira.example.com~ops".into(),
+            ..site
+        };
+        assert_eq!(second.host(), "jira.example.com");
+        assert_eq!(second.key(), "jira.example.com~ops");
     }
 }

@@ -396,7 +396,7 @@ impl Page {
             .store
             .read(cx)
             .site_for(key)
-            .map(|s| s.host().to_owned());
+            .map(|s| s.key().to_owned());
         self.frame
             .open(places_of::issue_route(key, host.as_deref()), cx);
     }
@@ -478,7 +478,7 @@ impl Page {
         let s = self.store.read(cx);
         let host = s
             .site_for(&key)
-            .map(|x| x.host().to_owned())
+            .map(|x| x.key().to_owned())
             .unwrap_or_default();
         let me = s.me.get(&host).cloned();
         if me.is_some() {
@@ -917,7 +917,7 @@ impl Page {
         let s = self.store.read(cx);
         let boards = s.boards_in(&project);
         // The board picked is another project's, in a window behind: this one's is picked once it is in front.
-        let elsewhere = (s.board.as_ref()).is_some_and(|b| !sites.iter().any(|x| x.host() == b.0));
+        let elsewhere = (s.board.as_ref()).is_some_and(|b| !sites.iter().any(|x| x.key() == b.0));
         if let Some(Read::Failed(why)) = boards {
             return (self.page_frame_own())
                 .child(controls::empty_state(
@@ -936,7 +936,7 @@ impl Page {
         if matches!(&boards, Some(Read::Done(b)) if b.is_empty()) {
             let host = sites
                 .first()
-                .map(|x| x.host().to_owned())
+                .map(|x| x.key().to_owned())
                 .unwrap_or_default();
             return (self.page_frame_own())
                 .child(

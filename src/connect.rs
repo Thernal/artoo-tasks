@@ -135,7 +135,7 @@ impl Page {
                 .flex_col()
                 .child(heading("Your accounts", false));
             for site in kept {
-                let host = site.host().to_owned();
+                let host = site.key().to_owned();
                 let kind = trackers::kind(&site.kind);
                 // Jira Cloud's user is an email, said; another kind's (Trello's API key) is not.
                 let about = match (&site.user, site.cloud()) {

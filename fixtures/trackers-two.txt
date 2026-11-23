@@ -1,0 +1,4 @@
+# Two accounts on one site: the second has its own key, so its own folder and its own token.
+https://acme.atlassian.net you@acme.example
+https://acme.atlassian.net ops@acme.example id=acme.atlassian.net~ops # Operations
+https://trello.com fixture-api-key

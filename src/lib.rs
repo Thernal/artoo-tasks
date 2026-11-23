@@ -3,9 +3,10 @@
 //! note for your agent on a paragraph of an issue or on a board as it is filtered; tools agents call for an issue or
 //! a search; issues moved, assigned, edited, commented on, linked and made, a write at a time, on your act.
 //!
-//! The accounts are named in `<data>/plugins/artoo-tasks/trackers.txt` (`https://jira.example.com`, an email after
-//! it for Jira Cloud), a line each, each one's token in `~/.config/tokens/<host>`; which of them a project's space
-//! reads, in `projects.txt` beside it (`links`).
+//! The accounts are named in `<data>/plugins/artoo-tasks/accounts.txt` (`https://jira.example.com`, an email after
+//! it for Jira Cloud), a line each, each one's token in `~/.config/tokens/<key>` (the host, or `host~name` for a
+//! second account on one site); which of them a project's space reads, by key, in `projects.txt` beside it (`links`).
+//! An older build's `trackers.txt` is carried over once and left as it was.
 
 mod accounts;
 mod agents;

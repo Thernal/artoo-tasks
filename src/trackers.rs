@@ -143,9 +143,11 @@ impl SiteExt for Site {
     }
 
     fn named(&self) -> String {
-        match self.label.is_empty() {
-            true => self.host().to_owned(),
-            false => self.label.clone(),
+        match (self.label.is_empty(), self.user.as_deref()) {
+            (false, _) => self.label.clone(),
+            // A later account on a site is told from the first by whom it is.
+            (true, Some(user)) if self.key() != self.host() => format!("{} · {user}", self.host()),
+            (true, _) => self.host().to_owned(),
         }
     }
 

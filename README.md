@@ -45,7 +45,7 @@ yet shows `Connect a tracker` in the Tasks space: the accounts kept, each with U
 your email (Jira Cloud) or API key (Trello) and a token, in the same card; `+` beside Boards connects another later,
 and a host's menu in the side panel stops reading it there. Settings → Accounts → Trackers keeps the accounts: Test,
 Change, Remove, Add a tracker. The accounts are kept in
-`~/Library/Application Support/Artoo/plugins/artoo-tasks/trackers.txt`, one a line, and which a project reads in
+`~/Library/Application Support/Artoo/plugins/artoo-tasks/accounts.txt`, one a line (a second account on the same site has an `id=` of its own; an older `trackers.txt` is carried over once), and which a project reads in
 `projects.txt` beside it (the project's folder, a tab, its accounts' hosts):
 
 ```text

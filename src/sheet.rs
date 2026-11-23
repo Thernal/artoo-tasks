@@ -214,7 +214,7 @@ impl Page {
         let board = s.picked().cloned();
         let host = (parent_issue.as_ref().map(|(h, _)| h.clone()))
             .or_else(|| board.as_ref().map(|b| b.site.clone()))
-            .or_else(|| s.sites.first().map(|x| x.host().to_owned()))
+            .or_else(|| s.sites.first().map(|x| x.key().to_owned()))
             .unwrap_or_default();
         let project = (parent_issue.map(|(_, p)| p))
             .or_else(|| board.as_ref().and_then(|b| b.project.clone()))

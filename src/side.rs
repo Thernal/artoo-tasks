@@ -102,7 +102,7 @@ pub fn side(page: &Entity<Page>, width: f32, cx: &mut App) -> Option<AnyElement>
                 );
             }
             for site in &sites {
-                let host = site.host().to_owned();
+                let host = site.key().to_owned();
                 let keys = site.caps().project_keys;
                 let bad = unread
                     .iter()
@@ -392,7 +392,7 @@ fn shown_boards(s: &Store, project: &str, typed: &str) -> Vec<Board> {
     };
     let boards = lately_first(s, boards.into_iter().filter(|b| matches(b, typed)));
     (s.sites_in(project).iter())
-        .flat_map(|site| (boards.iter()).filter(move |b| b.site == site.host()))
+        .flat_map(|site| (boards.iter()).filter(move |b| b.site == site.key()))
         .cloned()
         .collect()
 }

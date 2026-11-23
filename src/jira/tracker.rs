@@ -164,7 +164,7 @@ fn issue(site: &Site, v: &Value) -> Issue {
         .collect();
     Issue {
         url: format!("{}/browse/{}", site.url, head.key),
-        site: site.host().to_owned(),
+        site: site.key().to_owned(),
         description: text(&f["description"]),
         reporter: person(&f["reporter"]),
         created: text(&f["created"]),
@@ -250,7 +250,7 @@ fn board(site: &Site, b: &Value) -> Board {
         // Jira's board id is a number.
         id: (b["id"].as_u64()).map_or_else(|| text(&b["id"]), |n| n.to_string()),
         name: text(&b["name"]),
-        site: site.host().to_owned(),
+        site: site.key().to_owned(),
         project: b["location"]["projectKey"].as_str().map(str::to_owned),
     }
 }

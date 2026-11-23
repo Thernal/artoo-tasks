@@ -1,0 +1,14 @@
+{
+ "isLast": true,
+ "values": [
+  {
+   "id": 21,
+   "name": "Operations",
+   "type": "kanban",
+   "location": {
+    "projectKey": "OPS",
+    "projectName": "Operations"
+   }
+  }
+ ]
+}

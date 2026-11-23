@@ -1,0 +1,63 @@
+{
+ "id": "60000",
+ "key": "OPS-7",
+ "self": "https://acme.atlassian.net/rest/agile/1.0/issue/60000",
+ "fields": {
+  "summary": "Rotate the gateway certificates",
+  "issuetype": {
+   "id": "10002",
+   "name": "Task",
+   "subtask": false,
+   "hierarchyLevel": 0
+  },
+  "status": {
+   "id": "10000",
+   "name": "To Do",
+   "statusCategory": {
+    "id": 2,
+    "key": "new",
+    "name": "To Do"
+   }
+  },
+  "priority": {
+   "id": "2",
+   "name": "High"
+  },
+  "assignee": {
+   "accountId": "u-rowan",
+   "displayName": "Rowan Vale",
+   "active": true,
+   "avatarUrls": {
+    "48x48": ""
+   },
+   "emailAddress": ""
+  },
+  "reporter": {
+   "accountId": "u-rowan",
+   "displayName": "Rowan Vale",
+   "active": true,
+   "avatarUrls": {
+    "48x48": ""
+   },
+   "emailAddress": ""
+  },
+  "labels": [],
+  "updated": "2026-11-12T10:00:00.000+0000",
+  "created": "2026-11-10T09:00:00.000+0000",
+  "project": {
+   "id": "10020",
+   "key": "OPS",
+   "name": "Operations"
+  },
+  "comment": {
+   "comments": [],
+   "total": 0,
+   "maxResults": 50,
+   "startAt": 0
+  },
+  "subtasks": [],
+  "issuelinks": [],
+  "description": "",
+  "attachment": []
+ }
+}

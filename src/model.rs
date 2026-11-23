@@ -31,7 +31,7 @@ pub fn myself(site: &Site) -> Result<Person, String> {
 pub fn boards(site: &Site) -> Result<Vec<Board>, String> {
     let mut boards = tracker(site).boards()?;
     for b in &mut boards {
-        b.site = site.host().to_owned();
+        b.site = site.key().to_owned();
     }
     Ok(boards)
 }
@@ -49,7 +49,7 @@ pub fn board_issues(site: &Site, id: &str) -> Result<Vec<Row>, String> {
 /// Issue `key` whole.
 pub fn read_issue(site: &Site, key: &str) -> Result<Issue, String> {
     let mut issue = tracker(site).issue(key)?;
-    issue.site = site.host().to_owned();
+    issue.site = site.key().to_owned();
     Ok(issue)
 }
 

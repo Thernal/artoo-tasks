@@ -129,7 +129,7 @@ impl Remote {
     }
 
     fn host(&self) -> String {
-        self.site.host().to_owned()
+        self.site.key().to_owned()
     }
 }
 

@@ -146,7 +146,7 @@ fn boards(site: &Site) -> Result<Vec<Board>, String> {
         .map(|b| Board {
             id: text(&b["shortLink"]),
             name: text(&b["name"]),
-            site: site.host().to_owned(),
+            site: site.key().to_owned(),
             project: Some(text(&b["shortLink"])),
         })
         .collect())
@@ -259,7 +259,7 @@ fn read_issue(site: &Site, key: &str) -> Result<Issue, String> {
     let description = wiki::from_markdown(c["desc"].as_str().unwrap_or_default());
     let due = c["due"].as_str().map(|d| day(d).to_owned());
     Ok(Issue {
-        site: site.host().to_owned(),
+        site: site.key().to_owned(),
         url: (c["shortUrl"].as_str())
             .map_or_else(|| format!("https://trello.com/c/{key}"), str::to_owned),
         reporter,

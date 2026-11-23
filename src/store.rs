@@ -219,7 +219,7 @@ fn read_of<T>(r: Result<T, String>) -> Read<T> {
 impl Store {
     /// The site of `host`, when it is named.
     pub fn site_of(&self, host: &str) -> Option<Site> {
-        self.sites.iter().find(|s| s.host() == host).cloned()
+        self.sites.iter().find(|s| s.key() == host).cloned()
     }
 
     /// Whether `who` is the token's person on `host`.
@@ -237,7 +237,7 @@ impl Store {
             .map(|site| {
                 cx.background_spawn(async move {
                     let me = model::myself(&site).ok();
-                    (site.host().to_owned(), me, model::boards(&site))
+                    (site.key().to_owned(), me, model::boards(&site))
                 })
             })
             .collect();
@@ -306,21 +306,21 @@ impl Store {
             return self.read_boards(cx);
         }
         let sites: Vec<(Site, Person)> = (self.sites.iter())
-            .filter_map(|s| self.me.get(s.host()).map(|m| (s.clone(), m.clone())))
+            .filter_map(|s| self.me.get(s.key()).map(|m| (s.clone(), m.clone())))
             .collect();
         if sites.is_empty() {
             return;
         }
         // The projects' names, for where each news is.
         for (site, _) in &sites {
-            self.read_kinds(site.host(), "", cx);
+            self.read_kinds(site.key(), "", cx);
         }
         spawn_read(
             cx,
             move || {
                 Ok((sites.iter())
                     .flat_map(|(site, me)| {
-                        let host = site.host().to_owned();
+                        let host = site.key().to_owned();
                         (model::news(site, me).unwrap_or_default().into_iter())
                             .map(move |n| (host.clone(), n))
                     })
@@ -418,7 +418,7 @@ impl Store {
     pub fn sites_in(&self, project: &str) -> Vec<Site> {
         let hosts = self.links.get(project);
         (self.sites.iter())
-            .filter(|s| hosts.is_some_and(|h| h.iter().any(|x| x == s.host())))
+            .filter(|s| hosts.is_some_and(|h| h.iter().any(|x| x == s.key())))
             .cloned()
             .collect()
     }
@@ -427,7 +427,7 @@ impl Store {
     pub fn sites_not_in(&self, project: &str) -> Vec<Site> {
         let hosts = self.links.get(project);
         (self.sites.iter())
-            .filter(|s| !hosts.is_some_and(|h| h.iter().any(|x| x == s.host())))
+            .filter(|s| !hosts.is_some_and(|h| h.iter().any(|x| x == s.key())))
             .cloned()
             .collect()
     }
@@ -888,7 +888,7 @@ impl Store {
         self.saving.insert(at.clone());
         apply(self);
         cx.notify();
-        let host = site.host().to_owned();
+        let host = site.key().to_owned();
         spawn_read(
             cx,
             move || model::write(&site, &write),

@@ -429,6 +429,34 @@ def trello(folder):
     png(os.path.join(folder, 'files', 'pricing-sketch.png'), 320, 200,
         [(30 + 90 * i, 50, 70, 120, [(97, 175, 239), (229, 192, 123), (152, 195, 121)][i]) for i in range(3)])
 
+SECOND = 'ops@acme.example'
+SECOND_KEY = JIRA + '~ops'
+OPS_ISSUES = [('OPS-7', 'Rotate the gateway certificates', 'task', 'high', 'todo'),
+              ('OPS-9', 'Alert when a payout batch runs late', 'story', 'medium', 'prog')]
+
+def second(folder):
+    """A second account on the Jira site, `ops@acme.example`: someone else's sign-in, with a board of its own."""
+    os.makedirs(folder)
+    rowan = {'accountId': 'u-rowan', 'displayName': 'Rowan Vale', 'active': True, 'avatarUrls': {'48x48': ''}, 'emailAddress': ''}
+    write(folder, '/rest/api/2/myself', dict(rowan, timeZone='Europe/London', locale='en_GB'))
+    write(folder, '/rest/agile/1.0/board', {'isLast': True, 'values': [
+        {'id': 21, 'name': 'Operations', 'type': 'kanban', 'location': {'projectKey': 'OPS', 'projectName': 'Operations'}}]})
+    write(folder, '/rest/agile/1.0/board/21/configuration', {'id': 21, 'name': 'Operations', 'columnConfig': {'columns': [
+        {'name': 'To do', 'statuses': [{'id': '10000'}]}, {'name': 'In progress', 'statuses': [{'id': '3'}]},
+        {'name': 'Done', 'statuses': [{'id': '10002'}]}]}, 'location': {'type': 'project', 'key': 'OPS'}})
+    def one(n, key, summary, kind, pri, state):
+        return {'id': str(60000 + n), 'key': key, 'self': SITE + '/rest/agile/1.0/issue/' + str(60000 + n),
+                'fields': {'summary': summary, 'issuetype': TYPES[kind], 'status': STATES[state], 'priority': priority(pri),
+                           'assignee': rowan, 'reporter': rowan, 'labels': [], 'updated': '2026-11-12T10:00:00.000+0000',
+                           'created': '2026-11-10T09:00:00.000+0000', 'project': {'id': '10020', 'key': 'OPS', 'name': 'Operations'},
+                           'comment': {'comments': [], 'total': 0, 'maxResults': 50, 'startAt': 0}, 'subtasks': [], 'issuelinks': [],
+                           'description': '', 'attachment': []}}
+    issues = [one(n, *i) for n, i in enumerate(OPS_ISSUES)]
+    write(folder, '/rest/agile/1.0/board/21/issue', {'startAt': 0, 'maxResults': 100, 'total': len(issues), 'issues': issues})
+    for i in issues:
+        write(folder, '/rest/agile/1.0/issue/' + i['key'], i)
+    write(folder, '/rest/api/2/user/assignable/search', [rowan])
+
 def main():
     if os.path.isdir(OUT):
         shutil.rmtree(OUT)
@@ -436,11 +464,18 @@ def main():
     with open(os.path.join(OUT, 'trackers.txt'), 'w') as f:
         f.write('# The fixture\'s sites, as the plugin\'s trackers.txt names them.\n%s you@acme.example\n' % SITE)
         f.write('https://%s fixture-api-key\n' % TRELLO)
+    # The same, with a second account on the Jira site (`ARTOO_TASKS_FIXTURE_SITES=trackers-two.txt`): its own folder.
+    with open(os.path.join(OUT, 'trackers-two.txt'), 'w') as f:
+        f.write('# Two accounts on one site: the second has its own key, so its own folder and its own token.\n')
+        f.write('%s you@acme.example\n' % SITE)
+        f.write('%s %s id=%s # Operations\n' % (SITE, SECOND, SECOND_KEY))
+        f.write('https://%s fixture-api-key\n' % TRELLO)
     # What connecting a new site answers (`jira::probe`): a site that does not answer, one that refuses the sign-in.
     with open(os.path.join(OUT, 'probes.json'), 'w') as f:
         json.dump({'jira.acme.dev': 'reach', 'acme-payments.atlassian.net': 'token'}, f, indent=2)
     jira(os.path.join(OUT, JIRA))
     files(os.path.join(OUT, JIRA, 'files'))
+    second(os.path.join(OUT, SECOND_KEY))
     trello(os.path.join(OUT, TRELLO))
 
 main()

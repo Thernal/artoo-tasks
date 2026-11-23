@@ -2,8 +2,9 @@
 //! the code hosts — each account, what it reaches and how it signs in, Test and Change; one not reached says so with
 //! Retry; Change opens its fields — the site, the email (Jira Cloud), the token — and what it reaches; Add a tracker.
 //! The space's connect card opens the same form for a new account (`open_in_space`), drawn as a card's fields, and
-//! links what it saves to the project. The sites are kept in the plugin's `trackers.txt`, each token in
-//! `~/.config/tokens/<host>` as the Mac keeps internal hosts' tokens.
+//! links what it saves to the project. The accounts are kept in the plugin's `accounts.txt`, each token in
+//! `~/.config/tokens/<key>` (the host for the first account on a site, as the Mac keeps internal hosts' tokens; a
+//! second account's key is `host~name`).
 
 use crate::jira::{self, Site};
 use crate::model;
@@ -29,8 +30,10 @@ const EMAIL: &str = "tracker-email";
 
 /// A tracker's fields as Change shows them.
 struct Form {
-    /// The host it was opened for; None for a new one.
-    host: Option<String>,
+    /// The key of the account it was opened for; None for a new one.
+    key: Option<String>,
+    /// The key the account takes when saved, settled by Save: the one it has, or a new one.
+    id: String,
     /// The site, the email, the token, the label.
     fields: [String; 4],
     edits: [TextEdit; 4],
@@ -58,7 +61,8 @@ impl Form {
         let email = site.and_then(|s| s.user.clone()).unwrap_or_default();
         let label = site.map(|s| s.label.clone()).unwrap_or_default();
         Form {
-            host: site.map(|s| s.host().to_owned()),
+            key: site.map(|s| s.key().to_owned()),
+            id: String::new(),
             edits: [
                 TextEdit::new(url.clone()),
                 TextEdit::new(email.clone()),
@@ -180,7 +184,7 @@ impl Accounts {
     }
 
     fn open(&mut self, host: Option<String>, cx: &mut Context<Self>) {
-        if self.form.as_ref().is_some_and(|f| f.host == host) {
+        if self.form.as_ref().is_some_and(|f| f.key == host) {
             self.form = None;
             self.frame.leave_keyboard(INPUT, cx);
             return cx.notify();
@@ -347,6 +351,7 @@ impl Accounts {
             url,
             user: (!email.is_empty()).then_some(email),
             label,
+            id: form.id.clone(),
             ..Default::default()
         };
         site.kind = trackers::kind_of(site.host());
@@ -364,6 +369,22 @@ impl Accounts {
         }
         let (mut site, token) = Self::entered(form);
         let host = site.host().to_owned();
+        let sites = self.store.read(cx).sites.clone();
+        let editing = (form.key.as_deref()).and_then(|k| sites.iter().find(|s| s.key() == k));
+        // The account being edited keeps its key while it stays on its site; one typed with the email of an account
+        // on that site is that account; any other is a new one beside them.
+        let same = |a: &Site, b: &Site| {
+            a.host() == b.host()
+                && a.user.as_deref().unwrap_or_default().to_lowercase()
+                    == b.user.as_deref().unwrap_or_default().to_lowercase()
+        };
+        let known = (editing.filter(|e| e.host() == host).cloned())
+            .or_else(|| sites.iter().find(|s| same(s, &site)).cloned());
+        site.id = match &known {
+            Some(k) => k.key().to_owned(),
+            None => jira::free_key(&sites, &site),
+        };
+        form.id = site.id.clone();
         form.marked.clear();
         if host.is_empty() {
             form.why =
@@ -371,7 +392,7 @@ impl Accounts {
             form.marked.push(0);
             return cx.notify();
         }
-        if token.is_empty() && form.host.as_deref() != Some(host.as_str()) {
+        if token.is_empty() && known.is_none() {
             form.why = Some("A token is needed for a new site".into());
             form.marked.push(2);
             return cx.notify();
@@ -379,7 +400,7 @@ impl Accounts {
         form.why = None;
         form.reading = true;
         site.token = match token.is_empty() {
-            true => (self.store.read(cx).site_of(&host)).map_or_else(String::new, |s| s.token),
+            true => known.map_or_else(String::new, |s| s.token),
             false => token,
         };
         let read = cx.background_spawn(async move { jira::probe(&site) });
@@ -417,33 +438,22 @@ impl Accounts {
         }
     }
 
-    /// The site, answered, kept in `trackers.txt`, its token (when one is typed) in `~/.config/tokens/<host>`; the
+    /// The account, answered, kept in `accounts.txt`, its token (when one is typed) in `~/.config/tokens/<key>`; the
     /// boards read again.
     fn keep(&mut self, cx: &mut Context<Self>) {
         let Some(form) = self.form.as_mut() else {
             return;
         };
         let (site, token) = Self::entered(form);
-        let (url, host) = (site.url.clone(), site.host().to_owned());
-        let email = site.user.clone().unwrap_or_default();
+        let key = site.key().to_owned();
         if jira::fixture().is_some() {
             form.why = Some("The fixture's trackers are its trackers.txt".into());
             return cx.notify();
         }
-        // A kind other than Jira is said on the line, so a site whose plugin is gone is not read as Jira.
-        let kind = (site.kind != trackers::JIRA).then(|| format!(" kind={}", site.kind));
-        let mut line = match email.is_empty() {
-            true => format!("{url}{}", kind.unwrap_or_default()),
-            false => format!("{url} {email}{}", kind.unwrap_or_default()),
-        };
-        if !site.label.is_empty() {
-            line.push_str(&format!(" # {}", site.label));
-        }
-        let replaced = form.host.clone();
+        let replaced = form.key.clone();
         if let Err(why) = keep_site(
             replaced.as_deref(),
-            Some(&line),
-            &host,
+            Some(&site),
             (!token.is_empty()).then_some(&token),
         ) {
             form.why = Some(why);
@@ -454,7 +464,7 @@ impl Accounts {
         let linked = self.store.update(cx, |s, cx| {
             s.sites_again(cx);
             match project {
-                Some(project) => s.link(&project, &host, true, cx),
+                Some(project) => s.link(&project, &key, true, cx),
                 None => Ok(()),
             }
         });
@@ -463,12 +473,12 @@ impl Accounts {
         }
     }
 
-    /// Remove: the site out of `trackers.txt`; its token stays where the Mac keeps it.
+    /// Remove: the account out of `accounts.txt`; its token stays where the Mac keeps it.
     fn remove(&mut self, cx: &mut Context<Self>) {
-        let Some(host) = self.form.as_ref().and_then(|f| f.host.clone()) else {
+        let Some(key) = self.form.as_ref().and_then(|f| f.key.clone()) else {
             return self.close(cx);
         };
-        if let Err(why) = keep_site(Some(&host), None, &host, None) {
+        if let Err(why) = keep_site(Some(&key), None, None) {
             if let Some(f) = self.form.as_mut() {
                 f.why = Some(why);
             }
@@ -587,7 +597,7 @@ impl Accounts {
         let Some(form) = self.form.as_ref() else {
             return div().into_any_element();
         };
-        let host = form.host.clone();
+        let host = form.key.clone();
         let why = form.why.clone();
         let kind = form.kind();
         let jira = kind.id == trackers::JIRA;
@@ -901,7 +911,7 @@ impl Accounts {
     /// One tracker's row: its mark, host and what it reaches, how it signs in or why it is not reached; Test (Retry)
     /// and Change.
     fn row(&mut self, site: &Site, cx: &mut Context<Self>) -> AnyElement {
-        let host = site.host().to_owned();
+        let host = site.key().to_owned();
         // Its projects, read once when the row is first shown: the count beside Jira.
         self.store.update(cx, |s, cx| s.read_kinds(&host, "", cx));
         let s = self.store.read(cx);
@@ -932,7 +942,7 @@ impl Accounts {
         let open = self
             .form
             .as_ref()
-            .is_some_and(|f| f.host.as_deref() == Some(&host));
+            .is_some_and(|f| f.key.as_deref() == Some(&host));
         let (h1, h2) = (host.clone(), host.clone());
         let detail = match (&bad, &tested) {
             (_, Some(Read::Done(who))) => div().text_color(theme::added()).child(who.clone()),
@@ -1103,7 +1113,7 @@ impl Accounts {
             );
         }
         // A new account's form in a space is the space's.
-        let adding = (self.form.as_ref()).is_some_and(|f| f.host.is_none() && f.project.is_none());
+        let adding = (self.form.as_ref()).is_some_and(|f| f.key.is_none() && f.project.is_none());
         let adding_kind = (self.form.as_ref()).map_or_else(trackers::jira, Form::kind);
         if adding {
             out = out.child(
@@ -1233,35 +1243,39 @@ fn test_button(id: SharedString, unreached: bool) -> gpui::Stateful<gpui::Div> {
     }
 }
 
-/// `trackers.txt` with the line of `old` (a host) replaced by `line`, or `line` added, or the host's line taken out
-/// when `line` is None; `token` written to `~/.config/tokens/<host>`, readable by you alone.
-fn keep_site(
-    old: Option<&str>,
-    line: Option<&str>,
-    host: &str,
-    token: Option<&str>,
-) -> Result<(), String> {
+/// `accounts.txt` with the line of account `old` (a key) replaced by `site`'s, or `site`'s added, or `old`'s line taken
+/// out (`site` none); the token, when given, in `~/.config/tokens/<key>`. A later account's key is written on its
+/// line, so it holds when the one before it is gone.
+fn keep_site(old: Option<&str>, site: Option<&Site>, token: Option<&str>) -> Result<(), String> {
     let file = jira::settings_file().ok_or("No data folder")?;
     let text = std::fs::read_to_string(&file).unwrap_or_default();
+    let mut entries = jira::entries(&text).into_iter();
     let mut lines: Vec<String> = Vec::new();
     let mut put = false;
     for l in text.lines() {
-        let named = l.split_whitespace().next().map(|u| Site {
-            url: u.trim_end_matches('/').to_owned(),
-            ..Default::default()
-        });
-        let same = named.is_some_and(|s| Some(s.host()) == old || s.host() == host);
-        if same && !l.trim_start().starts_with('#') {
-            if let (Some(line), false) = (line, put) {
-                lines.push(line.to_owned());
+        if l.trim().is_empty() || l.trim_start().starts_with('#') {
+            lines.push(l.to_owned());
+            continue;
+        }
+        let Some((_, kept)) = entries.next() else {
+            lines.push(l.to_owned());
+            continue;
+        };
+        let same = Some(kept.key()) == old || site.is_some_and(|s| s.key() == kept.key());
+        if same {
+            if let (Some(site), false) = (site, put) {
+                lines.push(jira::line_of(site));
                 put = true;
             }
             continue;
         }
-        lines.push(l.to_owned());
+        lines.push(match kept.key() == kept.host() {
+            true => l.to_owned(),
+            false => jira::line_of(&kept),
+        });
     }
-    if let (Some(line), false) = (line, put) {
-        lines.push(line.to_owned());
+    if let (Some(site), false) = (site, put) {
+        lines.push(jira::line_of(site));
     }
     if let Some(dir) = file.parent() {
         std::fs::create_dir_all(dir).map_err(|e| e.to_string())?;
@@ -1273,7 +1287,7 @@ fn keep_site(
             .join(".config")
             .join("tokens");
         std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
-        let path = dir.join(host);
+        let path = dir.join(site.map_or_else(String::new, |s| s.key().to_owned()));
         std::fs::write(&path, format!("{token}\n")).map_err(|e| e.to_string())?;
         #[cfg(unix)]
         {

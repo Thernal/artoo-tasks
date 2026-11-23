@@ -15,23 +15,41 @@ use std::io::Write;
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
 
-/// The plugin's settings file: `<data>/plugins/artoo-tasks/trackers.txt`, a line per site, `url [email] [# label]`.
-pub fn settings_file() -> Option<PathBuf> {
+fn plugin_folder() -> Option<PathBuf> {
     Some(
         artoo_plugin_sdk::core::platform::data_dir()?
             .join("plugins")
-            .join("artoo-tasks")
-            .join("trackers.txt"),
+            .join("artoo-tasks"),
     )
 }
 
-/// Every site the settings name, each with its token: `~/.config/tokens/<host>`, as the Mac keeps internal hosts'
-/// tokens; a site with no token is left out, and why is said, as is one of a kind no plugin offers now. A fixture's
+/// The plugin's accounts file: `<data>/plugins/artoo-tasks/accounts.txt`, a line per account,
+/// `url [email] [kind=<id>] [id=<key>] [# label]`. Accounts made by a build that knew one account per host live in
+/// `trackers.txt`, read into this file once and left as they were, for that build.
+pub fn settings_file() -> Option<PathBuf> {
+    let folder = plugin_folder()?;
+    carry_over(&folder);
+    Some(folder.join("accounts.txt"))
+}
+
+/// `trackers.txt` of a build that knew one account per host copied to `accounts.txt` in `folder`, once: the old
+/// file stays as it was for that build, and a host's first account keeps its key, so its token, its links and its
+/// boards carry over unchanged.
+fn carry_over(folder: &std::path::Path) {
+    let (file, old) = (folder.join("accounts.txt"), folder.join("trackers.txt"));
+    if !file.exists() && old.is_file() {
+        // A failed copy is tried again next time.
+        let _ = std::fs::copy(&old, &file);
+    }
+}
+
+/// Every account the settings name, each with its token: `~/.config/tokens/<key>` (the host for the first account on
+/// a site, as the Mac keeps internal hosts' tokens); a site with no token is left out, and why is said, as is one of a kind no plugin offers now. A fixture's
 /// sites are its `trackers.txt`, else one example site, and take no token.
 pub fn sites() -> (Vec<Site>, Vec<String>) {
     let read = match fixture() {
         Some(dir) => {
-            let text = std::fs::read_to_string(dir.join("trackers.txt"))
+            let text = std::fs::read_to_string(fixture_sites(&dir))
                 .unwrap_or_else(|_| "https://jira.example.com".into());
             named(&text, |_| Some(String::new()))
         }
@@ -60,7 +78,7 @@ pub fn sites() -> (Vec<Site>, Vec<String>) {
 /// the plugin installs, before other plugins offer their kinds: a site of theirs is known by the kind its line says.
 pub fn trackers_named() -> &'static str {
     let text = match fixture() {
-        Some(dir) => std::fs::read_to_string(dir.join("trackers.txt")).unwrap_or_default(),
+        Some(dir) => std::fs::read_to_string(fixture_sites(&dir)).unwrap_or_default(),
         None => (settings_file().and_then(|f| std::fs::read_to_string(f).ok())).unwrap_or_default(),
     };
     let (sites, _) = named(&text, |_| Some(String::new()));
@@ -77,37 +95,82 @@ fn named_by(sites: &[Site]) -> &'static str {
     }
 }
 
-/// The sites `text` names, a line each (`url [user] [kind=<id>] [# label]`, a line of `#` a comment), each with the token `token` gives
-/// its host; a host named again is read once. A line's kind is the one it says, else the one claiming its host.
-fn named(text: &str, token: impl Fn(&str) -> Option<String>) -> (Vec<Site>, Vec<String>) {
-    let (mut sites, mut why) = (Vec::<Site>::new(), Vec::new());
+/// The accounts `text` names, each with its line, in order, no token read. A second account on a host is told apart
+/// by its key: the one its line says, else `host~<its user or label>`; the same key, or without a key the same host
+/// and user, named again is read once. A
+/// line's kind is the one it says, else the one claiming its host.
+pub fn entries(text: &str) -> Vec<(String, Site)> {
+    let mut out = Vec::<(String, Site)>::new();
     for line in text
         .lines()
         .map(str::trim)
         .filter(|l| !l.is_empty() && !l.starts_with('#'))
     {
-        let (line, label) = line.split_once(" # ").unwrap_or((line, ""));
-        let mut words = line.split_whitespace();
+        let (words, label) = line.split_once(" # ").unwrap_or((line, ""));
+        let mut words = words.split_whitespace();
         let url = words
             .next()
             .unwrap_or_default()
             .trim_end_matches('/')
             .to_owned();
-        let (kinds, users): (Vec<&str>, Vec<&str>) = words.partition(|w| w.starts_with("kind="));
+        let (tagged, users): (Vec<&str>, Vec<&str>) =
+            words.partition(|w| w.starts_with("kind=") || w.starts_with("id="));
+        let word = |tag: &str| {
+            (tagged.iter())
+                .find_map(|w| w.strip_prefix(tag))
+                .map(str::to_owned)
+        };
         let mut site = Site {
             url,
             user: users.first().map(|u| (*u).to_owned()),
             label: label.trim().to_owned(),
+            id: word("id=").unwrap_or_default(),
             ..Default::default()
         };
-        site.kind = match kinds.first() {
-            Some(k) => k["kind=".len()..].to_owned(),
-            None => trackers::kind_of(site.host()),
-        };
-        if sites.iter().any(|s| s.host() == site.host()) {
-            continue;
+        site.kind = word("kind=").unwrap_or_else(|| trackers::kind_of(site.host()));
+        let sites: Vec<Site> = out.iter().map(|(_, s)| s.clone()).collect();
+        if site.id.is_empty() {
+            // A line with no key of its own that names a host and user again is the same account, read once.
+            if sites
+                .iter()
+                .any(|s| s.host() == site.host() && s.user == site.user)
+            {
+                continue;
+            }
+            site.id = free_key(&sites, &site);
         }
-        match token(site.host()) {
+        if sites.iter().all(|s| s.key() != site.key()) {
+            out.push((line.to_owned(), site));
+        }
+    }
+    out
+}
+
+/// The line of `site`: `url [user] [kind=<id>] [id=<key>] [# label]`, the kind said when it is not Jira, the key when
+/// it is not the host.
+pub fn line_of(site: &Site) -> String {
+    let mut line = site.url.clone();
+    if let Some(user) = site.user.as_deref().filter(|u| !u.is_empty()) {
+        line.push_str(&format!(" {user}"));
+    }
+    if site.kind != trackers::JIRA {
+        line.push_str(&format!(" kind={}", site.kind));
+    }
+    if site.key() != site.host() {
+        line.push_str(&format!(" id={}", site.key()));
+    }
+    if !site.label.is_empty() {
+        line.push_str(&format!(" # {}", site.label));
+    }
+    line
+}
+
+/// The accounts `text` names (`entries`), each with the token `token` gives its key; one with none is left out and
+/// said.
+fn named(text: &str, token: impl Fn(&str) -> Option<String>) -> (Vec<Site>, Vec<String>) {
+    let (mut sites, mut why) = (Vec::<Site>::new(), Vec::new());
+    for (_, mut site) in entries(text) {
+        match token(site.key()) {
             Some(token) => {
                 site.token = token;
                 sites.push(site);
@@ -115,11 +178,35 @@ fn named(text: &str, token: impl Fn(&str) -> Option<String>) -> (Vec<Site>, Vec<
             None => why.push(format!(
                 "{} has no token in ~/.config/tokens/{}",
                 site.url,
-                site.host()
+                site.key()
             )),
         }
     }
     (sites, why)
+}
+
+/// The key a new account on `site`'s host takes among `sites`: the host for the first, else `host~<name>`, its user
+/// or label made of letters and digits, a number when that is taken or there is none.
+pub fn free_key(sites: &[Site], site: &Site) -> String {
+    let host = site.host();
+    if !sites.iter().any(|s| s.key() == host) {
+        return host.to_owned();
+    }
+    let name: String = (site.user.as_deref().filter(|u| !u.is_empty()))
+        .unwrap_or(site.label.as_str())
+        .chars()
+        .filter(char::is_ascii_alphanumeric)
+        .collect::<String>()
+        .to_lowercase();
+    let taken = |key: &str| sites.iter().any(|s| s.key() == key);
+    let named = format!("{host}~{name}");
+    if !name.is_empty() && !taken(&named) {
+        return named;
+    }
+    (2..)
+        .map(|n| format!("{host}~{n}"))
+        .find(|key| !taken(key))
+        .unwrap_or_default()
 }
 
 fn token_of(host: &str) -> Option<String> {
@@ -137,18 +224,32 @@ fn quoted(text: &str) -> String {
     text.replace('\\', "\\\\").replace('"', "\\\"")
 }
 
+/// The fixture's accounts file: `trackers.txt`, or the one `ARTOO_TASKS_FIXTURE_SITES` names (two accounts on one site).
+fn fixture_sites(dir: &std::path::Path) -> PathBuf {
+    dir.join(std::env::var("ARTOO_TASKS_FIXTURE_SITES").unwrap_or_else(|_| "trackers.txt".into()))
+}
+
 /// A folder of the API's answers to read instead of the tracker (`ARTOO_TASKS_FIXTURE`): pictures of the plugin
 /// that show no one's real work, and tests.
 pub fn fixture() -> Option<PathBuf> {
     std::env::var_os("ARTOO_TASKS_FIXTURE").map(PathBuf::from)
 }
 
-/// The fixture's file for `path` on `host`: what is before its query, `/` as `_` (`_rest_api_2_issue_PAY-412.json`),
-/// in the host's folder when the fixture has one.
-fn fixture_file(dir: &std::path::Path, host: &str, path: &str) -> PathBuf {
+/// The fixture's folder of `site`: the account's own (`<key>/`), else its host's, else the fixture's.
+fn fixture_home(dir: &std::path::Path, site: &Site) -> PathBuf {
+    let own = dir.join(site.key());
+    match own.is_dir() {
+        true => own,
+        false => dir.join(site.host()),
+    }
+}
+
+/// The fixture's file for `path` on `site`: what is before its query, `/` as `_` (`_rest_api_2_issue_PAY-412.json`),
+/// in the account's or the host's folder when the fixture has one.
+fn fixture_file(dir: &std::path::Path, site: &Site, path: &str) -> PathBuf {
     let path = bare(path);
     let name = format!("{}.json", path.replace('/', "_"));
-    let own = dir.join(host);
+    let own = fixture_home(dir, site);
     if own.is_dir() {
         own.join(name)
     } else {
@@ -173,10 +274,10 @@ pub fn get_for(site: &Site, path: &str, purpose: &str) -> Result<Value, String> 
             std::thread::sleep(std::time::Duration::from_millis(ms));
         }
         let own = (!purpose.is_empty())
-            .then(|| fixture_file(&dir, site.host(), &format!("{}@{purpose}", bare(path))));
+            .then(|| fixture_file(&dir, site, &format!("{}@{purpose}", bare(path))));
         let file = own
             .filter(|f| f.is_file())
-            .unwrap_or_else(|| fixture_file(&dir, site.host(), path));
+            .unwrap_or_else(|| fixture_file(&dir, site, path));
         let text = std::fs::read_to_string(&file)
             .map_err(|_| format!("{} has no {}", site.host(), bare(path)))?;
         return serde_json::from_str(&text).map_err(|e| e.to_string());
@@ -191,14 +292,14 @@ pub fn get_for(site: &Site, path: &str, purpose: &str) -> Result<Value, String> 
 pub fn send(site: &Site, method: &str, path: &str, body: Option<&Value>) -> Result<Value, String> {
     if let Some(dir) = fixture() {
         let sent = body.map(Value::to_string).unwrap_or_default();
-        let line = format!("{method} {}{path} {sent}\n", site.host());
+        let line = format!("{method} {}{path} {sent}\n", site.key());
         let log = dir.join("writes.log");
         let _ = std::fs::OpenOptions::new()
             .create(true)
             .append(true)
             .open(log)
             .and_then(|mut f| f.write_all(line.as_bytes()));
-        let file = fixture_file(&dir, site.host(), &format!("{method}{path}"));
+        let file = fixture_file(&dir, site, &format!("{method}{path}"));
         let Ok(text) = std::fs::read_to_string(file) else {
             return Ok(Value::Object(Default::default()));
         };
@@ -255,7 +356,7 @@ pub fn attach(site: &Site, path: &str, file: &std::path::Path) -> Result<Value, 
 pub fn bytes(site: &Site, url: &str) -> Result<Vec<u8>, String> {
     if let Some(dir) = fixture() {
         let name = bare(url).rsplit('/').next().unwrap_or_default();
-        let own = dir.join(site.host()).join("files").join(name);
+        let own = fixture_home(&dir, site).join("files").join(name);
         return std::fs::read(&own).map_err(|_| format!("{} has no {name}", site.host()));
     }
     let config = format!(
@@ -331,7 +432,7 @@ pub fn probe(site: &Site) -> Result<(), Probe> {
     if let Some(dir) = fixture() {
         let text = std::fs::read_to_string(dir.join("probes.json")).unwrap_or_default();
         let answers: Value = serde_json::from_str(&text).unwrap_or_default();
-        return match answers[site.host()].as_str() {
+        return match answers[site.key()].as_str() {
             Some("reach") => Err(Probe::Reach("no answer in 10 s".into())),
             Some("token") => Err(Probe::Refused),
             _ => Ok(()),
@@ -552,5 +653,124 @@ mod tests {
             why,
             ["https://old.example.net has no token in ~/.config/tokens/old.example.net"]
         );
+    }
+
+    #[test]
+    fn two_accounts_on_one_site_are_kept_apart_by_key() {
+        let text = "https://acme.atlassian.net me@example.com\n\
+                    https://acme.atlassian.net ops@example.com # Ops\n\
+                    https://acme.atlassian.net ops@example.com\n\
+                    https://acme.atlassian.net id=acme.atlassian.net~9 # Nine";
+        let (sites, why) = named(text, |key| Some(format!("token of {key}")));
+        let read: Vec<_> = (sites.iter())
+            .map(|s| (s.key(), s.token.as_str()))
+            .collect();
+        assert_eq!(
+            read,
+            [
+                ("acme.atlassian.net", "token of acme.atlassian.net"),
+                (
+                    "acme.atlassian.net~opsexamplecom",
+                    "token of acme.atlassian.net~opsexamplecom"
+                ),
+                ("acme.atlassian.net~9", "token of acme.atlassian.net~9"),
+            ]
+        );
+        assert!(why.is_empty());
+        assert!(sites.iter().all(|s| s.host() == "acme.atlassian.net"));
+    }
+
+    #[test]
+    fn a_layout_of_one_account_per_host_reads_as_it_did() {
+        let text = "https://jira.example.com\nhttps://team.atlassian.net me@example.com # Team";
+        let (sites, _) = named(text, |_| Some(String::new()));
+        let keys: Vec<_> = sites.iter().map(Site::key).collect();
+        assert_eq!(keys, ["jira.example.com", "team.atlassian.net"]);
+    }
+
+    #[test]
+    fn a_line_written_reads_back_the_same_account() {
+        let text = "https://acme.atlassian.net me@example.com\n\
+                    https://acme.atlassian.net ops@example.com # Ops";
+        let all = entries(text);
+        let again: String = all.iter().map(|(_, s)| line_of(s) + "\n").collect();
+        assert_eq!(
+            again,
+            "https://acme.atlassian.net me@example.com\n\
+             https://acme.atlassian.net ops@example.com id=acme.atlassian.net~opsexamplecom # Ops\n"
+        );
+        let back = entries(&again);
+        assert_eq!(
+            back.iter().map(|(_, s)| s.clone()).collect::<Vec<_>>(),
+            all.iter().map(|(_, s)| s.clone()).collect::<Vec<_>>()
+        );
+    }
+
+    #[test]
+    fn a_second_accounts_key_holds_when_the_first_is_gone() {
+        let all = entries(
+            "https://acme.atlassian.net me@example.com\n\
+             https://acme.atlassian.net ops@example.com",
+        );
+        let frozen = line_of(&all[1].1);
+        let left = entries(&frozen);
+        assert_eq!(left[0].1.key(), "acme.atlassian.net~opsexamplecom");
+    }
+
+    #[test]
+    fn a_0_1_layout_is_carried_over_once_and_kept() {
+        let dir = std::env::temp_dir().join(format!("artoo-tasks-carry-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let old = "https://acme.atlassian.net me@example.com # Acme\nhttps://trello.com key\n";
+        std::fs::write(dir.join("trackers.txt"), old).unwrap();
+        carry_over(&dir);
+        assert_eq!(
+            std::fs::read_to_string(dir.join("accounts.txt")).unwrap(),
+            old
+        );
+        assert_eq!(
+            std::fs::read_to_string(dir.join("trackers.txt")).unwrap(),
+            old
+        );
+        let keys: Vec<_> = entries(old)
+            .iter()
+            .map(|(_, s)| s.key().to_owned())
+            .collect();
+        assert_eq!(keys, ["acme.atlassian.net", "trello.com"]);
+        // Changed afterwards, the new file is no longer overwritten by the old one.
+        std::fs::write(dir.join("accounts.txt"), "https://other.example.net\n").unwrap();
+        carry_over(&dir);
+        assert_eq!(
+            std::fs::read_to_string(dir.join("accounts.txt")).unwrap(),
+            "https://other.example.net\n"
+        );
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn a_fixture_account_reads_its_own_folder_else_its_hosts() {
+        let dir = std::env::temp_dir().join(format!("artoo-tasks-home-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(dir.join("acme.atlassian.net")).unwrap();
+        std::fs::create_dir_all(dir.join("acme.atlassian.net~ops")).unwrap();
+        let site = |id: &str| Site {
+            url: "https://acme.atlassian.net".into(),
+            id: id.into(),
+            ..Default::default()
+        };
+        assert_eq!(
+            fixture_home(&dir, &site("")),
+            dir.join("acme.atlassian.net")
+        );
+        assert_eq!(
+            fixture_home(&dir, &site("acme.atlassian.net~ops")),
+            dir.join("acme.atlassian.net~ops")
+        );
+        assert_eq!(
+            fixture_home(&dir, &site("acme.atlassian.net~other")),
+            dir.join("acme.atlassian.net")
+        );
+        let _ = std::fs::remove_dir_all(&dir);
     }
 }

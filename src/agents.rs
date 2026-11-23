@@ -47,7 +47,7 @@ fn sites_for(site: Option<String>) -> Result<Vec<jira::Site>, String> {
     }
     match site {
         Some(host) => (sites.into_iter())
-            .find(|s| s.host() == host)
+            .find(|s| s.key() == host)
             .map(|s| vec![s])
             .ok_or_else(|| format!("No tracker at {host} is connected in Artoo")),
         None => Ok(sites),
@@ -108,7 +108,7 @@ pub fn add_tools(cx: &mut App) {
                                     .as_ref()
                                     .map_or("unassigned", |p| p.name.as_str());
                                 let at = if many {
-                                    format!(" · {}", site.host())
+                                    format!(" · {}", site.key())
                                 } else {
                                     String::new()
                                 };
@@ -143,7 +143,7 @@ pub fn add_tools(cx: &mut App) {
                 };
                 let store = store::get(cx);
                 let said = store.update(cx, |s, cx| {
-                let site = arg(&args, "site").or_else(|| s.site_for(&key).map(|x| x.host().to_owned())).unwrap_or_default();
+                let site = arg(&args, "site").or_else(|| s.site_for(&key).map(|x| x.key().to_owned())).unwrap_or_default();
                 let id = s.kept.next_id();
                 s.kept.pending.push(crate::keep::Pending { id, key: key.clone(), site, body, agent: "Your agent".into(), at: store::now() });
                 s.kept.write();
@@ -186,7 +186,7 @@ pub fn add_tools(cx: &mut App) {
                         };
                         let kinds = model::kinds(site, &key).unwrap_or_default();
                         let kind = kind_of(&kinds, kind.as_deref(), &key)?;
-                        return Ok((site.host().to_owned(), format!("{key} {name}"), kind));
+                        return Ok((site.key().to_owned(), format!("{key} {name}"), kind));
                     }
                     Err(format!(
                         "No tracker connected in Artoo has a project {project}"

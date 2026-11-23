@@ -186,7 +186,7 @@ fn site_of_key(key: &str, project: &str, s: &Store) -> Option<String> {
         .or_else(|| {
             (sites.iter())
                 .find(|site| site.caps().project_keys)
-                .map(|site| site.host().to_owned())
+                .map(|site| site.key().to_owned())
         })
 }
 
