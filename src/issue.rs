@@ -16,7 +16,8 @@ use crate::wiki::{self, handle};
 use artoo_plugin_sdk::core::textedit::TextEdit;
 use artoo_plugin_sdk::gpui::{
     self, AnyElement, App, Bounds, ClickEvent, Context, Div, ExternalPaths, FontWeight,
-    KeyDownEvent, ObjectFit, Pixels, SharedString, canvas, div, img, point, prelude::*,
+    KeyDownEvent, ObjectFit, Pixels, Rgba, SharedString, Window, canvas, div, img, point,
+    prelude::*,
 };
 use artoo_plugin_sdk::images::{Image, Picture, Viewer};
 use artoo_plugin_sdk::kit::composer::{Compose, ComposeAct, Look, Target, Typed as Written};
@@ -3127,38 +3128,75 @@ impl Page {
         let here = row.as_ref().map(|r| info.column_of(&r.state));
         let current = row.as_ref().map(|r| r.state.id.clone()).unwrap_or_default();
         let numbered: Vec<&model::Move> = moves.iter().filter(|m| m.to.id != current).collect();
-        let mut boxes = div().flex().items_center().gap(px(10.));
-        for (ix, c) in info.columns.iter().enumerate() {
-            let n = numbered
-                .iter()
-                .position(|m| c.states.contains(&m.to.id))
-                .map(|i| i + 1);
-            let asks = numbered
-                .iter()
-                .find(|m| c.states.contains(&m.to.id))
-                .is_some_and(|m| !m.asks.is_empty());
-            if ix > 0 {
-                let moves_at =
-                    |c: &model::Column| numbered.iter().any(|m| c.states.contains(&m.to.id));
-                let (forward, back) = (
-                    here == Some(ix - 1) && moves_at(c),
-                    here == Some(ix) && moves_at(&info.columns[ix - 1]),
-                );
-                boxes = boxes.child(
+        // The moves from here as (column, number): the first move into a column numbers it, as Move to does.
+        let targets: Vec<(usize, usize)> = info
+            .columns
+            .iter()
+            .enumerate()
+            .filter(|(ix, _)| Some(*ix) != here)
+            .filter_map(|(ix, c)| {
+                numbered
+                    .iter()
+                    .position(|m| c.states.contains(&m.to.id))
+                    .map(|i| (ix, i + 1))
+            })
+            .collect();
+        let edges = wf_edges(info.columns.len(), here, &targets);
+        let (width, height) = wf_size(info.columns.len());
+        let (faint, accent) = (theme::faint(), theme::accent());
+        let drawn = edges.clone();
+        let mut boxes = div()
+            .relative()
+            .w(px(width))
+            .h(px(height))
+            .child(
+                canvas(
+                    |_, _, _| {},
+                    move |bounds, _, window, _| {
+                        for e in &drawn {
+                            paint_edge(window, bounds.origin, e, if e.on { accent } else { faint });
+                        }
+                    },
+                )
+                .absolute()
+                .size_full(),
+            )
+            .children(edges.iter().filter_map(|e| {
+                let n = e.n?;
+                Some(
                     div()
-                        .text_size(px(16.))
-                        .text_color(if forward || back {
-                            theme::accent()
-                        } else {
-                            theme::faint()
-                        })
-                        .child(if back { "←" } else { "→" }),
-                );
-            }
+                        .absolute()
+                        .left(px(e.badge.0 - 9.))
+                        .top(px(e.badge.1 - 9.))
+                        .size(px(18.))
+                        .rounded_full()
+                        .bg(theme::accent())
+                        .flex()
+                        .items_center()
+                        .justify_center()
+                        .text_size(px(11.))
+                        .text_color(theme::on_accent())
+                        .child(n.to_string()),
+                )
+            }));
+        for (ix, c) in info.columns.iter().enumerate() {
+            let asks = targets
+                .iter()
+                .find(|(t, _)| *t == ix)
+                .and_then(|_| {
+                    numbered
+                        .iter()
+                        .find(|m| c.states.contains(&m.to.id))
+                        .map(|m| !m.asks.is_empty())
+                })
+                .unwrap_or(false);
             boxes = boxes.child(
                 div()
-                    .w(px(130.))
-                    .h(px(52.))
+                    .absolute()
+                    .left(px(ix as f32 * WF_PITCH))
+                    .top(px(WF_TOP))
+                    .w(px(WF_BOX_W))
+                    .h(px(WF_BOX_H))
                     .px(px(10.))
                     .flex()
                     .flex_col()
@@ -3172,25 +3210,9 @@ impl Page {
                     })
                     .child(
                         div()
-                            .flex()
-                            .items_center()
-                            .gap(px(6.))
                             .text_size(px(13.))
                             .text_color(theme::text())
-                            .child(c.name.clone())
-                            .children(n.map(|n| {
-                                div()
-                                    .ml_auto()
-                                    .size(px(18.))
-                                    .rounded_full()
-                                    .bg(theme::accent())
-                                    .flex()
-                                    .items_center()
-                                    .justify_center()
-                                    .text_size(px(11.))
-                                    .text_color(theme::on_accent())
-                                    .child(n.to_string())
-                            })),
+                            .child(c.name.clone()),
                     )
                     .when(asks, |d| {
                         d.child(
@@ -3199,15 +3221,21 @@ impl Page {
                                 .text_color(theme::faint())
                                 .child("asks Resolution"),
                         )
-                    })
-                    .when(Some(ix) == here, |d| {
-                        d.child(
-                            div()
-                                .text_size(px(11.))
-                                .text_color(theme::accent())
-                                .child(key.to_owned()),
-                        )
                     }),
+            );
+        }
+        if let Some(h) = here {
+            boxes = boxes.child(
+                div()
+                    .absolute()
+                    .left(px(h as f32 * WF_PITCH))
+                    .top(px(WF_TOP + WF_BOX_H + 6.))
+                    .w(px(WF_BOX_W))
+                    .flex()
+                    .justify_center()
+                    .text_size(px(11.))
+                    .text_color(theme::accent())
+                    .child(key.to_owned()),
             );
         }
         div()
@@ -3282,6 +3310,126 @@ impl Page {
                 cx.notify();
             }))
             .into_any_element()
+    }
+}
+
+const WF_BOX_W: f32 = 120.;
+const WF_BOX_H: f32 = 40.;
+const WF_PITCH: f32 = 160.;
+const WF_TOP: f32 = 96.;
+
+/// One arrow of the workflow picture: a cubic curve `a` → `b` through `c1`, `c2` (a straight one has its controls on
+/// the line), in the picture's own coordinates; `n` is the number Move to gives it, the badge sits at `badge`.
+#[derive(Clone, Debug, PartialEq)]
+struct WfEdge {
+    a: (f32, f32),
+    c1: (f32, f32),
+    c2: (f32, f32),
+    b: (f32, f32),
+    on: bool,
+    n: Option<usize>,
+    badge: (f32, f32),
+}
+
+/// The picture's size for `count` states in a row.
+fn wf_size(count: usize) -> (f32, f32) {
+    let w = count.saturating_sub(1) as f32 * WF_PITCH + WF_BOX_W;
+    (w, WF_TOP * 2. + WF_BOX_H)
+}
+
+/// The arrows of the states' diagram: the way forward between neighbours always (faint), and the moves `targets`
+/// (column, number) from the column `here` in the accent: a neighbour by a straight arrow (forward above the middle of
+/// the boxes' sides, back below it), a state further on by a curve over the boxes, one further back by a curve under.
+fn wf_edges(count: usize, here: Option<usize>, targets: &[(usize, usize)]) -> Vec<WfEdge> {
+    let (fwd, back) = (WF_TOP + 12., WF_TOP + 28.);
+    let x = |ix: usize| ix as f32 * WF_PITCH;
+    let straight = |a: (f32, f32), b: (f32, f32), on, n| WfEdge {
+        a,
+        c1: (a.0 + (b.0 - a.0) / 3., a.1),
+        c2: (a.0 + (b.0 - a.0) * 2. / 3., a.1),
+        b,
+        on,
+        n,
+        badge: ((a.0 + b.0) / 2., a.1),
+    };
+    let mut out = Vec::new();
+    let moved =
+        |from: usize, to: usize| here == Some(from) && targets.iter().any(|(t, _)| *t == to);
+    for ix in 0..count.saturating_sub(1) {
+        if !moved(ix, ix + 1) {
+            out.push(straight(
+                (x(ix) + WF_BOX_W, fwd),
+                (x(ix + 1), fwd),
+                false,
+                None,
+            ));
+        }
+    }
+    let Some(h) = here else { return out };
+    for &(t, n) in targets {
+        let span = t.abs_diff(h);
+        let lift = (24. + 16. * (span as f32 - 1.)).min(90.);
+        if span == 1 && t > h {
+            out.push(straight((x(h) + WF_BOX_W, fwd), (x(t), fwd), true, Some(n)));
+        } else if span == 1 {
+            out.push(straight(
+                (x(h), back),
+                (x(t) + WF_BOX_W, back),
+                true,
+                Some(n),
+            ));
+        } else if t > h {
+            let (a, b) = ((x(h) + 80., WF_TOP), (x(t) + 40., WF_TOP - 2.));
+            out.push(WfEdge {
+                a,
+                c1: (a.0, WF_TOP - lift),
+                c2: (b.0, WF_TOP - lift),
+                b,
+                on: true,
+                n: Some(n),
+                badge: ((a.0 + b.0) / 2., WF_TOP - lift * 0.75),
+            });
+        } else {
+            let bottom = WF_TOP + WF_BOX_H;
+            let (a, b) = ((x(h) + 40., bottom), (x(t) + 80., bottom + 2.));
+            out.push(WfEdge {
+                a,
+                c1: (a.0, bottom + lift),
+                c2: (b.0, bottom + lift),
+                b,
+                on: true,
+                n: Some(n),
+                badge: ((a.0 + b.0) / 2., bottom + lift * 0.75),
+            });
+        }
+    }
+    out
+}
+
+/// Paints `e` from `origin`: its curve and the arrowhead at its end.
+fn paint_edge(window: &mut Window, origin: gpui::Point<Pixels>, e: &WfEdge, color: Rgba) {
+    let at = |p: (f32, f32)| gpui::point(origin.x + px(p.0), origin.y + px(p.1));
+    let mut line = gpui::PathBuilder::stroke(px(if e.on { 2. } else { 1.25 }));
+    line.move_to(at(e.a));
+    line.cubic_bezier_to(at(e.b), at(e.c1), at(e.c2));
+    if let Ok(path) = line.build() {
+        window.paint_path(path, color);
+    }
+    let (dx, dy) = (e.b.0 - e.c2.0, e.b.1 - e.c2.1);
+    let len = (dx * dx + dy * dy).sqrt().max(0.001);
+    let (dx, dy) = (dx / len, dy / len);
+    let tail = (e.b.0 - dx * 8., e.b.1 - dy * 8.);
+    let mut head = gpui::PathBuilder::fill();
+    head.add_polygon(
+        &[
+            at(e.b),
+            at((tail.0 - dy * 4., tail.1 + dx * 4.)),
+            at((tail.0 + dy * 4., tail.1 - dx * 4.)),
+        ],
+        true,
+    );
+    if let Ok(path) = head.build() {
+        window.paint_path(path, color);
     }
 }
 
@@ -3469,6 +3617,33 @@ fn attached_markdown(answer: &Value, sent: &str) -> String {
 
 #[cfg(test)]
 mod tests {
+
+    #[test]
+    fn workflow_arrows_go_straight_to_a_neighbour_and_curve_over_or_under_the_rest() {
+        // Four states, the issue in the second: 1 → review, 2 → done (over), 3 → to do (a neighbour back).
+        let e = super::wf_edges(4, Some(1), &[(0, 3), (2, 1), (3, 2)]);
+        let on: Vec<_> = e.iter().filter(|e| e.on).collect();
+        assert_eq!(on.len(), 3);
+        // The neighbour arrows are straight; the skip is a curve rising above the boxes.
+        let skip = on.iter().find(|e| e.n == Some(2)).unwrap();
+        assert!(skip.c1.1 < super::WF_TOP && skip.badge.1 < super::WF_TOP);
+        let next = on.iter().find(|e| e.n == Some(1)).unwrap();
+        assert_eq!(next.a.1, next.b.1);
+        let back = on.iter().find(|e| e.n == Some(3)).unwrap();
+        assert!(back.a.0 > back.b.0 && back.a.1 > next.a.1);
+        // The faint way forward stays where no move is: 0 → 1 and 2 → 3, not 1 → 2.
+        let faint: Vec<_> = e.iter().filter(|e| !e.on).map(|e| e.a.0).collect();
+        assert_eq!(
+            faint,
+            vec![super::WF_BOX_W, 2. * super::WF_PITCH + super::WF_BOX_W]
+        );
+        // A move back past a state curves under the boxes.
+        let e = super::wf_edges(4, Some(3), &[(0, 1)]);
+        let under = e.iter().find(|e| e.on).unwrap();
+        assert!(under.c1.1 > super::WF_TOP + super::WF_BOX_H);
+        // No state to be in: only the faint way.
+        assert!(super::wf_edges(3, None, &[]).iter().all(|e| !e.on));
+    }
     use super::*;
 
     #[test]
