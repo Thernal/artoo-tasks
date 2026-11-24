@@ -261,6 +261,15 @@ pub fn day_words(text: &str) -> String {
     }
 }
 
+/// A date as day and month alone (`3 Nov`); the text itself when it cannot be read.
+pub fn day_month(text: &str) -> String {
+    let words = day_words(text);
+    match words.split_once(' ') {
+        Some((week, rest)) if week.len() == 3 && rest != words => rest.to_owned(),
+        _ => words,
+    }
+}
+
 /// How long ago a tracker's time was, as the kit says it (`3 h ago`); the time itself when it cannot be read.
 pub fn ago(text: &str) -> String {
     match stamp(text) {
@@ -271,6 +280,12 @@ pub fn ago(text: &str) -> String {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn a_creation_date_drops_its_weekday() {
+        assert_eq!(super::day_month("2026-11-03T09:00:00.000+0000"), "3 Nov");
+        assert_eq!(super::day_month("soon"), "soon");
+    }
+
     use super::*;
 
     #[test]

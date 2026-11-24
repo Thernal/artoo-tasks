@@ -3019,6 +3019,8 @@ impl Page {
             };
             let (k, a, id) = (key.clone(), anchor.clone(), f.id.clone());
             let changed = unseen.contains(&f.name);
+            let many = value_words(&issue.fields[f.id.as_str()]).is_some_and(|w| w.contains(", "));
+            let name = detail_name(&f, many);
             dl = dl.child(
                 div()
                     .flex()
@@ -3030,7 +3032,7 @@ impl Page {
                             .flex_none()
                             .pt(px(3.))
                             .text_color(theme::faint())
-                            .child(f.name.clone()),
+                            .child(name),
                     )
                     .child(
                         ctl(
@@ -3095,7 +3097,7 @@ impl Page {
                     .child(
                         div()
                             .text_color(theme::faint())
-                            .child(model::day_words(&issue.created)),
+                            .child(model::day_month(&issue.created)),
                     ),
             )
             .child(
@@ -3528,6 +3530,18 @@ fn page_pictures(issue: &Issue) -> Vec<Attachment> {
 }
 
 /// Two texts line by line: what is only theirs struck red, what is only yours green.
+/// A Details row's name in the design's words, not the tracker's field name: `Due`, `Component`, `Story points`.
+fn detail_name(f: &Field, many: bool) -> String {
+    let one_or_more = |one: &str, more: &str| if many { more } else { one }.to_owned();
+    match f.id.as_str() {
+        "duedate" => "Due".into(),
+        "components" => one_or_more("Component", "Components"),
+        "fixVersions" => one_or_more("Fix version", "Fix versions"),
+        "customfield_10016" => "Story points".into(),
+        _ => f.name.clone(),
+    }
+}
+
 fn diff_lines(theirs: &str, mine: &str) -> Div {
     let a: Vec<&str> = theirs.lines().collect();
     let b: Vec<&str> = mine.lines().collect();
@@ -3617,6 +3631,28 @@ fn attached_markdown(answer: &Value, sent: &str) -> String {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn details_rows_use_the_designs_words() {
+        let f = |id: &str, name: &str| Field {
+            id: id.into(),
+            name: name.into(),
+            ..Default::default()
+        };
+        assert_eq!(super::detail_name(&f("duedate", "Due date"), false), "Due");
+        assert_eq!(
+            super::detail_name(&f("components", "Components"), false),
+            "Component"
+        );
+        assert_eq!(
+            super::detail_name(&f("components", "Components"), true),
+            "Components"
+        );
+        assert_eq!(
+            super::detail_name(&f("fixVersions", "Fix versions"), false),
+            "Fix version"
+        );
+        assert_eq!(super::detail_name(&f("x", "Severity"), false), "Severity");
+    }
 
     #[test]
     fn workflow_arrows_go_straight_to_a_neighbour_and_curve_over_or_under_the_rest() {
