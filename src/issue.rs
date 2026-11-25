@@ -922,8 +922,15 @@ impl Page {
             div()
                 .id("tasks-desc-kept")
                 .flex_none()
-                .child(icons::icon("app").size(px(14.)).text_color(theme::faint()))
-                .tip("Kept on this Mac: an edit left open stays here until you save or cancel it")
+                .child(
+                    icons::icon("laptop")
+                        .size(px(14.))
+                        .text_color(theme::faint()),
+                )
+                .tip_two(
+                    "Kept on this Mac",
+                    "An edit left open stays here until you save or cancel it",
+                )
                 .into_any_element(),
             look::icon_button("tasks-desc-cancel", "x", "Cancel  esc")
                 .on_click(cx.listener(|this, _: &ClickEvent, _, cx| this.cancel_description(cx)))
@@ -1006,15 +1013,15 @@ impl Page {
                                 )
                             })
                             .child(
-                                look::icon_button(
-                                    "tasks-desc-compare",
-                                    "pull-request",
-                                    if compare {
-                                        "Compare: both versions as a diff  ·  on"
-                                    } else {
-                                        "Compare: both versions as a diff"
-                                    },
-                                )
+                                look::square_button("tasks-desc-compare", "git-compare")
+                                    .tip_two(
+                                        "Compare",
+                                        if compare {
+                                            "Both versions as a diff · on"
+                                        } else {
+                                            "Both versions as a diff"
+                                        },
+                                    )
                                 .when(compare, |b| b.border_color(theme::accent()))
                                 .on_click(cx.listener(|this, _: &ClickEvent, _, cx| {
                                     this.issue.compare = !this.issue.compare;

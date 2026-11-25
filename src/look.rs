@@ -334,6 +334,11 @@ pub fn icon_button(
     icon: &'static str,
     tip: impl Into<SharedString>,
 ) -> gpui::Stateful<Div> {
+    square_button(id, icon).tip(tip)
+}
+
+/// `icon_button` before its tooltip, for one whose tooltip is a title and a quieter line.
+pub fn square_button(id: impl Into<SharedString>, icon: &'static str) -> gpui::Stateful<Div> {
     div()
         .id(id.into())
         .flex_none()
@@ -347,7 +352,6 @@ pub fn icon_button(
         .cursor_pointer()
         .hover(|s| s.bg(theme::hover()))
         .child(icons::icon(icon).size(px(14.)).text_color(theme::muted()))
-        .tip(tip)
 }
 
 /// A fact of a row or a card: a glyph and, where it has one, its figure; its sentence is the tooltip.
