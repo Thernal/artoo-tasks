@@ -779,7 +779,7 @@ impl Page {
         let mut card = div()
             .id("tasks-pop")
             .w(px(match pop.kind {
-                PopKind::Epic => 340.,
+                PopKind::Epic | PopKind::MoveTo => 340.,
                 PopKind::Sprints => 400.,
                 _ => 260.,
             }))
