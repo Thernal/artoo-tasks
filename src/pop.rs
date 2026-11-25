@@ -5,6 +5,7 @@
 use crate::look;
 use crate::model::{self, Epic, Field, Move, Person, Row, Write};
 use crate::page::{Anchor, INPUT_POP, Page, Pop, PopKind};
+use crate::slices::{self, SliceId};
 use crate::store::{Read, Store};
 use crate::trackers::SiteExt;
 use artoo_plugin_sdk::core::textedit::TextEdit;
@@ -12,6 +13,7 @@ use artoo_plugin_sdk::gpui;
 use artoo_plugin_sdk::gpui::{
     AnyElement, ClickEvent, Context, FontWeight, Hsla, KeyDownEvent, SharedString, div, prelude::*,
 };
+use artoo_plugin_sdk::kit::hover::Hover;
 use artoo_plugin_sdk::kit::{icons, input, px, theme};
 use artoo_plugin_sdk::serde_json::{Value, json};
 use artoo_plugin_sdk::shell::{Toast, Typed};
@@ -27,6 +29,8 @@ pub enum Lead {
     Epic(Epic),
     Check(bool),
     Icon(&'static str),
+    /// A chevron: what unfolds, turned when open.
+    Turn(bool),
 }
 
 /// What picking a row does.
@@ -46,6 +50,10 @@ pub enum Act {
     /// A select of New task set: its field, the value, its words; of a field of many, a value toggled.
     Sheet(String, Value, String),
     SheetMany(String, Value, String),
+    /// A slice of the board shown.
+    Slice(SliceId),
+    /// The sprint picker's Past sprints unfolded or folded.
+    Past,
     Nothing,
 }
 
@@ -61,6 +69,13 @@ pub struct PopRow {
     pub checked: bool,
     /// A rule before it.
     pub rule: bool,
+    /// A section's title before it: `Active`.
+    pub head: Option<String>,
+    /// A second line under its text, faint, and what ends that line in bold: `78 issues · ends Fri 28 Nov`, `9 yours`.
+    pub under: Option<String>,
+    pub strong: Option<String>,
+    /// Its tooltip: where its key is said.
+    pub tip: Option<String>,
     pub act: Act,
 }
 
@@ -74,6 +89,10 @@ impl PopRow {
             key: None,
             checked: false,
             rule: false,
+            head: None,
+            under: None,
+            strong: None,
+            tip: None,
             act,
         }
     }
@@ -125,6 +144,19 @@ fn reassigned(from: &Person, to: Option<&Person>, me: Option<&Person>) -> String
 }
 
 impl Page {
+    /// S, or the facts line's sprint name: the sprint picker of a board read by slice, its sprints counted.
+    pub fn open_sprints(&mut self, cx: &mut Context<Self>) {
+        let s = self.store.read(cx);
+        let Some(board) = s.board.clone() else {
+            return;
+        };
+        if s.board_slices().is_none() || s.board_info().is_none_or(|i| i.sprintless) {
+            return;
+        }
+        self.store.update(cx, |s, cx| s.count_sprints(&board, cx));
+        self.open_pop(PopKind::Sprints, Anchor::Picker, "", cx);
+    }
+
     /// Whether popover `kind` is open at `anchor`.
     pub fn pop_at(&self, anchor: &Anchor, kind: PopKind) -> bool {
         self.pop
@@ -154,6 +186,8 @@ impl Page {
             at: 0,
             ask: None,
             asked: Vec::new(),
+            find: false,
+            past: false,
         });
         self.frame.take_keyboard(INPUT_POP, cx);
         cx.notify();
@@ -341,10 +375,11 @@ impl Page {
                     reading: false,
                 }
             }
+            PopKind::Sprints => sprint_rows(s, pop),
             PopKind::People => {
                 let play = s
                     .board_rows()
-                    .map(|r| crate::board::in_play(r, s.board_info()))
+                    .map(|r| crate::board::in_play(r))
                     .unwrap_or_default();
                 let all = crate::board::team(&play, me.as_ref());
                 let mut rows: Vec<PopRow> = (all.iter())
@@ -571,10 +606,10 @@ impl Page {
         let typing = self.frame.typing(cx) == Some(INPUT_POP);
         let mut card = div()
             .id("tasks-pop")
-            .w(px(if matches!(pop.kind, PopKind::Epic) {
-                340.
-            } else {
-                260.
+            .w(px(match pop.kind {
+                PopKind::Epic => 340.,
+                PopKind::Sprints => 400.,
+                _ => 260.,
             }))
             .max_h(px(420.))
             .flex()
@@ -588,15 +623,28 @@ impl Page {
             .text_size(px(13.))
             .occlude()
             .on_mouse_down_out(cx.listener(|this, _, _, cx| this.close_pop(cx)))
-            .child(
-                div()
-                    .px(px(12.))
-                    .pt(px(6.))
-                    .pb(px(4.))
-                    .text_size(px(11.))
-                    .text_color(theme::muted())
-                    .child(body.title.clone()),
-            );
+            .when(!body.title.is_empty(), |d| {
+                d.child(
+                    div()
+                        .px(px(12.))
+                        .pt(px(6.))
+                        .pb(px(4.))
+                        .text_size(px(11.))
+                        .text_color(theme::muted())
+                        .child(body.title.clone()),
+                )
+            });
+        // The sprint picker's filter takes letters once `/` or a click asks for it.
+        let find_key = (pop.kind == PopKind::Sprints && !pop.find).then(|| {
+            div()
+                .flex_none()
+                .px(px(5.))
+                .rounded(px(3.))
+                .bg(theme::hover())
+                .text_size(px(11.))
+                .text_color(theme::faint())
+                .child("/")
+        });
         if let Some(placeholder) = &body.filter {
             let shown = pop.filter.clone();
             let field = input::field(&shown, typing, placeholder, &input::Look::default(), || {
@@ -632,7 +680,14 @@ impl Page {
                             .size(px(12.))
                             .text_color(theme::faint()),
                     )
-                    .child(field.text_size(px(12.))),
+                    .child(field.text_size(px(12.)))
+                    .children(find_key)
+                    .on_click(cx.listener(|this, _: &ClickEvent, _, cx| {
+                        if let Some(p) = this.pop.as_mut() {
+                            p.find = true;
+                        }
+                        cx.notify();
+                    })),
                 INPUT_POP,
                 &self.frame,
             ));
@@ -654,6 +709,17 @@ impl Page {
         for (ix, r) in body.rows.into_iter().enumerate() {
             if r.rule {
                 list = list.child(div().my(px(4.)).h(px(1.)).bg(theme::border()));
+            }
+            if let Some(head) = &r.head {
+                list = list.child(
+                    div()
+                        .px(px(12.))
+                        .pt(px(6.))
+                        .pb(px(2.))
+                        .text_size(px(11.))
+                        .text_color(theme::faint())
+                        .child(head.clone()),
+                );
             }
             let act = r.act.clone();
             let lead: AnyElement = match &r.lead {
@@ -698,6 +764,10 @@ impl Page {
                     .size(px(14.))
                     .text_color(theme::muted())
                     .into_any_element(),
+                Lead::Turn(open) => {
+                    look::chevron(SharedString::from(format!("pop-turn-{ix}")), *open, 12.)
+                        .into_any_element()
+                }
             };
             let text: AnyElement = match &r.lead {
                 Lead::Epic(e) => div()
@@ -708,19 +778,44 @@ impl Page {
                     .child(look::key(&e.key))
                     .child(look::epic_lozenge(&self.store.read(cx).epic(e)))
                     .into_any_element(),
+                _ if r.under.is_some() || r.strong.is_some() => div()
+                    .min_w_0()
+                    .flex()
+                    .flex_col()
+                    .child(div().truncate().child(r.text.clone()))
+                    .child(
+                        div()
+                            .flex()
+                            .gap(px(8.))
+                            .text_size(px(11.))
+                            .text_color(theme::faint())
+                            .children(r.under.clone().map(|u| div().truncate().child(u)))
+                            .children(r.strong.clone().map(|s| {
+                                div()
+                                    .flex_none()
+                                    .font_weight(FontWeight::SEMIBOLD)
+                                    .text_color(theme::text())
+                                    .child(s)
+                            })),
+                    )
+                    .into_any_element(),
                 _ => div().truncate().child(r.text.clone()).into_any_element(),
             };
+            let two = r.under.is_some() || r.strong.is_some();
+            let tip = r.tip.clone();
             let enabled = !matches!(act, Act::Nothing);
             list = list.child(
                 div()
                     .id(SharedString::from(format!("pop-row-{ix}")))
                     .mx(px(4.))
-                    .h(px(28.))
+                    .when(two, |d| d.py(px(4.)))
+                    .when(!two, |d| d.h(px(28.)))
                     .px(px(8.))
                     .flex()
                     .items_center()
                     .gap(px(8.))
                     .rounded(px(5.))
+                    .when_some(tip, |d, tip| d.tip(tip))
                     .when(ix == at && enabled, |d| d.bg(theme::selected()))
                     .when(enabled, |d| {
                         d.cursor_pointer().hover(|s| s.bg(theme::hover()))
@@ -1023,6 +1118,28 @@ impl Page {
                 cx.open_url(&url);
             }
             act @ (Act::Sheet(..) | Act::SheetMany(..)) => self.sheet_pick(act, cx),
+            Act::Slice(slice) => {
+                self.close_pop(cx);
+                self.store.update(cx, |s, cx| {
+                    if let Some(board) = s.board.clone() {
+                        s.show_slice(&board, slice, cx);
+                    }
+                });
+            }
+            Act::Past => {
+                let open = self.pop.as_mut().map(|p| {
+                    p.past = !p.past;
+                    p.past
+                });
+                if open == Some(true) {
+                    self.store.update(cx, |s, cx| {
+                        if let Some(board) = s.board.clone() {
+                            s.read_past(&board, cx);
+                        }
+                    });
+                }
+                cx.notify();
+            }
         }
     }
 
@@ -1260,6 +1377,14 @@ impl Page {
             }
             _ => {}
         }
+        let picker = pop.kind == PopKind::Sprints;
+        if picker && !pop.find && key.key == "/" {
+            if let Some(p) = self.pop.as_mut() {
+                p.find = true;
+            }
+            cx.notify();
+            return Typed::Kept;
+        }
         // A row's own key: a number, or a letter while nothing is typed in the filter.
         if plain
             && let Some(c) = key
@@ -1268,7 +1393,11 @@ impl Page {
                 .next()
                 .filter(|_| key.key.chars().count() == 1)
         {
-            let ours = body.filter.is_none() || pop.filter.is_empty();
+            let ours = if picker {
+                !pop.find
+            } else {
+                body.filter.is_none() || pop.filter.is_empty()
+            };
             if ours
                 && let Some(row) = body
                     .rows
@@ -1283,7 +1412,7 @@ impl Page {
                 };
             }
         }
-        if body.filter.is_none() {
+        if body.filter.is_none() || picker && !pop.find {
             return Typed::Kept;
         }
         if let Some(p) = self.pop.as_mut() {
@@ -1294,6 +1423,107 @@ impl Page {
         }
         cx.notify();
         Typed::Kept
+    }
+}
+
+/// The sprint picker's rows: All active sprints, the active and the future sprints (each with its issues, when it ends
+/// or starts, and yours), the Backlog, and Past sprints folded, which open read only. While words are typed, the
+/// sprints whose names hold them.
+fn sprint_rows(s: &Store, pop: &Pop) -> Body {
+    let info = s.board_info().cloned().unwrap_or_default();
+    let host = s.board.as_ref().map(|b| b.0.clone()).unwrap_or_default();
+    let unit = crate::board::item_word(&host);
+    let plural = artoo_plugin_sdk::kit::format::plural;
+    let mut rows = Vec::new();
+    let Some(sl) = s.board_slices() else {
+        return Body {
+            title: String::new(),
+            filter: None,
+            rows,
+            foot: None,
+            reading: true,
+        };
+    };
+    let view = sl.view.as_ref();
+    let words = pop.filter.to_lowercase();
+    let finding = !words.is_empty();
+    let fits = |name: &str| name.to_lowercase().contains(&words);
+    let now = crate::store::now();
+    let sprint_row = |sprint: &model::Sprint| {
+        let slice = SliceId::Sprint(sprint.id);
+        let read = sl.reads.get(&slice);
+        let mut r = PopRow::new(Lead::None, sprint.name.clone(), Act::Nothing);
+        r.under = Some(slices::sprint_words(
+            sprint,
+            read.and_then(|r| r.count),
+            unit,
+            now,
+        ));
+        r.strong = (read.and_then(|r| r.mine))
+            .filter(|n| *n > 0 && sprint.state != "closed")
+            .map(|n| format!("{n} yours"));
+        r.checked = view == Some(&slice);
+        r.act = Act::Slice(slice);
+        r
+    };
+    if !finding && slices::active(&info).next().is_some() {
+        let mut r = PopRow::new(
+            Lead::Icon("layers"),
+            "All active sprints",
+            Act::Slice(SliceId::All),
+        );
+        r.hint = (sl.counts(&SliceId::All, &info).0).map(|n| plural(n, unit));
+        r.key = Some('a');
+        r.tip = Some("Every active sprint, each its own group  A".into());
+        r.checked = view == Some(&SliceId::All);
+        rows.push(r);
+    }
+    for (state, title) in [("active", "Active"), ("future", "Future")] {
+        let mut first = true;
+        for sprint in (info.sprints.iter()).filter(|x| x.state == state && fits(&x.name)) {
+            let mut r = sprint_row(sprint);
+            r.head = first.then(|| title.to_owned());
+            first = false;
+            rows.push(r);
+        }
+    }
+    if !finding {
+        let mut r = PopRow::new(Lead::Icon("list"), "Backlog", Act::Slice(SliceId::Backlog));
+        r.hint = (sl.reads.get(&SliceId::Backlog))
+            .and_then(|r| r.count)
+            .map(|n| plural(n, unit));
+        r.key = Some('b');
+        r.tip = Some("The issues in no sprint  B".into());
+        r.rule = true;
+        r.checked = view == Some(&SliceId::Backlog);
+        rows.push(r);
+    }
+    let past = match &sl.past {
+        Some(Read::Done(past)) => Some(past.as_slice()),
+        _ => None,
+    };
+    let open = pop.past || finding && past.is_some();
+    let mut r = PopRow::new(Lead::Turn(open), "Past sprints", Act::Past);
+    r.hint = match &sl.past {
+        Some(Read::Done(past)) => Some(plural(past.len(), "sprint")),
+        Some(Read::Reading) => Some("Reading…".into()),
+        Some(Read::Failed(_)) => Some("Not read".into()),
+        None => None,
+    };
+    r.tip = Some("Closed sprints, the last first; they open read only".into());
+    r.rule = true;
+    rows.push(r);
+    if open {
+        for sprint in past.into_iter().flatten().filter(|x| fits(&x.name)) {
+            rows.push(sprint_row(sprint));
+        }
+    }
+    Body {
+        title: String::new(),
+        filter: Some("Find a sprint".into()),
+        rows,
+        foot: None,
+        reading: false,
     }
 }
 

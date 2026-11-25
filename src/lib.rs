@@ -71,6 +71,7 @@ gpui::actions!(
         SearchTasks,
         UndoAssign,
         FilterBoards,
+        PickSprint,
     ]
 );
 
@@ -185,6 +186,16 @@ fn commands() -> Vec<Action> {
         a("tasks.group", Box::new(GroupBy), "Group by…", "g", HERE)
             .here("Group by…")
             .order(46),
+        // S, a letter as G and V are: ⌥S is the issue's Move to.
+        a(
+            "tasks.sprint",
+            Box::new(PickSprint),
+            "Pick a sprint…",
+            "s",
+            HERE,
+        )
+        .here("Pick a sprint…")
+        .order(46),
         a(
             "tasks.tracker",
             Box::new(OpenInTracker),
@@ -366,6 +377,7 @@ fn install(cx: &mut App) {
             (Box::new(AddSubtask), on(Page::key_subtask)),
             (Box::new(ToggleLayout), on(Page::toggle_view)),
             (Box::new(GroupBy), on(|p, cx| p.group_menu(None, cx))),
+            (Box::new(PickSprint), on(Page::open_sprints)),
             (Box::new(OpenInTracker), on(Page::open_in_tracker)),
             (Box::new(ReadAgain), on(Page::read_again)),
             (Box::new(NoteHere), on(Page::key_note)),

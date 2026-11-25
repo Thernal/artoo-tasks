@@ -106,9 +106,13 @@ pub fn bar(page: &Entity<Page>, route: Option<&Route>, cx: &mut App) -> Option<B
     }
     let board = board?;
     let me = s.me.get(&board.site).cloned();
+    // A board read by slice: the slice's counts as the tracker counts them, else its issues as read.
+    let (mine_counted, all_counted) = (s.board_slices())
+        .and_then(|sl| Some(sl.counts(sl.view.as_ref()?, s.board_info()?)))
+        .unwrap_or_default();
     let (mine_n, all_n) = match s.board_rows() {
         Some(rows) => {
-            let play = in_play(rows, s.board_info());
+            let play = in_play(rows);
             let top: Vec<_> = play.into_iter().filter(|r| r.parent.is_none()).collect();
             let mine = top
                 .iter()
@@ -117,9 +121,9 @@ pub fn bar(page: &Entity<Page>, route: Option<&Route>, cx: &mut App) -> Option<B
                         .is_some_and(|me| r.assignee.as_ref().is_some_and(|a| a.id == me.id))
                 })
                 .count();
-            (Some(mine), Some(top.len()))
+            (mine_counted.or(Some(mine)), all_counted.or(Some(top.len())))
         }
-        None => (None, None),
+        None => (mine_counted, all_counted),
     };
     let mine = s.mine;
     let columns = s.kept.view(&board.key()).board;

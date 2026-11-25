@@ -1,12 +1,13 @@
-//! A board as the space's own page shows it: which issues it shows (the sprint going on, Mine or All, the people
+//! A board as the space's own page shows it: which issues it shows (the slice picked, Mine or All, the people
 //! picked, what the filter says), grouped by state, story or epic; drawn as a list beside a preview or as columns of
 //! cards, a lane across them for each story or epic. What is drawn here reads plain data (`Shown`); the page's state
 //! and its clicks are the page's (`page.rs`).
 
 use crate::keep::Group;
 use crate::look::{self, sep};
-use crate::model::{self, BoardInfo, Epic, Issue, Person, Row, State};
+use crate::model::{self, BoardInfo, Epic, Issue, Person, Row, Sprint, State};
 use crate::page::{Anchor, Page, PopKind};
+use crate::slices::{self, Progress, SliceId, Slices};
 use crate::store::Read;
 use artoo_plugin_sdk::gpui::{
     AnyElement, App, ClickEvent, Context, Div, FontWeight, IntoElement, Render, SharedString,
@@ -45,7 +46,7 @@ impl Render for Dragged {
 }
 
 /// What a tracker calls the things on its boards: Trello's cards, everyone else's issues.
-fn item_word(host: &str) -> &'static str {
+pub(crate) fn item_word(host: &str) -> &'static str {
     if crate::trackers::kind_of(host) == crate::trackers::TRELLO {
         "card"
     } else {
@@ -116,13 +117,9 @@ pub fn matches(r: &Row, words: &str) -> bool {
     r.matches(words)
 }
 
-/// The board's issues in play: those of the sprint going on when it has one, no epics among them.
-pub fn in_play<'a>(rows: &'a [Row], info: Option<&BoardInfo>) -> Vec<&'a Row> {
-    let sprint = info.and_then(BoardInfo::active).map(|s| s.id);
-    (rows.iter())
-        .filter(|r| r.kind != "Epic")
-        .filter(|r| sprint.is_none_or(|id| r.sprint.as_ref().is_some_and(|s| s.id == id)))
-        .collect()
+/// The board's issues in play: those of the slice shown, no epics among them.
+pub fn in_play(rows: &[Row]) -> Vec<&Row> {
+    rows.iter().filter(|r| r.kind != "Epic").collect()
 }
 
 /// The rows the filter keeps, `me` your id.
@@ -251,6 +248,68 @@ pub fn shelves(
     }
 }
 
+/// Whether group `id` is Done's column, of a sprint of All active sprints or not.
+fn done_group(id: &str) -> bool {
+    id.rsplit('/')
+        .next()
+        .is_some_and(|own| own.eq_ignore_ascii_case("state:done"))
+}
+
+/// One of All active sprints' groups: the sprint, how many issues it holds, its issues in play and its own groups.
+#[derive(Clone, Debug, PartialEq)]
+pub struct Part {
+    pub sprint: Sprint,
+    pub count: Option<usize>,
+    pub rows: Vec<Row>,
+    pub shelves: Vec<Shelf>,
+}
+
+/// What folds sprint `id`'s part of All active sprints, and holds its groups' ids: `sprint:34`.
+pub fn part_id(id: u64) -> String {
+    format!("sprint:{id}")
+}
+
+/// All active sprints as the board lists them, each with its issues as read and its groups as `group` says, the
+/// rows `filter` keeps under each; a group's id is under its sprint's (`sprint:34/state:To do`).
+pub fn parts(
+    info: &BoardInfo,
+    slices: &Slices,
+    group: Group,
+    filter: &Filter,
+    me: Option<&Person>,
+) -> Vec<Part> {
+    slices::active(info)
+        .map(|sprint| {
+            let read = slices.reads.get(&SliceId::Sprint(sprint.id));
+            let rows = read.map(|r| in_play(&r.rows)).unwrap_or_default();
+            let mut groups = shelves(&rows, info, group, filter, me);
+            for g in &mut groups {
+                g.id = format!("{}/{}", part_id(sprint.id), g.id);
+            }
+            Part {
+                sprint: sprint.clone(),
+                count: read.and_then(|r| r.count),
+                rows: rows.into_iter().cloned().collect(),
+                shelves: groups,
+            }
+        })
+        .collect()
+}
+
+/// A sprint's dates: `Mon 17 – Fri 28 Nov`, the month said once when both are in it; its end alone when it has no
+/// start.
+pub fn span_words(start: Option<&str>, end: &str) -> String {
+    let end = model::day_words(end);
+    let Some(start) = start.map(model::day_words) else {
+        return end;
+    };
+    let month = |d: &str| d.rsplit(' ').next().map(str::to_owned);
+    match start.rsplit_once(' ') {
+        Some((day, _)) if month(&start) == month(&end) => format!("{day} – {end}"),
+        _ => format!("{start} – {end}"),
+    }
+}
+
 /// The state column `ix` of `info` is drawn with: the first of its states one of `rows` is in, else one named for
 /// the column, its category by its place (the first new, the last done).
 pub fn column_state<'a>(
@@ -301,6 +360,10 @@ pub fn team(rows: &[&Row], me: Option<&Person>) -> Vec<(Option<Person>, usize)> 
 /// Everything the board draws, read from the store once per drawing.
 pub struct Shown {
     pub host: String,
+    /// The slice shown, when the board is read by slice.
+    pub slice: Option<SliceShown>,
+    /// All active sprints, each its own group; empty for any other slice.
+    pub parts: Vec<Part>,
     pub board_name: String,
     pub info: BoardInfo,
     pub shelves: Vec<Shelf>,
@@ -315,20 +378,43 @@ pub struct Shown {
     pub people_picked: Vec<String>,
 }
 
+/// The slice a board read by slice shows.
+#[derive(Clone, Debug)]
+pub struct SliceShown {
+    pub id: SliceId,
+    /// As the tracker names it.
+    pub name: String,
+    /// The sprint shown, when it is one.
+    pub sprint: Option<Sprint>,
+    /// How many issues it holds, sub-tasks left out, as the tracker counts them.
+    pub count: Option<usize>,
+}
+
 impl Shown {
     /// The rows in the order the list draws them, folded groups left out: what ↑ ↓ walk.
     pub fn order(&self, folded: &dyn Fn(&str) -> bool) -> Vec<String> {
-        let mut out = Vec::new();
-        for s in &self.shelves {
-            if let Head::Story { row, .. } = &s.head {
-                out.push(row.key.clone());
-            }
-            if !folded(&s.id) {
-                out.extend(s.rows.iter().map(|r| r.key.clone()));
-            }
+        if !self.parts.is_empty() {
+            return (self.parts.iter())
+                .filter(|p| !folded(&part_id(p.sprint.id)))
+                .flat_map(|p| order_of(&p.shelves, folded))
+                .collect();
         }
-        out
+        order_of(&self.shelves, folded)
     }
+}
+
+/// The rows of `shelves` in the order the list draws them, folded groups left out.
+fn order_of(shelves: &[Shelf], folded: &dyn Fn(&str) -> bool) -> Vec<String> {
+    let mut out = Vec::new();
+    for s in shelves {
+        if let Head::Story { row, .. } = &s.head {
+            out.push(row.key.clone());
+        }
+        if !folded(&s.id) {
+            out.extend(s.rows.iter().map(|r| r.key.clone()));
+        }
+    }
+    out
 }
 
 impl Page {
@@ -340,15 +426,39 @@ impl Page {
         let info = s.board_info().cloned().unwrap_or_default();
         let view = s.kept.view(&board.key());
         let me = s.me.get(&board.site).cloned();
-        let play = in_play(rows, Some(&info));
+        let play = in_play(rows);
         let filter = Filter {
             mine: s.mine,
             faces: s.faces.clone(),
             words: self.frame.filter(cx),
         };
         let kept = shown(&play, &filter, me.as_ref());
+        let slices = s.board_slices();
+        let slice = slices.and_then(|sl| {
+            let id = sl.view.clone()?;
+            let past = match &sl.past {
+                Some(Read::Done(past)) => past.as_slice(),
+                _ => &[],
+            };
+            let (count, _) = sl.counts(&id, &info);
+            Some(SliceShown {
+                name: slices::name(&id, Some(&info), past),
+                sprint: (id.sprint())
+                    .and_then(|n| info.sprints.iter().chain(past).find(|s| s.id == n).cloned()),
+                id,
+                count,
+            })
+        });
+        let parts = match (slices, &slice) {
+            (Some(sl), Some(shown)) if shown.id == SliceId::All => {
+                parts(&info, sl, view.group, &filter, me.as_ref())
+            }
+            _ => Vec::new(),
+        };
         Some(Shown {
             host: board.site.clone(),
+            slice,
+            parts,
             board_name: board.name.clone(),
             shelves: shelves(&play, &info, view.group, &filter, me.as_ref()),
             count: kept.iter().filter(|r| r.parent.is_none()).count(),
@@ -364,14 +474,14 @@ impl Page {
 
     /// Whether group `id` is folded: Done's column is until unfolded.
     pub fn folded(&self, id: &str) -> bool {
-        if id == "state:Done" || id.starts_with("state:") && id.to_lowercase() == "state:done" {
+        if done_group(id) {
             return !self.unfolded.contains(id);
         }
         self.folded_ids.contains(id)
     }
 
     fn fold(&mut self, id: &str, cx: &mut Context<Self>) {
-        if id.to_lowercase() == "state:done" {
+        if done_group(id) {
             if !self.unfolded.remove(id) {
                 self.unfolded.insert(id.to_owned());
             }
@@ -385,7 +495,7 @@ impl Page {
 
     /// The board's line of facts: its sprint and when it ends, how many issues; the people picked; Group ▾.
     fn facts_line(
-        &self,
+        &mut self,
         shown: &Shown,
         stale: Option<(String, String)>,
         cx: &mut Context<Self>,
@@ -417,13 +527,9 @@ impl Page {
                         })),
                 );
         }
-        let mut line = match shown.info.active() {
-            Some(sprint) => line.child(
-                div()
-                    .font_weight(FontWeight::SEMIBOLD)
-                    .text_color(theme::text())
-                    .child(sprint.name.clone()),
-            ),
+        let picker = (shown.slice.as_ref()).filter(|_| !shown.info.sprintless);
+        let mut line = match picker {
+            Some(slice) => line.child(self.sprint_picker(slice, cx)),
             None => line.child(
                 div()
                     .font_weight(FontWeight::SEMIBOLD)
@@ -434,19 +540,25 @@ impl Page {
         let unit = item_word(&shown.host);
         let all = shown.all.iter().filter(|r| r.parent.is_none()).count();
         let nothing = shown.count == 0 && all > 0;
-        let mut tip = artoo_plugin_sdk::kit::format::plural(shown.count, unit);
-        let count = if nothing {
-            format!("0 of {}", artoo_plugin_sdk::kit::format::plural(all, unit))
-        } else {
-            shown.count.to_string()
-        };
-        if shown.group == Group::Story {
-            tip.push_str(&format!(
-                ", {}",
-                artoo_plugin_sdk::kit::format::plural(shown.subtasks, "sub-task")
-            ));
+        // The count is the bar's All; here only when the filters keep none of it.
+        if nothing {
+            let mut tip = artoo_plugin_sdk::kit::format::plural(shown.count, unit);
+            if shown.group == Group::Story {
+                tip.push_str(&format!(
+                    ", {}",
+                    artoo_plugin_sdk::kit::format::plural(shown.subtasks, "sub-task")
+                ));
+            }
+            line = line.child(
+                div()
+                    .id("tasks-count")
+                    .child(format!(
+                        "0 of {}",
+                        artoo_plugin_sdk::kit::format::plural(all, unit)
+                    ))
+                    .tip(tip),
+            );
         }
-        line = line.child(div().id("tasks-count").child(count).tip(tip));
         if !shown.people_picked.is_empty() {
             let names: Vec<String> = (shown.people_picked.iter())
                 .map(|id| match id.as_str() {
@@ -474,28 +586,12 @@ impl Page {
             return line.child(div().flex_1()).child(shown.host.clone());
         }
         let group = shown.group;
-        let ends = shown.info.active().and_then(|s| s.end.as_ref());
         line.child(div().flex_1())
             // Painted as the Mac kept it, until the tracker answers.
             .children(
                 self.kept_at(cx)
                     .map(|at| div().text_color(theme::faint()).child(format!("from {at}"))),
             )
-            .children(ends.map(|end| {
-                let day = model::day_words(end);
-                div()
-                    .id("tasks-ends")
-                    .flex()
-                    .items_center()
-                    .gap(px(4.))
-                    .child(
-                        icons::icon("clock")
-                            .size(px(12.))
-                            .text_color(theme::muted()),
-                    )
-                    .child(day.clone())
-                    .tip(format!("Ends {day}"))
-            }))
             .child(
                 look::small_button("tasks-group", "")
                     .child("Group:")
@@ -515,6 +611,187 @@ impl Page {
                         this.group_menu(Some(e.position()), cx)
                     })),
             )
+    }
+
+    /// The facts line's sprint picker: the slice shown and ▾, its menu the board's slices.
+    fn sprint_picker(&mut self, slice: &SliceShown, cx: &mut Context<Self>) -> AnyElement {
+        let open = self.pop_at(&Anchor::Picker, PopKind::Sprints);
+        div()
+            .id("tasks-picker")
+            .relative()
+            .flex()
+            .items_center()
+            .gap(px(4.))
+            .h(px(24.))
+            .min_w_0()
+            .px(px(8.))
+            .ml(px(-8.))
+            .rounded(px(5.))
+            .cursor_pointer()
+            .hover(|s| s.bg(theme::hover()))
+            .when(open, |d| d.bg(theme::hover()))
+            .child(
+                div()
+                    .max_w(px(320.))
+                    .truncate()
+                    .font_weight(FontWeight::SEMIBOLD)
+                    .text_color(theme::text())
+                    .child(slice.name.clone()),
+            )
+            .child(
+                icons::icon("chevron")
+                    .size(px(12.))
+                    .text_color(theme::muted()),
+            )
+            .tip(format!("{}\nPick a sprint  S", slice.name))
+            .on_click(cx.listener(|this, _: &ClickEvent, _, cx| this.open_sprints(cx)))
+            .children(self.pop_here(&Anchor::Picker, PopKind::Sprints, cx))
+            .into_any_element()
+    }
+
+    /// A sprint's head: its dates and days left (orange from three), its goal on one line, how far its issues have got
+    /// (`24 / 78`, the words in the bar's tooltip). In All active sprints its name leads and it folds its part (`fold`:
+    /// whether it is folded).
+    fn sprint_head(
+        &mut self,
+        sprint: &Sprint,
+        rows: &[Row],
+        count: Option<usize>,
+        unit: &str,
+        fold: Option<bool>,
+        cx: &mut Context<Self>,
+    ) -> AnyElement {
+        let id = sprint.id;
+        let progress = Progress::of(rows);
+        let all = progress.all(count).max(1) as f32;
+        let tint = |category: &str| {
+            look::state_color(&State {
+                category: category.into(),
+                ..Default::default()
+            })
+        };
+        const BAR: f32 = 72.;
+        let bar = div()
+            .id(SharedString::from(format!("sprint-bar-{id}")))
+            .flex_none()
+            .flex()
+            .w(px(BAR))
+            .h(px(4.))
+            .rounded_full()
+            .overflow_hidden()
+            .bg(theme::border())
+            .child(
+                div()
+                    .h_full()
+                    .w(px(BAR * progress.done.min(all as usize) as f32 / all))
+                    .bg(tint("done")),
+            )
+            .child(
+                div()
+                    .h_full()
+                    .w(px(BAR * progress.doing as f32 / all))
+                    .bg(tint("indeterminate")),
+            )
+            .tip(progress.words(count, unit, &sprint.name));
+        let how_far = div()
+            .flex()
+            .items_center()
+            .gap(px(8.))
+            .child(bar)
+            .child(div().text_color(theme::text()).child(progress.short(count)));
+        let when = sprint.end.as_deref().map(|end| {
+            let left = slices::days_left(end, crate::store::now());
+            div()
+                .flex()
+                .items_center()
+                .gap(px(8.))
+                .child(
+                    div()
+                        .flex()
+                        .items_center()
+                        .gap(px(4.))
+                        .child(
+                            icons::icon("clock")
+                                .size(px(12.))
+                                .text_color(theme::muted()),
+                        )
+                        .child(span_words(sprint.start.as_deref(), end)),
+                )
+                .children(left.map(|(words, few)| {
+                    div()
+                        .when(few, |d| d.text_color(theme::warning()))
+                        .child(words)
+                }))
+        });
+        let goal = (!sprint.goal.is_empty()).then(|| {
+            div()
+                .id(SharedString::from(format!("sprint-goal-{id}")))
+                .flex_1()
+                .min_w_0()
+                .flex()
+                .items_center()
+                .gap(px(6.))
+                .child(
+                    div()
+                        .flex_none()
+                        .text_size(px(10.))
+                        .text_color(theme::faint())
+                        .child("GOAL"),
+                )
+                .child(div().min_w_0().truncate().child(sprint.goal.clone()))
+                .tip(sprint.goal.clone())
+        });
+        let head = div()
+            .id(SharedString::from(format!("sprint-head-{id}")))
+            .flex_none()
+            .flex()
+            .flex_col()
+            .gap(px(4.))
+            .px(px(16.))
+            .py(px(8.))
+            .border_b_1()
+            .border_color(theme::border())
+            .text_size(px(12.))
+            .text_color(theme::muted())
+            .whitespace_nowrap();
+        let line = || div().flex().items_center().gap(px(8.)).min_w_0();
+        let Some(folded) = fold else {
+            return head
+                .child(line().children(when).child(div().flex_1()).child(how_far))
+                .children(goal.map(|g| line().child(g)))
+                .into_any_element();
+        };
+        let fold_id = part_id(id);
+        head.bg(theme::base())
+            .cursor_pointer()
+            .child(
+                line()
+                    .child(look::chevron(
+                        SharedString::from(format!("sprint-turn-{id}")),
+                        !folded,
+                        12.,
+                    ))
+                    .child(
+                        div()
+                            .flex_1()
+                            .min_w_0()
+                            .truncate()
+                            .text_size(px(13.))
+                            .font_weight(FontWeight::SEMIBOLD)
+                            .text_color(theme::text())
+                            .child(sprint.name.clone()),
+                    )
+                    .children(when),
+            )
+            .child(
+                line()
+                    .pl(px(20.))
+                    .children(goal)
+                    .when(sprint.goal.is_empty(), |d| d.child(div().flex_1()))
+                    .child(how_far),
+            )
+            .on_click(cx.listener(move |this, _: &ClickEvent, _, cx| this.fold(&fold_id, cx)))
+            .into_any_element()
     }
 
     /// The board as a list beside the preview, or its columns of cards.
@@ -593,6 +870,14 @@ impl Page {
                 .child(empty)
                 .into_any_element();
         }
+        // One sprint shown: its head over its issues. All active sprints: each sprint's over its part.
+        let head = (shown.slice.as_ref())
+            .filter(|_| shown.parts.is_empty())
+            .and_then(|sl| Some((sl.sprint.clone()?, sl.count)))
+            .map(|(sprint, count)| {
+                let unit = item_word(&shown.host);
+                self.sprint_head(&sprint, &shown.all, count, unit, None, cx)
+            });
         let note = self.board_note_open().then(|| {
             div()
                 .flex_none()
@@ -606,6 +891,7 @@ impl Page {
             return (self.page_frame())
                 .when(stale.is_some(), |d| d.opacity(STALE))
                 .child(self.facts_line(&shown, stale, cx))
+                .children(head)
                 .children(note)
                 .child(self.columns(&shown, cx))
                 .into_any_element();
@@ -613,6 +899,7 @@ impl Page {
         let list = (self.list_frame())
             .when(stale.is_some(), |d| d.opacity(STALE))
             .child(self.facts_line(&shown, stale.clone(), cx))
+            .children(head)
             .children(note)
             .child(
                 div()
@@ -640,8 +927,36 @@ impl Page {
 
     /// The list's groups, each with its head and rows.
     fn shelves(&mut self, shown: &Shown, cx: &mut Context<Self>) -> Div {
+        if shown.parts.is_empty() {
+            return self.shelf_list(&shown.shelves, shown, cx);
+        }
         let mut out = div().flex().flex_col();
-        for shelf in &shown.shelves {
+        let unit = item_word(&shown.host);
+        for part in &shown.parts {
+            let id = part_id(part.sprint.id);
+            let folded = self.folded(&id);
+            out = out.child(self.sprint_head(
+                &part.sprint,
+                &part.rows,
+                part.count,
+                unit,
+                Some(folded),
+                cx,
+            ));
+            let key = format!("shelf-{id}");
+            if folded && !self.motion.recent(&key) {
+                continue;
+            }
+            let groups = self.shelf_list(&part.shelves, shown, cx);
+            out = out.children(self.folding(&key, !folded, groups));
+        }
+        out
+    }
+
+    /// Groups `shelves`, each with its head and rows.
+    fn shelf_list(&mut self, shelves: &[Shelf], shown: &Shown, cx: &mut Context<Self>) -> Div {
+        let mut out = div().flex().flex_col();
+        for shelf in shelves {
             let folded = self.folded(&shelf.id);
             out = out.child(self.shelf_head(shelf, folded, cx));
             // Its rows fold in and out moving; folded and still, they are not drawn.
@@ -1799,9 +2114,8 @@ impl Page {
         let s = self.store.read(cx);
         let board = s.picked()?.clone();
         let rows = s.board_rows()?;
-        let info = s.board_info().cloned();
         let me = s.me.get(&board.site).cloned();
-        let play = in_play(rows, info.as_ref());
+        let play = in_play(rows);
         let all = team(&play, me.as_ref());
         let picked: HashSet<String> = s.faces.iter().cloned().collect();
         let unit = item_word(&board.site);
@@ -1954,7 +2268,8 @@ pub fn skeleton_in_page(id: &'static str, rows: usize) -> Div {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::model::{Column, Sprint};
+    use crate::model::Column;
+    use crate::slices::SliceRead;
 
     fn st(id: &str, cat: &str) -> State {
         State {
@@ -2144,7 +2459,91 @@ mod tests {
     }
 
     #[test]
-    fn issues_of_another_sprint_are_not_in_play() {
+    fn all_active_sprints_are_a_part_each_holding_its_own_issues_and_groups() {
+        let mut info = info();
+        for (id, state) in [(35, "future"), (36, "active")] {
+            info.sprints.push(Sprint {
+                id,
+                name: format!("Sprint {id}"),
+                state: state.into(),
+                ..Default::default()
+            });
+        }
+        let read = |rows: Vec<Row>, count: usize| {
+            let mut r = SliceRead::default();
+            r.rows = rows;
+            r.count = Some(count);
+            r
+        };
+        let mut slices = Slices::default();
+        slices.reads.insert(
+            SliceId::Sprint(34),
+            read(
+                vec![
+                    row("PAY-1", "todo", "new", Some("you")),
+                    row("PAY-2", "done", "done", None),
+                ],
+                2,
+            ),
+        );
+        slices.reads.insert(
+            SliceId::Sprint(35),
+            read(vec![row("PAY-9", "todo", "new", None)], 1),
+        );
+        slices.reads.insert(
+            SliceId::Sprint(36),
+            read(vec![row("PAY-3", "prog", "indeterminate", None)], 7),
+        );
+        let you = Person {
+            id: "you".into(),
+            name: "You".into(),
+        };
+        let parts = parts(&info, &slices, Group::State, &Filter::default(), Some(&you));
+        let ids: Vec<u64> = parts.iter().map(|p| p.sprint.id).collect();
+        assert_eq!(ids, [34, 36], "the active sprints, as the board lists them");
+        let keys = |p: &Part| -> Vec<String> { p.rows.iter().map(|r| r.key.clone()).collect() };
+        assert_eq!(keys(&parts[0]), ["PAY-1", "PAY-2"]);
+        assert_eq!(keys(&parts[1]), ["PAY-3"]);
+        assert_eq!(parts[1].count, Some(7));
+        let groups: Vec<(&str, usize)> = (parts[0].shelves.iter())
+            .map(|g| (g.id.as_str(), g.rows.len()))
+            .collect();
+        assert_eq!(
+            groups,
+            [
+                ("sprint:34/state:To do", 1),
+                ("sprint:34/state:In progress", 0),
+                ("sprint:34/state:Done", 1)
+            ]
+        );
+        assert!(done_group("sprint:34/state:Done") && !done_group("sprint:34/state:To do"));
+        let mine = Filter {
+            mine: true,
+            ..Default::default()
+        };
+        let parts = super::parts(&info, &slices, Group::State, &mine, Some(&you));
+        let shown: usize = parts[1].shelves.iter().map(|g| g.rows.len()).sum();
+        assert_eq!(shown, 0, "the filters keep rows per part");
+        assert_eq!(
+            parts[1].rows.len(),
+            1,
+            "a part's progress counts all it holds"
+        );
+    }
+
+    #[test]
+    fn a_sprints_dates_say_their_month_once() {
+        let (start, end) = ("2026-11-16T09:00:00.000Z", "2026-11-27T17:00:00.000Z");
+        assert_eq!(span_words(Some(start), end), "Mon 16 – Fri 27 Nov");
+        assert_eq!(
+            span_words(Some(start), "2026-12-04T17:00:00.000Z"),
+            "Mon 16 Nov – Fri 4 Dec"
+        );
+        assert_eq!(span_words(None, end), "Fri 27 Nov");
+    }
+
+    #[test]
+    fn epics_are_not_in_play_and_every_sprint_of_the_slice_is() {
         let mut later = row("PAY-500", "todo", "new", None);
         later.sprint = Some(Sprint {
             id: 35,
@@ -2152,8 +2551,10 @@ mod tests {
             state: "future".into(),
             ..Default::default()
         });
-        let rows = vec![row("PAY-1", "todo", "new", None), later];
-        assert_eq!(in_play(&rows, Some(&info())).len(), 1);
-        assert_eq!(in_play(&rows, None).len(), 2);
+        let mut epic = row("PAY-400", "todo", "new", None);
+        epic.kind = "Epic".into();
+        let rows = vec![row("PAY-1", "todo", "new", None), later, epic];
+        let keys: Vec<&str> = in_play(&rows).iter().map(|r| r.key.as_str()).collect();
+        assert_eq!(keys, ["PAY-1", "PAY-500"]);
     }
 }

@@ -51,6 +51,8 @@ pub enum Anchor {
     Faces,
     /// A select of New task, by its field.
     Sheet(String),
+    /// The facts line's sprint picker.
+    Picker,
 }
 
 impl Anchor {
@@ -63,6 +65,7 @@ impl Anchor {
             Anchor::Detail(f) => format!("detail-{f}"),
             Anchor::Faces => "faces".into(),
             Anchor::Sheet(f) => format!("sheet-{f}"),
+            Anchor::Picker => "picker".into(),
         }
     }
 }
@@ -81,6 +84,8 @@ pub enum PopKind {
     Field(String),
     /// A select of New task, by its field.
     Sheet(String),
+    /// The board's slices: its sprints, the Backlog, Past sprints.
+    Sprints,
 }
 
 /// A popover open.
@@ -96,6 +101,10 @@ pub struct Pop {
     /// A move that asks, and the value picked for each field it asks.
     pub ask: Option<crate::model::Move>,
     pub asked: Vec<usize>,
+    /// The sprint picker's letters type into its filter, once `/` asked for it.
+    pub find: bool,
+    /// The sprint picker's Past sprints unfolded.
+    pub past: bool,
 }
 
 /// Where a note for the agent is being written.

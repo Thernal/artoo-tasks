@@ -6,7 +6,7 @@
 // alone reads them, and some of this has no caller outside the tests.
 #![allow(dead_code)]
 
-use crate::model::{Ask, BoardInfo, Page, Person, Row, Sprint, Write, stamp};
+use crate::model::{Ask, BoardInfo, Page, Person, Row, Sprint, Write, day_words, stamp};
 use crate::store::Read;
 use std::collections::HashMap;
 
@@ -197,6 +197,91 @@ pub fn name(slice: &SliceId, info: Option<&BoardInfo>, past: &[Sprint]) -> Strin
         SliceId::All => "All active sprints".into(),
         SliceId::Backlog => "Backlog".into(),
         SliceId::Board => String::new(),
+    }
+}
+
+/// A sprint's days left on `now` (Unix seconds), by the calendar day it ends, in words; and whether they are few
+/// (three or fewer, or past): drawn orange.
+pub fn days_left(end: &str, now: i64) -> Option<(String, bool)> {
+    let days = stamp(end)?.div_euclid(86_400) - now.div_euclid(86_400);
+    Some(match days {
+        ..-1 => (format!("ended {} days ago", -days), true),
+        -1 => ("ended yesterday".into(), true),
+        0 => ("ends today".into(), true),
+        1 => ("1 day left".into(), true),
+        days => (format!("{days} days left"), days <= 3),
+    })
+}
+
+/// A sprint's line under its name in the sprint picker: `78 issues · ends Fri 28 Nov · 5 days left`, `No issues yet ·
+/// starts Wed 3 Dec`, `ended Fri 14 Nov`; its issues left out until they are counted.
+pub fn sprint_words(sprint: &Sprint, count: Option<usize>, unit: &str, now: i64) -> String {
+    let day = |d: &Option<String>| d.as_deref().map(day_words);
+    let mut out = Vec::new();
+    if sprint.state == "closed" {
+        out.extend(day(&sprint.end).map(|d| format!("ended {d}")));
+        return out.join(" · ");
+    }
+    match count {
+        Some(0) => out.push(format!("No {unit}s yet")),
+        Some(n) => out.push(artoo_plugin_sdk::kit::format::plural(n, unit)),
+        None => {}
+    }
+    if sprint.state == "future" {
+        out.extend(day(&sprint.start).map(|d| format!("starts {d}")));
+    } else {
+        out.extend(day(&sprint.end).map(|d| format!("ends {d}")));
+        out.extend((sprint.end.as_deref()).and_then(|e| Some(days_left(e, now)?.0)));
+    }
+    out.join(" · ")
+}
+
+/// How far a slice's issues have got, sub-tasks left out: done, in progress or review, to do.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct Progress {
+    pub done: usize,
+    pub doing: usize,
+    pub todo: usize,
+}
+
+impl Progress {
+    pub fn of<'a>(rows: impl IntoIterator<Item = &'a Row>) -> Self {
+        let mut p = Progress::default();
+        for r in rows
+            .into_iter()
+            .filter(|r| !r.subtask && r.parent.is_none())
+        {
+            match r.state.category.as_str() {
+                "done" => p.done += 1,
+                "indeterminate" => p.doing += 1,
+                _ => p.todo += 1,
+            }
+        }
+        p
+    }
+
+    /// Of how many: the slice's count, else the issues read.
+    pub fn all(&self, count: Option<usize>) -> usize {
+        count.unwrap_or(self.done + self.doing + self.todo)
+    }
+
+    /// Beside its bar: `24 / 78`.
+    pub fn short(&self, count: Option<usize>) -> String {
+        format!("{} / {}", self.done, self.all(count))
+    }
+
+    /// Its bar's tooltip and accessible name: `24 done · 23 in progress or review · 31 to do of 78 issues in Sprint 4`.
+    pub fn words(&self, count: Option<usize>, unit: &str, slice: &str) -> String {
+        let all = self.all(count);
+        let unit = if all == 1 {
+            unit.to_owned()
+        } else {
+            format!("{unit}s")
+        };
+        format!(
+            "{} done · {} in progress or review · {} to do of {all} {unit} in {slice}",
+            self.done, self.doing, self.todo
+        )
     }
 }
 
@@ -417,6 +502,26 @@ impl Slices {
         }
     }
 
+    /// How many issues `slice` holds and how many are yours, as counted; All's are its sprints' added up, once each is
+    /// counted.
+    pub fn counts(&self, slice: &SliceId, info: &BoardInfo) -> (Option<usize>, Option<usize>) {
+        let of = |s: &SliceId| {
+            self.reads
+                .get(s)
+                .map_or((None, None), |r| (r.count, r.mine))
+        };
+        match slice {
+            SliceId::All => {
+                let each: Vec<_> = active(info).map(|s| of(&SliceId::Sprint(s.id))).collect();
+                (
+                    each.iter().map(|c| c.0).sum(),
+                    each.iter().map(|c| c.1).sum(),
+                )
+            }
+            slice => of(slice),
+        }
+    }
+
     /// All active sprints' issues, sprint after sprint as the board lists them.
     pub fn all_rows<'a>(&'a self, info: &'a BoardInfo) -> impl Iterator<Item = &'a Row> {
         active(info)
@@ -589,6 +694,105 @@ mod tests {
 
     fn keys(rows: &[Row]) -> Vec<&str> {
         rows.iter().map(|r| r.key.as_str()).collect()
+    }
+
+    #[test]
+    fn days_left_are_counted_by_the_day_a_sprint_ends_and_few_from_three() {
+        let now = stamp("2026-11-23T09:30:00.000Z").unwrap();
+        let left = |end: &str| days_left(end, now).unwrap();
+        assert_eq!(
+            left("2026-11-28T17:00:00.000Z"),
+            ("5 days left".into(), false)
+        );
+        assert_eq!(
+            left("2026-11-27T08:00:00.000Z"),
+            ("4 days left".into(), false)
+        );
+        assert_eq!(
+            left("2026-11-26T17:00:00.000Z"),
+            ("3 days left".into(), true)
+        );
+        assert_eq!(
+            left("2026-11-24T17:00:00.000Z"),
+            ("1 day left".into(), true)
+        );
+        assert_eq!(
+            left("2026-11-23T17:00:00.000Z"),
+            ("ends today".into(), true)
+        );
+        assert_eq!(
+            left("2026-11-22T17:00:00.000Z"),
+            ("ended yesterday".into(), true)
+        );
+        assert_eq!(
+            left("2026-11-20T17:00:00.000Z"),
+            ("ended 3 days ago".into(), true)
+        );
+        assert_eq!(days_left("someday", now), None);
+    }
+
+    #[test]
+    fn a_sprint_says_its_issues_and_when_it_ends_or_starts() {
+        let now = stamp("2026-11-23T09:30:00.000Z").unwrap();
+        let mut active = sprint(34, "active", Some("2026-11-28T17:00:00.000Z"));
+        active.start = Some("2026-11-17T09:00:00.000Z".into());
+        assert_eq!(
+            sprint_words(&active, Some(78), "issue", now),
+            "78 issues · ends Sat 28 Nov · 5 days left"
+        );
+        assert_eq!(
+            sprint_words(&active, None, "issue", now),
+            "ends Sat 28 Nov · 5 days left"
+        );
+        let mut future = sprint(35, "future", None);
+        future.start = Some("2026-12-03T09:00:00.000Z".into());
+        assert_eq!(
+            sprint_words(&future, Some(0), "issue", now),
+            "No issues yet · starts Thu 3 Dec"
+        );
+        let closed = sprint(33, "closed", Some("2026-11-14T17:00:00.000Z"));
+        assert_eq!(
+            sprint_words(&closed, Some(40), "issue", now),
+            "ended Sat 14 Nov"
+        );
+    }
+
+    #[test]
+    fn progress_counts_issues_by_their_state_and_says_of_the_slice_count() {
+        let at = |key: &str, category: &str| Row {
+            key: key.into(),
+            state: crate::model::State {
+                category: category.into(),
+                ..Default::default()
+            },
+            ..Default::default()
+        };
+        let rows = vec![
+            at("PAY-1", "done"),
+            at("PAY-2", "done"),
+            at("PAY-3", "indeterminate"),
+            at("PAY-4", "new"),
+            sub("PAY-5", "PAY-4"),
+        ];
+        let p = Progress::of(&rows);
+        assert_eq!(
+            p,
+            Progress {
+                done: 2,
+                doing: 1,
+                todo: 1
+            }
+        );
+        assert_eq!(p.short(None), "2 / 4");
+        assert_eq!(p.short(Some(78)), "2 / 78");
+        assert_eq!(
+            p.words(Some(78), "issue", "Sprint 4"),
+            "2 done · 1 in progress or review · 1 to do of 78 issues in Sprint 4"
+        );
+        assert_eq!(
+            Progress::of(&rows[3..4]).words(None, "card", "Sprint 4"),
+            "0 done · 0 in progress or review · 1 to do of 1 card in Sprint 4"
+        );
     }
 
     #[test]

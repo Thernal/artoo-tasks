@@ -497,6 +497,10 @@ impl Page {
             key: None,
             checked: false,
             rule: false,
+            head: None,
+            under: None,
+            strong: None,
+            tip: None,
             act: Act::Sheet(id.to_owned(), value, words),
         };
         let current = sheet

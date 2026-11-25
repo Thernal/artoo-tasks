@@ -746,6 +746,10 @@ impl Store {
         {
             self.read_slice(&board, view, How::Again, cx);
         }
+        // A board read by slice reads only the slice in view.
+        if self.by_slice(&board) {
+            return;
+        }
         if let Some(number) = self.begin_rows(&board, ask) {
             let (id, key) = (board.1.clone(), board.clone());
             let task = read_task(
@@ -1254,6 +1258,7 @@ impl Store {
         let at: FieldKey = (key.to_owned(), field.to_owned());
         let (issue_before, board) = (self.issues.get(key).cloned(), self.board.clone());
         let rows_before = board.as_ref().and_then(|b| self.rows.get(b).cloned());
+        let slices_before = board.as_ref().and_then(|b| self.slices.get(b).cloned());
         self.refused.remove(&at);
         self.saving.insert(at.clone());
         apply(self);
@@ -1268,8 +1273,18 @@ impl Store {
                     if let Some(before) = issue_before {
                         this.issues.insert(at.0.clone(), before);
                     }
-                    if let (Some(b), Some(before)) = (board, rows_before) {
+                    if let (Some(b), Some(before)) = (board.clone(), rows_before) {
                         this.rows.insert(b, before);
+                    }
+                    // Only the rows go back: what was read of the slices since stays.
+                    if let (Some(b), Some(before)) = (board, slices_before)
+                        && let Some(now) = this.slices.get_mut(&b)
+                    {
+                        for (slice, read) in now.reads.iter_mut() {
+                            if let Some(was) = before.reads.get(slice) {
+                                read.rows = was.rows.clone();
+                            }
+                        }
                     }
                     this.refused.insert(at.clone(), why.clone());
                 }
@@ -1291,6 +1306,12 @@ impl Store {
             if let Read::Done(rows) = read {
                 rows.iter_mut().filter(|r| r.key == key).for_each(&edit);
             }
+        }
+        for read in self.slices.values_mut().flat_map(|s| s.reads.values_mut()) {
+            read.rows
+                .iter_mut()
+                .filter(|r| r.key == key)
+                .for_each(&edit);
         }
         if let Some(Read::Done(issue)) = self.issues.get_mut(key) {
             edit(&mut issue.row);
@@ -1337,6 +1358,11 @@ impl Store {
         (self.rows.values())
             .filter_map(Read::done)
             .flat_map(|rows| rows.iter())
+            .chain(
+                (self.slices.values())
+                    .flat_map(|s| s.reads.values())
+                    .flat_map(|r| r.rows.iter()),
+            )
             .find(|r| r.key == key)
             .or_else(|| self.issue(key).map(|i| &i.row))
     }
@@ -1458,6 +1484,7 @@ impl Store {
     pub fn show_slice(&mut self, board: &BoardId, slice: SliceId, cx: &mut Context<Self>) {
         self.slices.entry(board.clone()).or_default().view = Some(slice.clone());
         self.read_slice(board, slice, How::Show, cx);
+        self.show_rows(board, cx);
         self.keep_slice(board);
         cx.notify();
     }
@@ -1491,6 +1518,89 @@ impl Store {
         if self.kept.remember_slice(board.clone(), kept) {
             self.kept.write();
         }
+    }
+
+    /// Whether slice `slice` of board `board` is shown: the one in view, or one of All's sprints.
+    fn shows(&self, board: &BoardId, slice: &SliceId) -> bool {
+        let Some(view) = self.slices.get(board).and_then(|s| s.view.as_ref()) else {
+            return false;
+        };
+        view == slice
+            || (*view == SliceId::All && matches!(slice, SliceId::Sprint(_)))
+                && (self.info.get(board).and_then(Read::done))
+                    .is_some_and(|i| slices::active(i).any(|s| *slice == SliceId::Sprint(s.id)))
+    }
+
+    /// The issues of `board`'s slice in view as the board's `rows`, what the page and its parts read: once some are
+    /// read, whatever reads on; until then on their way, or why not. Rows the Mac kept stay until the slice's land.
+    fn show_rows(&mut self, board: &BoardId, cx: &mut Context<Self>) {
+        let Some(slices) = self.slices.get(board) else {
+            return;
+        };
+        let Some(view) = slices.view.clone() else {
+            return;
+        };
+        let reads: Vec<&slices::SliceRead> = match &view {
+            SliceId::All => (self.info.get(board).and_then(Read::done))
+                .map(|i| {
+                    slices::active(i)
+                        .filter_map(|s| slices.reads.get(&SliceId::Sprint(s.id)))
+                        .collect()
+                })
+                .unwrap_or_default(),
+            slice => slices.reads.get(slice).into_iter().collect(),
+        };
+        let some = (reads.iter()).any(|r| !r.rows.is_empty() || r.state == Some(Read::Done(())));
+        let failed = (reads.iter()).find_map(|r| match &r.state {
+            Some(Read::Failed(why)) if r.rows.is_empty() => Some(why.clone()),
+            _ => None,
+        });
+        let at = reads.iter().filter_map(|r| r.at).max();
+        if some {
+            let rows = reads.iter().flat_map(|r| r.rows.iter().cloned()).collect();
+            self.rows.insert(board.clone(), Read::Done(rows));
+            self.stale.remove(board);
+            let whole = reads.iter().all(|r| r.state != Some(Read::Reading));
+            if let Some(at) = at.filter(|_| whole) {
+                self.read_at.insert(board.clone(), at);
+                self.from_disk.remove(board);
+                self.keep_board(board, cx);
+            }
+        } else if let Some(why) = failed.filter(|_| reads.iter().all(|r| r.rows.is_empty())) {
+            if self.from_disk.contains(board) {
+                self.stale.insert(board.clone(), why);
+            } else {
+                self.rows.insert(board.clone(), Read::Failed(why));
+            }
+        } else if !self.from_disk.contains(board) {
+            self.rows.insert(board.clone(), Read::Reading);
+        }
+    }
+
+    /// Board `board`'s slices the sprint picker counts: each active and future sprint, and the Backlog.
+    pub fn count_sprints(&mut self, board: &BoardId, cx: &mut Context<Self>) {
+        let Some(Read::Done(info)) = self.info.get(board) else {
+            return;
+        };
+        let mut counted: Vec<SliceId> = (info.sprints.iter())
+            .filter(|s| s.state != "closed")
+            .map(|s| SliceId::Sprint(s.id))
+            .collect();
+        if !info.sprintless {
+            counted.push(SliceId::Backlog);
+        }
+        for slice in counted {
+            self.read_count(board, slice, cx);
+        }
+    }
+
+    /// The slices of the board picked, when it is read by slice.
+    pub fn board_slices(&self) -> Option<&Slices> {
+        let board = self.board.as_ref()?;
+        if !self.by_slice(board) {
+            return None;
+        }
+        self.slices.get(board)
     }
 
     /// Slice `slice` of board `board` read as `how` asks, page after page while it reads on, each shown as it comes.
@@ -1554,11 +1664,8 @@ impl Store {
                 if let Some((number, next)) = this.put_slice(&k, number, read, now()) {
                     this.slice_step(site, k.clone(), number, next, cx);
                 }
-                if this
-                    .slices
-                    .get(&k.0)
-                    .is_some_and(|s| s.view.as_ref() == Some(&k.1))
-                {
+                if this.shows(&k.0, &k.1) {
+                    this.show_rows(&k.0, cx);
                     this.keep_slice(&k.0);
                 }
             },
@@ -1589,6 +1696,26 @@ impl Store {
                 None
             }
         }
+    }
+
+    /// Board `board`'s closed sprints, read once Past sprints is opened.
+    pub fn read_past(&mut self, board: &BoardId, cx: &mut Context<Self>) {
+        let Some(site) = self.site_of(&board.0) else {
+            return;
+        };
+        let slices = self.slices.entry(board.clone()).or_default();
+        if matches!(slices.past, Some(Read::Reading | Read::Done(_))) {
+            return;
+        }
+        slices.past = Some(Read::Reading);
+        let (id, board) = (board.1.clone(), board.clone());
+        spawn_read(
+            cx,
+            move || model::past_sprints(&site, &id),
+            move |this, read, _| {
+                this.slices.entry(board).or_default().past = Some(read_of(read));
+            },
+        );
     }
 
     /// Slice `slice` of board `board` counted, unless it is or is being.
@@ -1637,7 +1764,7 @@ impl Store {
     }
 }
 
-// TODO(#15): the page loads the Backlog's pages, filters it, opens Past sprints, says an epic's whole count and moves
+// TODO(#15): the page loads the Backlog's pages, filters it, says an epic's whole count and moves
 // issues in the work's next steps; until then nothing calls these.
 #[allow(dead_code)]
 impl Store {
@@ -1666,26 +1793,6 @@ impl Store {
             .ok();
         })
         .detach();
-    }
-
-    /// Board `board`'s closed sprints, read once Past sprints is opened.
-    pub fn read_past(&mut self, board: &BoardId, cx: &mut Context<Self>) {
-        let Some(site) = self.site_of(&board.0) else {
-            return;
-        };
-        let slices = self.slices.entry(board.clone()).or_default();
-        if matches!(slices.past, Some(Read::Reading | Read::Done(_))) {
-            return;
-        }
-        slices.past = Some(Read::Reading);
-        let (id, board) = (board.1.clone(), board.clone());
-        spawn_read(
-            cx,
-            move || model::past_sprints(&site, &id),
-            move |this, read, _| {
-                this.slices.entry(board).or_default().past = Some(read_of(read));
-            },
-        );
     }
 
     /// Epic `epic`'s issues in all, on board `board`'s site, read once.
