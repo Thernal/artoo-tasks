@@ -76,6 +76,8 @@ fn sprint(v: &Value) -> Option<Sprint> {
         name: text(&v["name"]),
         state: text(&v["state"]),
         end: v["endDate"].as_str().map(str::to_owned),
+        start: v["startDate"].as_str().map(str::to_owned),
+        goal: text(&v["goal"]),
     })
 }
 
@@ -252,6 +254,7 @@ fn board(site: &Site, b: &Value) -> Board {
         name: text(&b["name"]),
         site: site.key().to_owned(),
         project: b["location"]["projectKey"].as_str().map(str::to_owned),
+        kind: text(&b["type"]),
     }
 }
 
@@ -300,6 +303,7 @@ fn board_info(site: &Site, id: &str) -> Result<BoardInfo, String> {
         sprints_unread: sprints.is_none(),
         epics: epics.iter().flatten().filter_map(epic).collect(),
         sprints: sprints.iter().flatten().filter_map(sprint).collect(),
+        sprintless: false,
     })
 }
 
@@ -766,7 +770,7 @@ fn request(w: &Write, cloud: bool) -> (&'static str, String, Option<Value>) {
             );
             ("POST", path, Some(json!({ "issues": [key] })))
         }
-        Write::Sprint { key, sprint } => {
+        Write::Sprint { key, sprint, .. } => {
             let path = match sprint {
                 Some(id) => format!("/rest/agile/1.0/sprint/{id}/issue"),
                 None => "/rest/agile/1.0/backlog/issue".to_owned(),

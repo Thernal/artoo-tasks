@@ -132,7 +132,7 @@ mod tests {
                 id: id.into(),
                 name: format!("Board {id}"),
                 site: host.into(),
-                project: None,
+                ..Default::default()
             },
             info: BoardInfo::default(),
             rows: vec![Row {

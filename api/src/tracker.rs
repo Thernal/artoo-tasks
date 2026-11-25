@@ -1,7 +1,9 @@
 //! A tracker: the site it is on and how it signs in, its kind (what it is called, the hosts it is on, what it has),
 //! and what Tasks asks of it — the `Tracker` trait — and writes to it, each change an intent (`Write`).
 
-use crate::model::{Board, BoardInfo, Field, Issue, Kind, Move, News, Person, Row};
+use crate::model::{
+    Ask, Board, BoardInfo, Field, Issue, Kind, Move, News, Page, Person, Row, Sprint,
+};
 use artoo_plugin_sdk::serde::{Deserialize, Serialize};
 use artoo_plugin_sdk::serde_json::Value;
 use std::path::Path;
@@ -164,10 +166,13 @@ pub enum Write {
         key: String,
         epic: Option<String>,
     },
-    /// Issue `key` put in sprint `sprint`, or back in the backlog.
+    /// Issue `key` put in sprint `sprint`, or back in the backlog; ranked before issue `before` when one is named (the
+    /// Backlog's top). An older build ignores `before`.
     Sprint {
         key: String,
         sprint: Option<u64>,
+        #[serde(default)]
+        before: Option<String>,
     },
     /// A comment on issue `key`.
     Comment {
@@ -240,6 +245,7 @@ impl Write {
         Self::Sprint {
             key: key.into(),
             sprint,
+            before: None,
         }
     }
 
@@ -307,6 +313,15 @@ pub trait Tracker: Send + Sync {
     fn board_info(&self, board: &str) -> Result<BoardInfo, String>;
     /// Board `board`'s issues, the latest changed first.
     fn board_issues(&self, board: &str) -> Result<Vec<Row>, String>;
+    /// Board `board`'s slice `ask`: a page of its issues and how many it holds. By default, read out of
+    /// `board_issues` and filtered here, for a tracker whose board is one list.
+    fn slice(&self, board: &str, ask: &Ask) -> Result<Page, String> {
+        read_slice(self, board, ask)
+    }
+    /// Board `board`'s closed sprints, the last closed first; none by default.
+    fn past_sprints(&self, _board: &str) -> Result<Vec<Sprint>, String> {
+        Ok(Vec::new())
+    }
     /// Board `board`'s page on the tracker.
     fn board_url(&self, board: &str) -> String;
     /// Issue `key` whole; `<host> has no <key>` when it has none, so the next site is asked.
@@ -349,6 +364,12 @@ pub trait Tracker: Send + Sync {
     fn write(&self, w: &Write) -> Result<Value, String>;
 }
 
+/// Board `board`'s slice `ask`, read out of `t`'s `board_issues`: what `Tracker::slice` does by default.
+pub fn read_slice<T: Tracker + ?Sized>(t: &T, board: &str, ask: &Ask) -> Result<Page, String> {
+    let me = if ask.mine { Some(t.myself()?) } else { None };
+    Ok(Page::of(t.board_issues(board)?, ask, me.as_ref()))
+}
+
 /// A query's words, for a tracker with no query language: what is quoted in it (`text ~ "rounding"`, `key =
 /// "PAY-412"`), else the query before `ORDER BY`.
 pub fn words_of(query: &str) -> String {
@@ -365,6 +386,7 @@ pub fn words_of(query: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use artoo_plugin_sdk::serde_json::json;
 
     #[test]
     fn a_kind_claims_its_hosts_and_those_under_a_star() {
@@ -385,6 +407,20 @@ mod tests {
         );
         assert_eq!(words_of("refund ORDER BY updated"), "refund");
         assert_eq!(words_of("key = \"kZ3fG9aB\""), "kZ3fG9aB");
+    }
+
+    #[test]
+    fn a_sprint_write_reads_without_its_place() {
+        let older = json!({ "Sprint": { "key": "PAY-412", "sprint": 35 } });
+        let w: Write = artoo_plugin_sdk::serde_json::from_value(older).unwrap();
+        assert_eq!(w, Write::in_sprint("PAY-412", Some(35)));
+        let top = Write::Sprint {
+            key: "PAY-412".into(),
+            sprint: None,
+            before: Some("PAY-300".into()),
+        };
+        let sent = artoo_plugin_sdk::serde_json::to_value(&top).unwrap();
+        assert_eq!(sent["Sprint"]["before"], "PAY-300");
     }
 
     #[test]

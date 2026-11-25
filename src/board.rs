@@ -113,15 +113,7 @@ fn picked(r: &Row, faces: &[String]) -> bool {
 
 /// Whether row `r` matches the filter's words.
 pub fn matches(r: &Row, words: &str) -> bool {
-    words.split_whitespace().all(|w| {
-        let w = w.to_lowercase();
-        if let Some(label) = w.strip_prefix("label:") {
-            return r.labels.iter().any(|l| l.to_lowercase() == label);
-        }
-        r.key.to_lowercase().contains(&w)
-            || r.summary.to_lowercase().contains(&w)
-            || r.labels.iter().any(|l| l.to_lowercase().contains(&w))
-    })
+    r.matches(words)
 }
 
 /// The board's issues in play: those of the sprint going on when it has one, no epics among them.
@@ -1986,7 +1978,7 @@ mod tests {
                 id: 34,
                 name: "Sprint 34".into(),
                 state: "active".into(),
-                end: None,
+                ..Default::default()
             }),
             ..Default::default()
         }
@@ -2018,7 +2010,7 @@ mod tests {
                 id: 34,
                 name: "Sprint 34".into(),
                 state: "active".into(),
-                end: None,
+                ..Default::default()
             }],
             ..Default::default()
         }
@@ -2158,7 +2150,7 @@ mod tests {
             id: 35,
             name: "Sprint 35".into(),
             state: "future".into(),
-            end: None,
+            ..Default::default()
         });
         let rows = vec![row("PAY-1", "todo", "new", None), later];
         assert_eq!(in_play(&rows, Some(&info())).len(), 1);

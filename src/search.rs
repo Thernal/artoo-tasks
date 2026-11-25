@@ -310,6 +310,7 @@ mod tests {
             name: name.into(),
             site: "acme.atlassian.net".into(),
             project: Some(project.into()),
+            ..Default::default()
         };
         let boards = [board("7", "Payments", "PAY"), board("9", "Ledger", "LED")];
         let nowhere = |_: &Board| Opens::Run(Rc::new(|_: &mut App| {}));

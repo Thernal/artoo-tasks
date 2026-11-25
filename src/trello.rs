@@ -148,6 +148,7 @@ fn boards(site: &Site) -> Result<Vec<Board>, String> {
             name: text(&b["name"]),
             site: site.key().to_owned(),
             project: Some(text(&b["shortLink"])),
+            kind: String::new(),
         })
         .collect())
 }

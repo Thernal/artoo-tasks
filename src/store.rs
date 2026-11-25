@@ -1343,7 +1343,7 @@ mod tests {
             id: id.into(),
             name: format!("Board {id}"),
             site: "acme.atlassian.net".into(),
-            project: None,
+            ..Default::default()
         }
     }
 

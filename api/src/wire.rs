@@ -6,8 +6,8 @@
 //! arguments as JSON in, its answer as JSON out — which this crate turns back into the `Tracker` on each side. A
 //! plugin built against an older contract still answers: what it does not send is left at its default.
 
-use crate::model::Person;
-use crate::tracker::{Site, Tracker, TrackerKind, Write};
+use crate::model::{Ask, Person};
+use crate::tracker::{Site, Tracker, TrackerKind, Write, read_slice};
 use artoo_plugin_sdk::gpui::App;
 use artoo_plugin_sdk::serde::Serialize;
 use artoo_plugin_sdk::serde::de::DeserializeOwned;
@@ -84,6 +84,12 @@ pub fn wire(
             "boards" => answer(t.boards()),
             "board_info" => answer(t.board_info(&text("board"))),
             "board_issues" => answer(t.board_issues(&text("board"))),
+            "slice" => {
+                let a: Ask =
+                    serde_json::from_value(ask["ask"].clone()).map_err(|e| e.to_string())?;
+                answer(t.slice(&text("board"), &a))
+            }
+            "past_sprints" => answer(t.past_sprints(&text("board"))),
             "board_url" => Ok(json!(t.board_url(&text("board")))),
             "issue" => answer(t.issue(&text("key"))),
             "find" => answer(t.find(&text("words"), max)),
@@ -131,6 +137,11 @@ impl Remote {
     fn host(&self) -> String {
         self.site.key().to_owned()
     }
+
+    /// Whether `why` is the other side's build not knowing `method`: one built before the method was.
+    fn unknown(&self, why: &str, method: &str) -> bool {
+        why.ends_with(&format!(" does not know {method}"))
+    }
 }
 
 impl Tracker for Remote {
@@ -152,6 +163,20 @@ impl Tracker for Remote {
 
     fn board_issues(&self, board: &str) -> Result<Vec<crate::Row>, String> {
         self.ask("board_issues", json!({ "board": board }))
+    }
+
+    fn slice(&self, board: &str, ask: &Ask) -> Result<crate::Page, String> {
+        match self.ask("slice", json!({ "board": board, "ask": ask })) {
+            Err(why) if self.unknown(&why, "slice") => read_slice(self, board, ask),
+            read => read,
+        }
+    }
+
+    fn past_sprints(&self, board: &str) -> Result<Vec<crate::Sprint>, String> {
+        match self.ask("past_sprints", json!({ "board": board })) {
+            Err(why) if self.unknown(&why, "past_sprints") => Ok(Vec::new()),
+            read => read,
+        }
     }
 
     fn board_url(&self, board: &str) -> String {
@@ -365,6 +390,64 @@ mod tests {
         assert_eq!(
             remote.write(&Write::in_sprint("D-1", Some(3))),
             Err("Desk failed on write".into())
+        );
+    }
+
+    #[test]
+    fn a_slice_is_read_across_or_out_of_the_board_when_the_other_side_is_older() {
+        let kind = TrackerKind {
+            id: "desk".into(),
+            name: "Desk".into(),
+            ..Default::default()
+        };
+        let open = |site: Site| -> Box<dyn Tracker> {
+            Box::new(Fake {
+                site,
+                written: Arc::default(),
+            })
+        };
+        let (_, call) = wire(kind, open);
+        // A build from before slices: it does not know the calls, as its wire says of any it does not know.
+        let older: Call = Arc::new(move |method: &str, ask: Value| match method {
+            "slice" | "past_sprints" => Err(format!("Desk does not know {method}")),
+            _ => call(method, ask),
+        });
+        let site = Site {
+            url: "https://desk.example.org".into(),
+            ..Default::default()
+        };
+        let (_, call) = wire(
+            TrackerKind {
+                name: "Desk".into(),
+                ..Default::default()
+            },
+            open,
+        );
+        for call in [call, older] {
+            let remote = Remote {
+                name: "Desk".into(),
+                call,
+                site: site.clone(),
+            };
+            let ask = crate::Ask {
+                max: 50,
+                ..crate::Ask::backlog()
+            };
+            let page = remote.slice("1", &ask).unwrap();
+            assert_eq!((page.rows[0].key.as_str(), page.total), ("D-1", 1));
+            assert_eq!(remote.past_sprints("1"), Ok(Vec::new()));
+        }
+        // Another refusal is the other side's answer, not an older build.
+        let refusing: Call =
+            Arc::new(|_: &str, _: Value| Err("desk.example.org refused the token".into()));
+        let remote = Remote {
+            name: "Desk".into(),
+            call: refusing,
+            site,
+        };
+        assert_eq!(
+            remote.slice("1", &crate::Ask::backlog()),
+            Err("desk.example.org refused the token".into())
         );
     }
 
