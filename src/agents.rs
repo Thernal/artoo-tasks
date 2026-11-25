@@ -3,11 +3,13 @@
 //! the developer, and reaches the tracker only when they send it.
 
 use crate::{jira, model, store};
+use artoo_plugin_sdk::agents::comment::{Comment, State};
 use artoo_plugin_sdk::agents::places::{self, Kind};
 use artoo_plugin_sdk::core::route::Route;
 use artoo_plugin_sdk::gpui::{App, AppContext, Task};
 use artoo_plugin_sdk::serde_json::{self, Value, json};
 use artoo_plugin_sdk::tools::{self, Tool};
+use std::collections::HashSet;
 use std::rc::Rc;
 
 /// The page of an issue: `tasks.issue`, its key and the host of its site when known.
@@ -34,6 +36,22 @@ pub fn site_of(route: &Route) -> Option<String> {
 pub fn key_of(route: &Route) -> Option<String> {
     let v: Value = serde_json::from_str(&route.args).ok()?;
     v["key"].as_str().map(str::to_owned)
+}
+
+/// The issue pages that hold a note for the agent not sent yet: each under its site and without one, since the
+/// menu's row may have been opened either way.
+pub fn noted(comments: &[Comment]) -> HashSet<Route> {
+    (comments.iter())
+        .filter(|c| c.state == State::Draft)
+        .filter_map(|c| c.on.as_ref().filter(|on| on.kind == "jira.issue"))
+        .flat_map(|on| {
+            let v: Value = serde_json::from_str(&on.data).unwrap_or_default();
+            let site = v["site"].as_str();
+            v["key"].as_str().map_or_else(Vec::new, |key| {
+                vec![issue_route(key, site), issue_route(key, None)]
+            })
+        })
+        .collect()
 }
 
 /// The sites a tool reads: the one of host `site` when it names one, else every site.
@@ -393,6 +411,39 @@ pub fn add_places(cx: &mut App) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn an_issue_wears_the_notes_dot_while_a_note_on_it_is_not_sent() {
+        let note = |kind: &str, data: String, state| {
+            let on = artoo_plugin_sdk::agents::comment::On {
+                kind: kind.into(),
+                data,
+                reads: String::new(),
+                digest: String::new(),
+                tool: None,
+            };
+            let mut c = places::note(on, "Round it up".into());
+            c.state = state;
+            c
+        };
+        let para = |key| paragraph_place(key, "jira.example.com", 2);
+        let board = board_place(
+            &("jira.example.com".into(), "7".into()),
+            "Payments",
+            true,
+            None,
+        );
+        let held = noted(&[
+            note("jira.issue", para("PAY-412"), State::Draft),
+            note("jira.issue", para("PAY-398"), State::Sent),
+            note("jira.board", board, State::Draft),
+        ]);
+        let of = |site| issue_route("PAY-412", site);
+        assert_eq!(
+            held,
+            HashSet::from([of(Some("jira.example.com")), of(None)])
+        );
+    }
 
     #[test]
     fn a_board_note_reads_as_the_board_is_filtered() {

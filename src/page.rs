@@ -10,6 +10,7 @@ use crate::lines::Lines;
 use crate::model::BoardId;
 use crate::store::{Ask, Read, Store};
 use artoo_plugin_sdk::agents::places;
+use artoo_plugin_sdk::agents::tab::Agents;
 use artoo_plugin_sdk::core::markdown::Helper;
 use artoo_plugin_sdk::core::route::Route;
 use artoo_plugin_sdk::core::textedit::TextEdit;
@@ -19,7 +20,8 @@ use artoo_plugin_sdk::gpui::{
 };
 use artoo_plugin_sdk::kit::composer::{Compose, ComposeAct, Look, Short, Target, Typed as Written};
 use artoo_plugin_sdk::kit::{controls, icons, markdown, motion, px, room, theme};
-use artoo_plugin_sdk::shell::{Frame, MenuItem, Typed};
+use artoo_plugin_sdk::shell::{Frame, MenuItem, Typed, spaces};
+use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use std::rc::Rc;
 use std::time::Duration;
@@ -245,6 +247,22 @@ pub struct Page {
     pub selected: Vec<String>,
     /// Whether the tab's window is in front: what is on screen is read again each minute only while it is.
     pub front: bool,
+    /// Whether this tab's agents tell the page of their notes (`watch_notes`).
+    notes_watched: bool,
+    /// The issue pages this tab said hold a note not sent: the menu's rows that wear the note's dot.
+    noted: Rc<RefCell<HashSet<Route>>>,
+}
+
+/// The menu told of the issues whose notes began or stopped waiting since it was last told.
+fn say_noted(agents: &dyn Agents, said: &RefCell<HashSet<Route>>, cx: &mut App) {
+    let now = places_of::noted(agents.comments(cx));
+    let before = said.replace(now.clone());
+    for route in now.difference(&before) {
+        spaces::set_note(cx, route.clone(), true);
+    }
+    for route in before.difference(&now) {
+        spaces::set_note(cx, route.clone(), false);
+    }
 }
 
 impl Page {
@@ -258,6 +276,11 @@ impl Page {
         // comes there (`Page::window_front`): someone else's change shows (`Store::note_change`).
         let page = cx.weak_entity();
         store.update(cx, |s, _| s.watch_page(page));
+        // Once the tab is made, so its agents are there before the space is first drawn.
+        let page = cx.weak_entity();
+        cx.defer(move |cx| {
+            page.update(cx, |p, cx| p.watch_notes(cx)).ok();
+        });
         Self {
             store,
             frame,
@@ -297,7 +320,32 @@ impl Page {
             undo_sprint: None,
             selected: Vec::new(),
             front: true,
+            notes_watched: false,
+            noted: Rc::default(),
         }
+    }
+
+    /// Tells the menu which issues hold a note not sent, now and as this tab's agents change theirs; nothing until
+    /// the tab has its agents.
+    fn watch_notes(&mut self, cx: &mut Context<Self>) {
+        if self.notes_watched {
+            return;
+        }
+        let Some(agents) = self.frame.services().get::<Rc<dyn Agents>>() else {
+            return;
+        };
+        self.notes_watched = true;
+        say_noted(&*agents, &self.noted, cx);
+        // Held weakly: the agents keep what they tell.
+        let (weak, noted) = (Rc::downgrade(&agents), self.noted.clone());
+        agents.on_comments(
+            Rc::new(move |cx| {
+                if let Some(agents) = weak.upgrade() {
+                    say_noted(&*agents, &noted, cx);
+                }
+            }),
+            cx,
+        );
     }
 
     /// The project this tab's space is of, as last drawn.
@@ -821,10 +869,7 @@ impl Page {
 
     /// `body` added to the tab's drafts for the agent, on the place of `kind` `data`; the Agents window shown.
     pub fn send_to_agent(&mut self, kind: &str, data: &str, body: String, cx: &mut Context<Self>) {
-        let agents = self
-            .frame
-            .services()
-            .get::<Rc<dyn artoo_plugin_sdk::agents::tab::Agents>>();
+        let agents = self.frame.services().get::<Rc<dyn Agents>>();
         match (places::on(cx, kind, data), agents) {
             (Some(on), Some(agents)) => {
                 agents.add_comment(places::note(on, body), cx);
@@ -1119,6 +1164,7 @@ impl Render for Page {
             let store = self.store.clone();
             cx.defer(move |cx| store.update(cx, |s, cx| s.show_project(&project, cx)));
         }
+        self.watch_notes(cx);
         let page = match self.issue_key() {
             Some(key) => self.issue_page(key, cx),
             None => self.own_page(cx),
