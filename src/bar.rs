@@ -107,7 +107,7 @@ pub fn bar(page: &Entity<Page>, route: Option<&Route>, cx: &mut App) -> Option<B
     let board = board?;
     let me = s.me.get(&board.site).cloned();
     // A board read by slice: the slice's counts as the tracker counts them, else its issues as read.
-    let (mine_counted, all_counted) = (s.board_slices())
+    let (all_counted, mine_counted) = (s.board_slices())
         .and_then(|sl| Some(sl.counts(sl.view.as_ref()?, s.board_info()?)))
         .unwrap_or_default();
     let (mine_n, all_n) = match s.board_rows() {
