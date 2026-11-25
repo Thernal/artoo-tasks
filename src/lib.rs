@@ -44,7 +44,8 @@ use artoo_plugin_sdk::shell::{
     Typed, add_action, add_parts, when,
 };
 use artoo_plugin_sdk::{self as sdk, Meta};
-use page::Page;
+use page::{Anchor, Page};
+use slices::SliceId;
 use std::rc::Rc;
 
 gpui::actions!(
@@ -518,6 +519,70 @@ fn install(cx: &mut App) {
                     });
                     wait().await;
                     view.update(cx, |p, cx| p.drop_card(&key, ix, cx));
+                })
+                .detach();
+            }
+            // `tasks:board=<host>/<id>&…` that board picked, then, once read, as the parts after it say: `past` (its
+            // past sprints read), `slice=<kept slice>` (`sprint:36`, `backlog`, `all`), `mine`, `columns`,
+            // `group=epic`, `pick` (the sprint picker open), `move=<key>` (its Move to open on its row),
+            // `select=<key>+<key>` (checked, the bar's Move to open), `moved=<key>>slice` (moved there, its toast
+            // shown). Each step waits 1.5 s for the reads before it: the window is saved later than that only with
+            // `ARTOO_SNAPSHOT_MOTION=5000`.
+            if let Some(rest) = arg.strip_prefix("board=") {
+                let mut parts = rest.split('&');
+                let board = parts.next().unwrap_or_default();
+                let (host, id) = board
+                    .split_once('/')
+                    .unwrap_or(("acme.atlassian.net", board));
+                let id: crate::model::BoardId = (host.to_owned(), id.to_owned());
+                let parts: Vec<String> = parts.map(str::to_owned).collect();
+                let view = snap_view.clone();
+                snap_view.update(cx, |p, cx| {
+                    p.store.update(cx, |s, cx| s.pick_board(id, cx));
+                });
+                cx.spawn(async move |cx| {
+                    let wait = cx.background_executor().clone();
+                    let wait = move || wait.timer(std::time::Duration::from_millis(1500));
+                    wait().await;
+                    for part in &parts {
+                        if part == "past" {
+                            view.update(cx, |p, cx| {
+                                p.store.update(cx, |s, cx| {
+                                    if let Some(board) = s.board.clone() {
+                                        s.read_past(&board, cx);
+                                    }
+                                })
+                            });
+                            wait().await;
+                        }
+                        if let Some(slice) = part.strip_prefix("slice=").and_then(SliceId::parse) {
+                            view.update(cx, |p, cx| p.show_slice(slice, cx));
+                            wait().await;
+                        }
+                    }
+                    view.update(cx, |p, cx| {
+                        for part in &parts {
+                            match part.split_once('=').unwrap_or((part, "")) {
+                                ("mine", _) => p.set_mine(true, cx),
+                                ("columns", _) => p.set_columns(true, cx),
+                                ("group", "epic") => p.set_group(crate::keep::Group::Epic, cx),
+                                ("pick", _) => p.open_sprints(cx),
+                                ("move", key) => p.open_move_to(Anchor::Row(key.into()), key, cx),
+                                ("select", keys) => {
+                                    p.selected = keys.split('+').map(str::to_owned).collect();
+                                    p.open_selection_move(cx);
+                                }
+                                ("moved", m) => {
+                                    if let Some((key, to)) = m.split_once('>')
+                                        && let Some(to) = SliceId::parse(to)
+                                    {
+                                        p.move_issues(vec![key.to_owned()], to, false, cx);
+                                    }
+                                }
+                                _ => {}
+                            }
+                        }
+                    });
                 })
                 .detach();
             }
