@@ -2971,6 +2971,29 @@ impl Page {
         let reporter = issue.reporter.clone();
         let me_rep = s.is_me(&issue.site, reporter.as_ref());
         let ordered = detail_fields(&screen, !issue.row.labels.is_empty());
+        let reporter_place = reporter_at(&ordered);
+        let mut reporter_row = reporter.as_ref().map(|rep| {
+            div()
+                .flex()
+                .items_center()
+                .gap(px(10.))
+                .child(
+                    div()
+                        .w(px(84.))
+                        .flex_none()
+                        .text_color(theme::faint())
+                        .child("Reporter"),
+                )
+                .child(
+                    div()
+                        .flex()
+                        .items_center()
+                        .gap(px(6.))
+                        .child(look::face(&rep.name, me_rep, 16.))
+                        .child(rep.name.clone()),
+                )
+                .into_any_element()
+        });
         let key = issue.row.key.clone();
         let mut dl = div()
             .flex()
@@ -2978,7 +3001,10 @@ impl Page {
             .gap(px(10.))
             .p(px(14.))
             .text_size(px(12.));
-        for f in ordered {
+        for (ix, f) in ordered.into_iter().enumerate() {
+            if ix == reporter_place {
+                dl = dl.children(reporter_row.take());
+            }
             let anchor = Anchor::Detail(f.id.clone());
             let open = self.pop_at(&anchor, PopKind::Field(f.id.clone()));
             let value: AnyElement = if f.id == "labels" {
@@ -3046,29 +3072,7 @@ impl Page {
                     ),
             );
         }
-        if let Some(rep) = &reporter {
-            dl = dl.child(
-                div()
-                    .flex()
-                    .items_center()
-                    .gap(px(10.))
-                    .child(
-                        div()
-                            .w(px(84.))
-                            .flex_none()
-                            .text_color(theme::faint())
-                            .child("Reporter"),
-                    )
-                    .child(
-                        div()
-                            .flex()
-                            .items_center()
-                            .gap(px(6.))
-                            .child(look::face(&rep.name, me_rep, 16.))
-                            .child(rep.name.clone()),
-                    ),
-            );
-        }
+        dl = dl.children(reporter_row.take());
         let when = div()
             .flex()
             .flex_col()
@@ -3432,6 +3436,22 @@ enum Piece {
     Picture(Attachment),
 }
 
+/// The Details rows the design names, in its order: Labels, Due, Components, Story points, Fix version.
+const DESIGNED: [&str; 5] = [
+    "labels",
+    "duedate",
+    "components",
+    "customfield_10016",
+    "fixVersions",
+];
+
+/// Where Reporter stands among Details' rows: after the design's, before the rest of the edit screen.
+fn reporter_at(rows: &[Field]) -> usize {
+    (rows.iter())
+        .take_while(|f| DESIGNED.contains(&f.id.as_str()))
+        .count()
+}
+
 /// Details' rows of an edit screen, in the design's order and then the screen's: a field the page shows elsewhere
 /// is left out, a text of many lines among them. Labels are shown while the screen is not read, if the issue has some.
 fn detail_fields(screen: &[Field], labels: bool) -> Vec<Field> {
@@ -3453,13 +3473,7 @@ fn detail_fields(screen: &[Field], labels: bool) -> Vec<Field> {
         "epic",
     ];
     let mut ordered: Vec<Field> = Vec::new();
-    for want in [
-        "labels",
-        "duedate",
-        "components",
-        "customfield_10016",
-        "fixVersions",
-    ] {
+    for want in DESIGNED {
         if let Some(f) = screen.iter().find(|f| f.id == want) {
             ordered.push(f.clone());
         }
@@ -3891,5 +3905,39 @@ mod attached_tests {
                 "h3. Given\n* a refund:\n** of {{0.01}}".to_owned()
             )]
         );
+    }
+
+    #[test]
+    fn reporter_follows_the_designs_rows_before_the_rest_of_the_screen() {
+        let f = |id: &str| Field {
+            id: id.into(),
+            name: id.into(),
+            ..Default::default()
+        };
+        let screen = [
+            f("customfield_10060"),
+            f("fixVersions"),
+            f("environment_team"),
+            f("labels"),
+            f("duedate"),
+        ];
+        let rows = super::detail_fields(&screen, false);
+        let ids: Vec<&str> = rows.iter().map(|f| f.id.as_str()).collect();
+        assert_eq!(
+            ids,
+            [
+                "labels",
+                "duedate",
+                "fixVersions",
+                "customfield_10060",
+                "environment_team"
+            ]
+        );
+        assert_eq!(super::reporter_at(&rows), 3);
+        assert_eq!(
+            super::reporter_at(&super::detail_fields(&[f("customfield_10060")], false)),
+            0
+        );
+        assert_eq!(super::reporter_at(&[]), 0);
     }
 }
