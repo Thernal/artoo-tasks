@@ -687,7 +687,12 @@ impl Page {
         } else {
             self.pop_card(cx)
         };
-        Some(anchored_under(card))
+        // The selection bar sits at the list's foot: its menu opens above it, its right edge on the button's.
+        Some(if *anchor == Anchor::Selection {
+            anchored_over(card)
+        } else {
+            anchored_under(card)
+        })
     }
 
     /// The tracker's refusal of a move, under the chip: its reason, the issue in the way opened from it.
@@ -1885,6 +1890,26 @@ pub fn anchored_under(card: AnyElement) -> AnyElement {
             gpui::deferred(
                 gpui::anchored()
                     .offset(gpui::point(px(0.), px(6.)))
+                    .snap_to_window_with_margin(px(8.))
+                    .child(card),
+            )
+            .with_priority(2),
+        )
+        .into_any_element()
+}
+
+/// `card` above the element it is drawn in, their right edges together, kept inside the window.
+pub fn anchored_over(card: AnyElement) -> AnyElement {
+    div()
+        .absolute()
+        .right_0()
+        .top_0()
+        .size_0()
+        .child(
+            gpui::deferred(
+                gpui::anchored()
+                    .anchor(gpui::Anchor::BottomRight)
+                    .offset(gpui::point(px(0.), px(-6.)))
                     .snap_to_window_with_margin(px(8.))
                     .child(card),
             )
