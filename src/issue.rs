@@ -385,7 +385,7 @@ impl Page {
             .unwrap_or(Caps::ALL);
         let key = r.key.clone();
         let title_editing = self.issue.title.is_some();
-        let typing = self.frame.typing(cx) == Some(INPUT_TITLE);
+        let typing = self.typing == Some(INPUT_TITLE);
         let title: AnyElement = match &self.issue.title {
             Some((text, edit)) => {
                 let shown = text.clone();
@@ -1363,7 +1363,7 @@ impl Page {
     /// The empty row: typed into at once (N puts the caret there); ↵ creates and keeps the caret for the next, ⇧↵
     /// opens New task with the parent, esc lets it go.
     fn new_sub_row(&mut self, issue: &Issue, cx: &mut Context<Self>) -> AnyElement {
-        let typing = self.frame.typing(cx) == Some(INPUT_SUB);
+        let typing = self.typing == Some(INPUT_SUB);
         let shown = self.issue.sub.clone();
         let project = issue.row.project.clone();
         if !typing && shown.is_empty() {
@@ -1713,7 +1713,7 @@ impl Page {
         let Some(link) = self.issue.link.as_ref() else {
             return div().into_any_element();
         };
-        let typing = self.frame.typing(cx) == Some(crate::page::INPUT_POP);
+        let typing = self.typing == Some(crate::page::INPUT_POP);
         let shown = link.words.clone();
         let field = input::field(
             &shown,

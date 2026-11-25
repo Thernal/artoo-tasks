@@ -782,7 +782,7 @@ impl Page {
         };
         let body = self.pop_body(pop, cx);
         let at = pop.at.min(body.rows.len().saturating_sub(1));
-        let typing = self.frame.typing(cx) == Some(INPUT_POP);
+        let typing = self.typing == Some(INPUT_POP);
         let mut card = div()
             .id("tasks-pop")
             .w(px(match pop.kind {

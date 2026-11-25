@@ -22,7 +22,7 @@ const BOARDS: &str = "side-boards";
 pub fn side(page: &Entity<Page>, width: f32, cx: &mut App) -> Option<AnyElement> {
     let p = page.read(cx);
     let project = p.project().to_owned();
-    let filter = filter_field(p, p.boards_typing);
+    let filter = filter_field(p, p.typing == Some(INPUT_BOARDS));
     let typed = p.boards_filter.clone();
     let (store, frame, drafts_on) = (
         p.store.clone(),

@@ -194,9 +194,9 @@ pub struct Page {
     /// What the side panel's filter of the boards has typed in it (⌘P).
     pub boards_filter: String,
     pub boards_filter_edit: TextEdit,
-    /// Whether the boards' filter has the keyboard, as the page last drew it: the side panel, drawn by the tab, may
-    /// not read the tab to ask.
-    pub boards_typing: bool,
+    /// The input that has the keyboard, as the page last drew it: what the tab draws of the page (the side panel,
+    /// the bar's faces and their popover) runs inside the tab's update, so it may not ask the tab (`Frame::typing`).
+    pub typing: Option<&'static str>,
     /// Where the side panel's boards are scrolled to: back at the top for the filter (⌘P).
     pub boards_scroll: ScrollHandle,
     /// The kind whose form the connect card had open when last drawn: its folds move when it changes.
@@ -265,7 +265,7 @@ impl Page {
             boards_folded: false,
             boards_filter: String::new(),
             boards_filter_edit: TextEdit::new(String::new()),
-            boards_typing: false,
+            typing: None,
             boards_scroll: ScrollHandle::new(),
             connect_open: None,
             motion: motion::Marks::default(),
@@ -1078,9 +1078,9 @@ impl Render for Page {
             let frame = self.frame.clone();
             cx.defer(move |cx| frame.redraw(cx));
         }
-        let typing = self.frame.typing(cx) == Some(INPUT_BOARDS);
-        if typing != self.boards_typing {
-            self.boards_typing = typing;
+        let typing = self.frame.typing(cx);
+        if typing != self.typing {
+            self.typing = typing;
             let frame = self.frame.clone();
             cx.defer(move |cx| frame.redraw(cx));
         }
@@ -1118,5 +1118,31 @@ mod tests {
             "PAY-412-refund-rounds-down-on-partial-captures"
         );
         assert!(branch_name("PAY-1", &"word ".repeat(40)).len() <= 60);
+    }
+
+    /// #1: Artoo draws the bar's faces and their popover, and the side panel, inside its own update; a page method that
+    /// asks the tab which input has the keyboard there updates it again, and Artoo stops. The page asks once, in its
+    /// own render, and everything else reads that answer.
+    #[test]
+    fn only_the_pages_own_render_asks_the_tab_which_input_types() {
+        let sources = [
+            ("page.rs", include_str!("page.rs")),
+            ("bar.rs", include_str!("bar.rs")),
+            ("side.rs", include_str!("side.rs")),
+            ("board.rs", include_str!("board.rs")),
+            ("pop.rs", include_str!("pop.rs")),
+            ("issue.rs", include_str!("issue.rs")),
+            ("sheet.rs", include_str!("sheet.rs")),
+            ("slices.rs", include_str!("slices.rs")),
+        ];
+        let asked = concat!("frame.", "typing(");
+        for (name, text) in sources {
+            let n = text.matches(asked).count();
+            assert_eq!(
+                n,
+                usize::from(name == "page.rs"),
+                "{name} asks the tab {n} times"
+            );
+        }
     }
 }
