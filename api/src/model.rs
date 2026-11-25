@@ -226,6 +226,9 @@ pub struct Field {
     pub kind: String,
     /// An array's items' type: `string` (labels), `component`, `version`, `option`, `json` (sprint).
     pub items: String,
+    /// The schema's custom type, `com.atlassian.jira.plugin.system.customfieldtypes:textarea`; empty for Jira's own
+    /// fields.
+    pub custom: String,
     /// The values it takes, `(id, name)`; empty when any.
     pub values: Vec<(String, String)>,
     /// The value the screen fills in when none is picked, `(id, name)`: a priority's `Medium`.
@@ -236,6 +239,11 @@ impl Field {
     /// Many values (labels, components, fix versions) or one.
     pub fn many(&self) -> bool {
         self.kind == "array"
+    }
+
+    /// A text of many lines, wiki markup as the description is: acceptance criteria, an environment.
+    pub fn long(&self) -> bool {
+        self.id == "environment" || self.custom.ends_with(":textarea")
     }
 }
 

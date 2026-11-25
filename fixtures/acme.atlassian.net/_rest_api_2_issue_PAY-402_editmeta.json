@@ -169,6 +169,18 @@
    "operations": [
     "set"
    ]
+  },
+  "customfield_10050": {
+   "required": false,
+   "name": "Acceptance criteria",
+   "schema": {
+    "type": "string",
+    "custom": "com.atlassian.jira.plugin.system.customfieldtypes:textarea",
+    "customId": 10050
+   },
+   "operations": [
+    "set"
+   ]
   }
  }
 }

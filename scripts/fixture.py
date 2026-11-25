@@ -166,6 +166,15 @@ def attachments_of(key):
                     'thumbnail': SITE + '/rest/api/2/attachment/thumbnail/' + aid if mime.startswith('image/') else None})
     return out
 
+PAY_412_CRITERIA = """h3. Refund
+* A partial refund of a captured payment:
+** keeps every cent: {{10.05 - 3.33}} leaves {{6.72}}
+** shows the amount left on the payment's page
+* A refund larger than what is left is refused, with the amount left in the message
+
+h3. Ledger
+* One ledger line per refund, never two"""
+
 def fields_of(key, whole):
     k, summary, kind, pri, who, state, labels, desc, parent, ncomments = BY[key]
     f = {'summary': summary, 'issuetype': TYPES[kind], 'status': STATES[state], 'priority': priority(pri),
@@ -189,6 +198,8 @@ def fields_of(key, whole):
                        'fields': {'summary': e['name'], 'status': STATES['prog'], 'issuetype': TYPES['epic']}}
     if whole:
         f['description'] = PAY_412 if k == 'PAY-412' else (desc or '')
+        if k == 'PAY-412':
+            f['customfield_10050'] = PAY_412_CRITERIA
         f['attachment'] = attachments_of(k)
     return f
 
@@ -375,6 +386,7 @@ def jira(folder):
                         'allowedValues': [{'id': '10200', 'name': '2.5', 'released': False}, {'id': '10201', 'name': '2.6', 'released': False}]},
         'customfield_10020': {'required': False, 'name': 'Sprint', 'schema': {'type': 'array', 'items': 'json', 'custom': 'com.pyxis.greenhopper.jira:gh-sprint', 'customId': 10020}, 'operations': ['set']},
         'assignee': {'required': False, 'name': 'Assignee', 'schema': {'type': 'user', 'system': 'assignee'}, 'operations': ['set']},
+        'customfield_10050': {'required': False, 'name': 'Acceptance criteria', 'schema': {'type': 'string', 'custom': 'com.atlassian.jira.plugin.system.customfieldtypes:textarea', 'customId': 10050}, 'operations': ['set']},
     }}
     for k in [k for k, *_ in ISSUES] + ['PAY-427']:
         write(folder, '/rest/api/2/issue/%s/editmeta' % k, edit)

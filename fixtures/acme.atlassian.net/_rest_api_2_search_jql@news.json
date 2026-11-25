@@ -358,6 +358,7 @@
      }
     },
     "description": "A partial capture refunds less than it should: {{RefundCalculator}} rounds each part down before summing, so a three-way split of 10.00 refunds 9.99.\n\nSteps: capture 10.00 in three parts (3.34, 3.33, 3.33), then refund the whole capture.\n\nExpected 10.00 back. Today: 9.99, and the ledger books a 0.01 remainder on the merchant.\n\n!rounding-split.png|thumbnail!\n\nDone when the refund equals what was captured for any split, rounding is half-even and once, on the total, currencies with 0 and 3 minor units have tests, and the merchant report shows the corrected amount.",
+    "customfield_10050": "h3. Refund\n* A partial refund of a captured payment:\n** keeps every cent: {{10.05 - 3.33}} leaves {{6.72}}\n** shows the amount left on the payment's page\n* A refund larger than what is left is refused, with the amount left in the message\n\nh3. Ledger\n* One ledger line per refund, never two",
     "attachment": [
      {
       "id": "54120",

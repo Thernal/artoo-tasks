@@ -263,6 +263,7 @@ impl Page {
             .flex_col()
             .gap(px(16.))
             .child(self.description(&issue, cx))
+            .children(self.long_texts(&issue, cx))
             .when(caps.subtasks, |d| d.child(self.subtasks(&issue, cx)))
             // A tracker that has them shows them while the issue has none too, with their Add.
             .when(
@@ -842,6 +843,31 @@ impl Page {
             .group("desc")
             .child(body)
             .into_any_element()
+    }
+
+    /// The edit screen's texts of many lines that hold words, each a section after the description, read as it is.
+    fn long_texts(&mut self, issue: &Issue, cx: &mut Context<Self>) -> Vec<AnyElement> {
+        let screen = match self.store.read(cx).screens.get(&issue.row.key) {
+            Some(Read::Done(f)) => f.clone(),
+            _ => return Vec::new(),
+        };
+        let people = self.mentionable(&issue.row.key, cx);
+        let mut out = Vec::new();
+        for (field, text) in long_texts(&screen, &issue.fields) {
+            let mut body = div()
+                .flex()
+                .flex_col()
+                .gap(px(10.))
+                .pl(px(40.))
+                .pr(px(30.))
+                .py(px(16.));
+            for (ix, para) in model::paragraphs(&text).iter().enumerate() {
+                let id = format!("tasks-long-{}-{ix}", field.id);
+                body = body.child(self.drawn(&named(para, &people), &issue.attachments, id, cx));
+            }
+            out.push(section(&field.name).child(body).into_any_element());
+        }
+        out
     }
 
     /// E: the description in the composer's editor; kept on this Mac while it is open.
@@ -2944,52 +2970,7 @@ impl Page {
             .unwrap_or_default();
         let reporter = issue.reporter.clone();
         let me_rep = s.is_me(&issue.site, reporter.as_ref());
-        // The facts row's and the page's own are not repeated here.
-        const SHOWN: [&str; 14] = [
-            "summary",
-            "description",
-            "issuetype",
-            "priority",
-            "assignee",
-            "reporter",
-            "project",
-            "parent",
-            "customfield_10020",
-            "sprint",
-            "comment",
-            "attachment",
-            "issuelinks",
-            "epic",
-        ];
-        let mut ordered: Vec<Field> = Vec::new();
-        for want in [
-            "labels",
-            "duedate",
-            "components",
-            "customfield_10016",
-            "fixVersions",
-        ] {
-            if let Some(f) = screen.iter().find(|f| f.id == want) {
-                ordered.push(f.clone());
-            }
-        }
-        for f in &screen {
-            if !SHOWN.contains(&f.id.as_str())
-                && !ordered.iter().any(|o| o.id == f.id)
-                && !f.id.starts_with("customfield_1001")
-            {
-                ordered.push(f.clone());
-            }
-        }
-        if screen.is_empty() && !issue.row.labels.is_empty() {
-            ordered.push(Field {
-                id: "labels".into(),
-                name: "Labels".into(),
-                kind: "array".into(),
-                items: "string".into(),
-                ..Default::default()
-            });
-        }
+        let ordered = detail_fields(&screen, !issue.row.labels.is_empty());
         let key = issue.row.key.clone();
         let mut dl = div()
             .flex()
@@ -3451,6 +3432,70 @@ enum Piece {
     Picture(Attachment),
 }
 
+/// Details' rows of an edit screen, in the design's order and then the screen's: a field the page shows elsewhere
+/// is left out, a text of many lines among them. Labels are shown while the screen is not read, if the issue has some.
+fn detail_fields(screen: &[Field], labels: bool) -> Vec<Field> {
+    // The facts row's and the page's own are not repeated here.
+    const SHOWN: [&str; 14] = [
+        "summary",
+        "description",
+        "issuetype",
+        "priority",
+        "assignee",
+        "reporter",
+        "project",
+        "parent",
+        "customfield_10020",
+        "sprint",
+        "comment",
+        "attachment",
+        "issuelinks",
+        "epic",
+    ];
+    let mut ordered: Vec<Field> = Vec::new();
+    for want in [
+        "labels",
+        "duedate",
+        "components",
+        "customfield_10016",
+        "fixVersions",
+    ] {
+        if let Some(f) = screen.iter().find(|f| f.id == want) {
+            ordered.push(f.clone());
+        }
+    }
+    for f in screen {
+        if !SHOWN.contains(&f.id.as_str())
+            && !f.long()
+            && !ordered.iter().any(|o| o.id == f.id)
+            && !f.id.starts_with("customfield_1001")
+        {
+            ordered.push(f.clone());
+        }
+    }
+    if screen.is_empty() && labels {
+        ordered.push(Field {
+            id: "labels".into(),
+            name: "Labels".into(),
+            kind: "array".into(),
+            items: "string".into(),
+            ..Default::default()
+        });
+    }
+    ordered
+}
+
+/// An edit screen's texts of many lines that hold words, in the screen's order, each with its wiki text.
+fn long_texts(screen: &[Field], fields: &Value) -> Vec<(Field, String)> {
+    (screen.iter())
+        .filter(|f| f.long() && f.id != "description")
+        .filter_map(|f| {
+            let text = fields[f.id.as_str()].as_str()?.trim();
+            (!text.is_empty()).then(|| (f.clone(), text.to_owned()))
+        })
+        .collect()
+}
+
 /// Markdown `md` cut at each picture of `attachments` named in it (`*name.png*`, as wiki's `!name.png|thumbnail!`
 /// reads): the words before it, the picture, the words after; a fenced code block is left whole, words that are only
 /// blank are left out.
@@ -3801,6 +3846,50 @@ mod attached_tests {
         assert_eq!(
             attached_markdown(&trello, "x"),
             "[card shot.png](https://t/a.png)"
+        );
+    }
+
+    #[test]
+    fn a_text_of_many_lines_is_a_section_of_its_own_not_a_details_row() {
+        let f = |id: &str, name: &str, custom: &str| Field {
+            id: id.into(),
+            name: name.into(),
+            kind: "string".into(),
+            custom: custom.into(),
+            ..Default::default()
+        };
+        let screen = [
+            f("description", "Description", ""),
+            f(
+                "customfield_10050",
+                "Acceptance criteria",
+                "com.atlassian.jira.plugin.system.customfieldtypes:textarea",
+            ),
+            f(
+                "customfield_10051",
+                "Team",
+                "com.atlassian.jira.plugin.system.customfieldtypes:textfield",
+            ),
+            f("environment", "Environment", ""),
+        ];
+        let rows: Vec<String> = (super::detail_fields(&screen, false).into_iter())
+            .map(|f| f.id)
+            .collect();
+        assert_eq!(rows, ["customfield_10051"]);
+        let fields = json!({
+            "description": "The whole story",
+            "customfield_10050": "h3. Given\n* a refund:\n** of {{0.01}}\n",
+            "environment": "  ",
+        });
+        let long: Vec<(String, String)> = (super::long_texts(&screen, &fields).into_iter())
+            .map(|(f, t)| (f.name, t))
+            .collect();
+        assert_eq!(
+            long,
+            [(
+                "Acceptance criteria".to_owned(),
+                "h3. Given\n* a refund:\n** of {{0.01}}".to_owned()
+            )]
         );
     }
 }

@@ -684,6 +684,7 @@ fn field(id: &str, f: &Value) -> Field {
         required: f["required"].as_bool().unwrap_or(false),
         kind: text(&f["schema"]["type"]),
         items: text(&f["schema"]["items"]),
+        custom: text(&f["schema"]["custom"]),
         values: (f["allowedValues"].as_array().into_iter().flatten())
             .map(|a| {
                 let name = a["name"]
