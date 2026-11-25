@@ -1,0 +1,227 @@
+{
+ "startAt": 0,
+ "maxResults": 2,
+ "total": 2,
+ "issues": [
+  {
+   "id": "31264",
+   "key": "PAY-1264",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31264",
+   "fields": {
+    "summary": "Retry the nightly ledger close",
+    "issuetype": {
+     "id": "10001",
+     "name": "Story",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10002",
+     "name": "Done",
+     "statusCategory": {
+      "id": 3,
+      "key": "done",
+      "name": "Done"
+     }
+    },
+    "priority": {
+     "id": "1",
+     "name": "Highest"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-07T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": [
+     {
+      "id": 30,
+      "name": "Sprint 30",
+      "state": "closed",
+      "originBoardId": 7,
+      "goal": "",
+      "startDate": "2026-09-08T09:00:00.000Z",
+      "endDate": "2026-09-19T17:00:00.000Z",
+      "completeDate": "2026-09-19T16:30:00.000Z"
+     }
+    ],
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31273",
+   "key": "PAY-1273",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31273",
+   "fields": {
+    "summary": "Batch dispute evidence",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10002",
+     "name": "Done",
+     "statusCategory": {
+      "id": 3,
+      "key": "done",
+      "name": "Done"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-07T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20380,
+     "key": "PAY-380",
+     "name": "Idempotent refunds API",
+     "summary": "Idempotent refunds API",
+     "color": {
+      "key": "color_8"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": [
+     {
+      "id": 30,
+      "name": "Sprint 30",
+      "state": "closed",
+      "originBoardId": 7,
+      "goal": "",
+      "startDate": "2026-09-08T09:00:00.000Z",
+      "endDate": "2026-09-19T17:00:00.000Z",
+      "completeDate": "2026-09-19T16:30:00.000Z"
+     }
+    ],
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20380",
+     "key": "PAY-380",
+     "fields": {
+      "summary": "Idempotent refunds API",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  }
+ ]
+}

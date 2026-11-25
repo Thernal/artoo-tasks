@@ -277,7 +277,7 @@ def slices(folder):
     slice_files(folder, '/rest/agile/1.0/sprint/36/issue', second)
     slice_files(folder, '/rest/agile/1.0/sprint/35/issue', [])
     for sid, keys in closed.items():
-        write(folder, '/rest/agile/1.0/sprint/%d/issue' % sid, listed(keys))
+        slice_files(folder, '/rest/agile/1.0/sprint/%d/issue' % sid, keys)
     slice_files(folder, '/rest/agile/1.0/board/7/backlog', backlog, ('mine', 'words', 'epic'))
     # An epic's issues wherever they are: its whole count, beside a slice's part of it.
     everywhere = first + second + backlog + [k for keys in closed.values() for k in keys]
@@ -289,16 +289,16 @@ def slices(folder):
     write(folder, '/rest/agile/1.0/board/8/configuration', {'id': 8, 'name': 'Ledger', 'type': 'kanban',
           'columnConfig': columns('Backlog', 'Selected for development', 'In progress', 'Done'),
           'location': {'type': 'project', 'key': 'LED'}})
-    write(folder, '/rest/agile/1.0/board/8/issue', listed(ledger))
+    slice_files(folder, '/rest/agile/1.0/board/8/issue', ledger)
     write(folder, '/rest/agile/1.0/board/8/backlog', listed([k for k in ledger if BY[k][5] == 'backlog']))
     platform = generated('PLAT', 30, ['todo', 'prog', 'done', 'done', 'todo'])
     write(folder, '/rest/agile/1.0/board/9/configuration', {'id': 9, 'name': 'Platform', 'type': 'kanban',
           'columnConfig': columns('To do', 'In progress', 'Done'), 'location': {'type': 'project', 'key': 'PLAT'}})
-    write(folder, '/rest/agile/1.0/board/9/issue', listed(platform))
+    slice_files(folder, '/rest/agile/1.0/board/9/issue', platform)
     wallet = generated('WAL', 20, ['todo', 'prog', 'todo', 'done'])
     write(folder, '/rest/agile/1.0/board/10/configuration', {'id': 10, 'name': 'Wallet', 'type': 'simple',
           'columnConfig': columns('To do', 'In progress', 'Done'), 'location': {'type': 'project', 'key': 'WAL'}})
-    write(folder, '/rest/agile/1.0/board/10/issue', listed(wallet))
+    slice_files(folder, '/rest/agile/1.0/board/10/issue', wallet)
     write(folder, '/rest/agile/1.0/board/10/sprint', {'status': 400, 'errorMessages': ['The board does not support sprints']})
     planned = generated('CHK', 8, ['todo'], CHECKOUT_SPRINT, [CHECKOUT_SPRINT])
     waiting = generated('CHK', 25, ['todo'])
