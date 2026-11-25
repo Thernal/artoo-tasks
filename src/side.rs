@@ -162,15 +162,15 @@ pub fn side(page: &Entity<Page>, width: f32, cx: &mut App) -> Option<AnyElement>
                         )
                         .child(div().flex_1().truncate().child(site.named()))
                         .children(since.clone().map(|at| div().flex_none().child(at)))
-                        .tip(match (&since, &bad) {
-                            (Some(at), _) => format!("Can’t reach {host} · boards from {at}"),
-                            (None, Some(why)) => format!("Can’t reach {host} · {why}"),
-                            (None, None) => {
-                                if site.cloud() {
-                                    "Jira Cloud".to_owned()
-                                } else {
-                                    site.tracker()
+                        .map(|d| {
+                            let unreached = || format!("Can’t reach {host}");
+                            match (&since, &bad) {
+                                (Some(at), _) => {
+                                    d.tip_two(unreached(), format!("Boards from {at}"))
                                 }
+                                (None, Some(why)) => d.tip_two(unreached(), why.clone()),
+                                (None, None) if site.cloud() => d.tip("Jira Cloud"),
+                                (None, None) => d.tip(site.tracker()),
                             }
                         }),
                 );
@@ -321,7 +321,7 @@ pub fn side(page: &Entity<Page>, width: f32, cx: &mut App) -> Option<AnyElement>
                                 .child(n.to_string()),
                         )
                     })
-                    .tip("Drafts: kept on this Mac until created")
+                    .tip_two("Drafts", "Kept on this Mac until created")
                     .on_click(move |_, _, cx| {
                         page.update(cx, |p, cx| {
                             p.drafts = true;

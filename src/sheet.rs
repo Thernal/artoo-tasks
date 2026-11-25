@@ -1383,9 +1383,10 @@ impl Page {
                     .text_color(theme::text())
                     .child(look::state_mark(&c.state, 13.))
                     .child(name.clone())
-                    .tip(format!(
-                        "From its column on the board: made, then moved to {name}"
-                    ))
+                    .tip_two(
+                        "From its column on the board",
+                        format!("Made, then moved to {name}"),
+                    )
                     .into_any_element(),
             ));
         }
@@ -1695,10 +1696,13 @@ impl Page {
                                     .text_color(theme::muted()),
                             )
                             .child(look::short_ago(d.at))
-                            .tip(format!(
-                                "Draft  ·  kept on this Mac until it is created  ·  saved {}",
-                                artoo_plugin_sdk::kit::format::ago(d.at)
-                            )),
+                            .tip_two(
+                                "Draft",
+                                format!(
+                                    "Kept on this Mac until it is created · saved {}",
+                                    artoo_plugin_sdk::kit::format::ago(d.at)
+                                ),
+                            ),
                     )
                     .into_any_element(),
             ))

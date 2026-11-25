@@ -753,7 +753,7 @@ impl Accounts {
                     .when(host.is_some(), |d| {
                         d.child(
                             crate::look::small_button("tracker-remove", "Remove")
-                                .tip("Stop reading this tracker; its token stays")
+                                .tip_two("Stop reading this tracker", "Its token stays")
                                 .on_click(
                                     cx.listener(|this, _: &ClickEvent, _, cx| this.remove(cx)),
                                 ),
@@ -978,11 +978,13 @@ impl Accounts {
                 .child(div().text_color(theme::faint()).child(how))
                 .children(who.map(|w| div().text_color(theme::muted()).child(w))),
         };
-        let why = bad.clone().map(|why| match &since {
-            Some(at) => format!(
-                "Can’t reach {host} · {why}\nIts boards as read at {at}; Retry reads them again"
-            ),
-            None => format!("Can’t reach {host} · {why}"),
+        // The hover's title and quieter line: the boards still shown, else why there are none.
+        let why = bad.clone().map(|why| {
+            let line = match &since {
+                Some(at) => format!("Its boards as read at {at}; Retry reads them again"),
+                None => why,
+            };
+            (format!("Can’t reach {host}"), line)
         });
         let chips = (bad.is_none() && !readers.is_empty()).then(|| {
             let extra = readers.len().saturating_sub(3);
@@ -1060,7 +1062,7 @@ impl Accounts {
                                 div()
                                     .id(SharedString::from(format!("tracker-detail-{host}")))
                                     .child(detail.text_size(px(12.)).truncate())
-                                    .when_some(why, |d, why| d.tip(why)),
+                                    .when_some(why, |d, (title, line)| d.tip_two(title, line)),
                             ),
                     )
                     .children(chips)
@@ -1250,7 +1252,7 @@ fn test_button(id: SharedString, unreached: bool) -> gpui::Stateful<gpui::Div> {
                     .size(px(14.))
                     .text_color(theme::muted()),
             )
-            .tip("Test: who the token is, read now"),
+            .tip_two("Test", "Who the token is, read now"),
     }
 }
 

@@ -356,6 +356,11 @@ pub fn square_button(id: impl Into<SharedString>, icon: &'static str) -> gpui::S
 
 /// A fact of a row or a card: a glyph and, where it has one, its figure; its sentence is the tooltip.
 fn fact(id: String, glyph: impl IntoElement, figure: Option<String>, tip: String) -> Stateful<Div> {
+    bare_fact(id, glyph, figure).tip(tip)
+}
+
+/// `fact` before its tooltip.
+fn bare_fact(id: String, glyph: impl IntoElement, figure: Option<String>) -> Stateful<Div> {
     div()
         .id(SharedString::from(id))
         .flex_none()
@@ -364,7 +369,6 @@ fn fact(id: String, glyph: impl IntoElement, figure: Option<String>, tip: String
         .gap(px(3.))
         .child(glyph)
         .children(figure)
-        .tip(tip)
 }
 
 /// A priority as its arrow alone, its name the tooltip.
@@ -401,16 +405,15 @@ pub fn comments_fact(key: &str, n: usize) -> Stateful<Div> {
 
 /// What blocks an issue: the struck ring alone, who blocks it and its state the tooltip.
 pub fn blocked_fact(key: &str, by: &crate::model::Brief) -> Stateful<Div> {
-    fact(
-        format!("blk-{key}"),
-        blocked_mark(),
-        None,
-        format!(
-            "Blocked by {} {} · {}",
-            by.key,
-            by.summary,
-            display_state(&by.state.name)
-        ),
+    let (title, line) = blocked_tip(by);
+    bare_fact(format!("blk-{key}"), blocked_mark(), None).tip_two(title, line)
+}
+
+/// What a blocked mark says: who blocks, then that issue's summary and state.
+pub fn blocked_tip(by: &crate::model::Brief) -> (String, String) {
+    (
+        format!("Blocked by {}", by.key),
+        format!("{} · {}", by.summary, display_state(&by.state.name)),
     )
 }
 

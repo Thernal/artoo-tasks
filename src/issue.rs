@@ -140,6 +140,11 @@ fn empty_row(text: &'static str) -> Div {
 
 /// A control: its value and ▾, ringed while its list is open.
 fn ctl(id: impl Into<SharedString>, on: bool, tip: impl Into<SharedString>) -> gpui::Stateful<Div> {
+    bare_ctl(id, on).tip(tip)
+}
+
+/// `ctl` before its tooltip.
+fn bare_ctl(id: impl Into<SharedString>, on: bool) -> gpui::Stateful<Div> {
     div()
         .id(id.into())
         .relative()
@@ -155,7 +160,6 @@ fn ctl(id: impl Into<SharedString>, on: bool, tip: impl Into<SharedString>) -> g
         .cursor_pointer()
         .hover(|s| s.bg(theme::hover()))
         .when(on, |d| d.border_1().border_color(theme::accent()))
-        .tip(tip)
 }
 
 /// A changed field's dot, until it is seen.
@@ -560,11 +564,12 @@ impl Page {
             let open = self.pop_at(&anchor, PopKind::Epic);
             let k = key.clone();
             let a = anchor.clone();
-            let epic_tip = match &epic {
-                Some(e) => format!("Epic · {}  ⇧E", e.name),
-                None => "Epic · none  ⇧E".to_owned(),
+            let epic_title = match &epic {
+                Some(e) => format!("Epic · {}", e.name),
+                None => "Epic · none".to_owned(),
             };
-            ctl("tasks-ctl-epic", open, epic_tip)
+            bare_ctl("tasks-ctl-epic", open)
+                .tip_two(epic_title, "⇧E changes it")
                 .child(match &epic {
                     Some(e) => div()
                         .flex()
@@ -749,7 +754,7 @@ impl Page {
                             .size(px(12.))
                             .text_color(theme::muted()),
                     )
-                    .tip("Edit the description  E · or a double-click in it")
+                    .tip_two("Edit the description  E", "Or a double-click in it")
                     .on_click(cx.listener(|this, _: &ClickEvent, _, cx| this.edit_description(cx))),
             );
         let people = self.mentionable(&issue.row.key, cx);
@@ -968,78 +973,74 @@ impl Page {
             INPUT_DESC,
             &self.frame,
         );
-        let warn =
-            conflict.map(|(who, theirs)| {
-                let mine = desc.edit.text().to_owned();
-                let compare = self.issue.compare;
-                let at = key_at;
-                div()
-                    .flex()
-                    .flex_col()
-                    .gap(px(8.))
-                    .p(px(10.))
-                    .rounded(px(6.))
-                    .bg(theme::warning_bg())
-                    .text_size(px(12.))
-                    .child(
-                        div()
-                            .flex()
-                            .items_center()
-                            .gap(px(8.))
-                            .child(
-                                icons::icon("alert")
-                                    .size(px(14.))
-                                    .text_color(theme::warning()),
-                            )
-                            .child(
-                                div()
-                                    .id("tasks-desc-changed")
-                                    .flex_1()
-                                    .flex()
-                                    .items_center()
-                                    .gap(px(6.))
-                                    .text_color(theme::text())
-                                    .child(look::face(&who, false, 16.))
-                                    .child(who.clone())
-                                    .tip(format!(
-                                        "{who} changed the description after you started editing it  ·  Save mine overwrites it"
-                                    )),
-                            )
-                            .when(at > 0, |r| {
-                                r.child(
-                                    div()
-                                        .text_color(theme::faint())
-                                        .child(look::short_ago(at)),
+        let warn = conflict.map(|(who, theirs)| {
+            let mine = desc.edit.text().to_owned();
+            let compare = self.issue.compare;
+            let at = key_at;
+            div()
+                .flex()
+                .flex_col()
+                .gap(px(8.))
+                .p(px(10.))
+                .rounded(px(6.))
+                .bg(theme::warning_bg())
+                .text_size(px(12.))
+                .child(
+                    div()
+                        .flex()
+                        .items_center()
+                        .gap(px(8.))
+                        .child(
+                            icons::icon("alert")
+                                .size(px(14.))
+                                .text_color(theme::warning()),
+                        )
+                        .child(
+                            div()
+                                .id("tasks-desc-changed")
+                                .flex_1()
+                                .flex()
+                                .items_center()
+                                .gap(px(6.))
+                                .text_color(theme::text())
+                                .child(look::face(&who, false, 16.))
+                                .child(who.clone())
+                                .tip_two(
+                                    format!("{who} changed the description"),
+                                    "After you started editing it; Save mine overwrites it",
+                                ),
+                        )
+                        .when(at > 0, |r| {
+                            r.child(div().text_color(theme::faint()).child(look::short_ago(at)))
+                        })
+                        .child(
+                            look::square_button("tasks-desc-compare", "git-compare")
+                                .tip_two(
+                                    "Compare",
+                                    if compare {
+                                        "Both versions as a diff · on"
+                                    } else {
+                                        "Both versions as a diff"
+                                    },
                                 )
-                            })
-                            .child(
-                                look::square_button("tasks-desc-compare", "git-compare")
-                                    .tip_two(
-                                        "Compare",
-                                        if compare {
-                                            "Both versions as a diff · on"
-                                        } else {
-                                            "Both versions as a diff"
-                                        },
-                                    )
                                 .when(compare, |b| b.border_color(theme::accent()))
                                 .on_click(cx.listener(|this, _: &ClickEvent, _, cx| {
                                     this.issue.compare = !this.issue.compare;
                                     cx.notify();
                                 })),
-                            )
-                            .child(
-                                look::small_button("tasks-desc-theirs", "Keep theirs").on_click(
-                                    cx.listener(|this, _: &ClickEvent, _, cx| {
-                                        this.cancel_description(cx)
-                                    }),
-                                ),
+                        )
+                        .child(
+                            look::small_button("tasks-desc-theirs", "Keep theirs").on_click(
+                                cx.listener(|this, _: &ClickEvent, _, cx| {
+                                    this.cancel_description(cx)
+                                }),
                             ),
-                    )
-                    .when(compare, |d| {
-                        d.child(diff_lines(&wiki::to_markdown(&theirs), &mine))
-                    })
-            });
+                        ),
+                )
+                .when(compare, |d| {
+                    d.child(diff_lines(&wiki::to_markdown(&theirs), &mine))
+                })
+        });
         let _ = issue;
         section("Description")
             .child(
@@ -1202,7 +1203,7 @@ impl Page {
                     )
                     .child(a.name.clone()),
             )
-            .tip(format!("{} · click to open", a.name))
+            .tip_two(a.name.clone(), "Click to open")
             .on_click(cx.listener(move |this, _: &ClickEvent, _, cx| this.open_whole(&id, cx)))
             .into_any_element()
     }
@@ -2039,7 +2040,7 @@ impl Page {
                 look::small_button("tasks-attach", "Add")
                     .child(icons::icon("plus").size(px(12.)).text_color(theme::muted()))
                     // ⇧⌘A is the Agents window's while nothing is typed; a comment being written takes it.
-                    .tip("Add a file, or drop one on the page")
+                    .tip_two("Add a file", "Or drop one on the page")
                     .on_click(cx.listener(|this, _: &ClickEvent, _, cx| this.pick_attachment(cx))),
             );
         let (pictures, files): (Vec<&Attachment>, Vec<&Attachment>) =
@@ -2400,10 +2401,10 @@ impl Page {
                                     .text_color(theme::agent())
                                     .text_size(px(11.))
                                     .child("pending")
-                                    .tip(format!(
-                                        "Written by {}. Only you see it until you post it.",
-                                        p.agent
-                                    )),
+                                    .tip_two(
+                                        format!("Written by {}", p.agent),
+                                        "Only you see it until you post it",
+                                    ),
                             ),
                     )
                     .child(

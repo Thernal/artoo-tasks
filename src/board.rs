@@ -3104,12 +3104,10 @@ impl Page {
                     )
                     .child(div().flex_1().min_w_0().truncate().child(b.summary.clone()))
                     .child(look::state_mark(&b.state, 14.))
-                    .tip(format!(
-                        "Blocked by {} {} · {}",
-                        b.key,
-                        b.summary,
-                        look::display_state(&b.state.name)
-                    ))
+                    .map(|d| {
+                        let (title, line) = look::blocked_tip(b);
+                        d.tip_two(title, line)
+                    })
                     .into_any_element(),
             ));
         }
