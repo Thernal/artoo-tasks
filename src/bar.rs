@@ -126,6 +126,8 @@ pub fn bar(page: &Entity<Page>, route: Option<&Route>, cx: &mut App) -> Option<B
         None => (mine_counted, all_counted),
     };
     let mine = s.mine;
+    let backlog =
+        (s.board_slices()).is_some_and(|sl| sl.view == Some(crate::slices::SliceId::Backlog));
     let columns = s.kept.view(&board.key()).board;
     let url = s
         .site_of(&board.site)
@@ -171,7 +173,12 @@ pub fn bar(page: &Entity<Page>, route: Option<&Route>, cx: &mut App) -> Option<B
     let mut parts = BarParts {
         path: Some(path(vec!["Tasks".into()], &board.name, None)),
         view: Some(view),
-        filter: Some("Filter issues"),
+        // The Backlog's words are asked of Jira, which finds by more than a row shows.
+        filter: Some(if backlog {
+            "Filter in Jira"
+        } else {
+            "Filter issues"
+        }),
         ..Default::default()
     };
     parts.actions.push(

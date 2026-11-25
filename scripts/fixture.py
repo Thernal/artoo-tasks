@@ -279,6 +279,11 @@ def slices(folder):
     for sid, keys in closed.items():
         write(folder, '/rest/agile/1.0/sprint/%d/issue' % sid, listed(keys))
     slice_files(folder, '/rest/agile/1.0/board/7/backlog', backlog, ('mine', 'words', 'epic'))
+    # An epic's issues wherever they are: its whole count, beside a slice's part of it.
+    everywhere = first + second + backlog + [k for keys in closed.values() for k in keys]
+    for e in EPICS:
+        write(folder, '/rest/agile/1.0/epic/%s/issue' % e['key'],
+              listed([k for k in everywhere if EPIC_OF.get(k) == e['key']]))
 
     ledger = generated('LED', 40, ['backlog', 'backlog', 'todo', 'prog', 'backlog', 'done', 'todo', 'backlog'])
     write(folder, '/rest/agile/1.0/board/8/configuration', {'id': 8, 'name': 'Ledger', 'type': 'kanban',

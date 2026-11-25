@@ -213,6 +213,19 @@ pub fn days_left(end: &str, now: i64) -> Option<(String, bool)> {
     })
 }
 
+/// A number as people read it: `2,123`.
+pub fn grouped(n: usize) -> String {
+    let digits = n.to_string();
+    let mut out = String::new();
+    for (ix, c) in digits.chars().enumerate() {
+        if ix > 0 && (digits.len() - ix).is_multiple_of(3) {
+            out.push(',');
+        }
+        out.push(c);
+    }
+    out
+}
+
 /// A sprint's line under its name in the sprint picker: `78 issues · ends Fri 28 Nov · 5 days left`, `No issues yet ·
 /// starts Wed 3 Dec`, `ended Fri 14 Nov`; its issues left out until they are counted.
 pub fn sprint_words(sprint: &Sprint, count: Option<usize>, unit: &str, now: i64) -> String {
@@ -729,6 +742,14 @@ mod tests {
             ("ended 3 days ago".into(), true)
         );
         assert_eq!(days_left("someday", now), None);
+    }
+
+    #[test]
+    fn a_number_is_grouped_by_thousands() {
+        assert_eq!(grouped(0), "0");
+        assert_eq!(grouped(950), "950");
+        assert_eq!(grouped(2123), "2,123");
+        assert_eq!(grouped(1234567), "1,234,567");
     }
 
     #[test]

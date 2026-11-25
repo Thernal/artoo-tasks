@@ -1764,9 +1764,6 @@ impl Store {
     }
 }
 
-// TODO(#15): the page loads the Backlog's pages, filters it, says an epic's whole count and moves
-// issues in the work's next steps; until then nothing calls these.
-#[allow(dead_code)]
 impl Store {
     /// The Backlog's next page of board `board`.
     pub fn load_more(&mut self, board: &BoardId, cx: &mut Context<Self>) {
@@ -1817,7 +1814,11 @@ impl Store {
             },
         );
     }
+}
 
+// TODO(#15): the page moves issues and undoes a move in the work's next step; until then nothing calls these.
+#[allow(dead_code)]
+impl Store {
     /// Issues `keys` of board `board` moved to `to` (a sprint, or the Backlog; its top with `top`): shown at once, then
     /// sent, one write an issue. An issue the tracker refuses goes back where it was, its reason on its `sprint` field;
     /// the others stay moved. `done` hears the move as it stands, for its toast and Undo.

@@ -524,6 +524,13 @@ impl Page {
             "Type · Change".into(),
             cx,
         );
+        // An issue of a board without sprints is in none; of one with sprints, in none of them is the Backlog.
+        let sprintless = self
+            .store
+            .read(cx)
+            .board_info()
+            .is_some_and(|i| i.sprintless);
+        let no_sprint = if sprintless { "None" } else { "Backlog" };
         let sprint_field = if issue.fields.get("customfield_10020").is_some() {
             "customfield_10020"
         } else {
@@ -537,12 +544,12 @@ impl Page {
                 Some(sp) => div().child(sp.name.clone()).into_any_element(),
                 None => div()
                     .text_color(theme::faint())
-                    .child("Backlog")
+                    .child(no_sprint)
                     .into_any_element(),
             },
             format!(
                 "Sprint · {} · Change",
-                r.sprint.as_ref().map_or("Backlog", |sp| sp.name.as_str())
+                r.sprint.as_ref().map_or(no_sprint, |sp| sp.name.as_str())
             ),
             cx,
         )

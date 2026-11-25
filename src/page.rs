@@ -182,6 +182,8 @@ pub struct Page {
     /// The groups folded; Done's column is folded until it is in `unfolded`.
     pub folded_ids: HashSet<String>,
     pub unfolded: HashSet<String>,
+    /// When the slice shown was last read whole, once `Read 78 of 78` was said for it a moment.
+    pub read_told: Option<i64>,
     /// The side panel's Boards folded.
     pub boards_folded: bool,
     /// What the side panel's filter of the boards has typed in it (⌘P).
@@ -250,6 +252,7 @@ impl Page {
             pick: None,
             folded_ids: HashSet::new(),
             unfolded: HashSet::new(),
+            read_told: None,
             boards_folded: false,
             boards_filter: String::new(),
             boards_filter_edit: TextEdit::new(String::new()),

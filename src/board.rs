@@ -9,12 +9,14 @@ use crate::model::{self, BoardInfo, Epic, Issue, Person, Row, Sprint, State};
 use crate::page::{Anchor, Page, PopKind};
 use crate::slices::{self, Progress, SliceId, Slices};
 use crate::store::Read;
+use artoo_plugin_sdk::gpui;
 use artoo_plugin_sdk::gpui::{
     AnyElement, App, ClickEvent, Context, Div, FontWeight, IntoElement, Render, SharedString,
     Window, div, prelude::*,
 };
 use artoo_plugin_sdk::kit::hover::Hover;
 use artoo_plugin_sdk::kit::{controls, icons, markdown, px, theme};
+use artoo_plugin_sdk::shell::MenuItem;
 use std::collections::HashSet;
 
 /// Who the people filter picks, by person id; `NONE` for Unassigned.
@@ -65,6 +67,9 @@ fn short_ago(at: &str) -> String {
 
 /// How a board is drawn while its site is not reached: as last read, dimmed.
 const STALE: f32 = 0.72;
+
+/// How long `Read 78 of 78` is said once a slice is read whole, in seconds.
+const READ_TOLD: i64 = 3;
 
 /// What the board shows of its issues, as the bar's filters and the board's own say.
 #[derive(Clone, Debug, Default)]
@@ -310,6 +315,77 @@ pub fn span_words(start: Option<&str>, end: &str) -> String {
     }
 }
 
+/// What leads the facts line: the slice shown as the sprint picker, or the board's own name (a board without
+/// sprints: no picker, no count, not its kind).
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum Lead {
+    Picker(String),
+    Board(String),
+}
+
+/// What leads the facts line of board `board` as `info` lists it, its slice shown named `slice` when it is read by
+/// slice.
+pub fn lead_words(board: &str, info: &BoardInfo, slice: Option<&str>) -> Lead {
+    match slice {
+        Some(name) if !info.sprintless => Lead::Picker(name.to_owned()),
+        _ => Lead::Board(board.to_owned()),
+    }
+}
+
+/// What a slice shows in place of its issues: one line and one action each.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum Empty {
+    /// Being read, none yet: a skeleton, the facts line saying how far.
+    Reading,
+    /// Not read, and none read before: why, and Retry.
+    Failed(String),
+    /// A sprint with no issues: Plan from Backlog.
+    Unplanned(String),
+    /// The Backlog or a board holding none.
+    Nothing,
+    /// The filter's words or the people picked keep none: they are named.
+    Hidden { words: String, people: Vec<String> },
+    /// Mine keeps none of what the slice holds, so many as counted: Show all.
+    NotYours(Option<usize>),
+}
+
+/// What a slice shows in place of its issues, if anything: as it is read (`read`), the sprint it is (`sprint`), the
+/// issues it holds as read (`all`) and those `filter` keeps (`kept`); `asked` when its filter is asked of the tracker
+/// (the Backlog), whose rows are then those it found.
+pub fn empty_of(
+    read: Option<&Read<()>>,
+    sprint: Option<&str>,
+    all: usize,
+    kept: usize,
+    filter: &Filter,
+    asked: bool,
+    count: Option<usize>,
+) -> Option<Empty> {
+    if kept > 0 {
+        return None;
+    }
+    let named = !filter.words.is_empty() || !filter.faces.is_empty();
+    let filtered = named || filter.mine;
+    if all == 0 && !(asked && filtered) || all == 0 && matches!(read, None | Some(Read::Reading)) {
+        return Some(match read {
+            None | Some(Read::Reading) => Empty::Reading,
+            Some(Read::Failed(why)) => Empty::Failed(why.clone()),
+            Some(Read::Done(())) => match sprint {
+                Some(name) => Empty::Unplanned(name.to_owned()),
+                None => Empty::Nothing,
+            },
+        });
+    }
+    Some(if named {
+        Empty::Hidden {
+            words: filter.words.clone(),
+            people: filter.faces.clone(),
+        }
+    } else {
+        Empty::NotYours(count)
+    })
+}
+
 /// The state column `ix` of `info` is drawn with: the first of its states one of `rows` is in, else one named for
 /// the column, its category by its place (the first new, the last done).
 pub fn column_state<'a>(
@@ -364,6 +440,10 @@ pub struct Shown {
     pub slice: Option<SliceShown>,
     /// All active sprints, each its own group; empty for any other slice.
     pub parts: Vec<Part>,
+    /// The Backlog's issues the filters keep, in the tracker's rank: listed so, ungrouped.
+    pub ranked: Option<Vec<Row>>,
+    /// What the slice shows in place of its issues.
+    pub empty: Option<Empty>,
     pub board_name: String,
     pub info: BoardInfo,
     pub shelves: Vec<Shelf>,
@@ -388,11 +468,67 @@ pub struct SliceShown {
     pub sprint: Option<Sprint>,
     /// How many issues it holds, sub-tasks left out, as the tracker counts them.
     pub count: Option<usize>,
+    /// Its read: on its way, done, or why not; All's the first of its sprints' that failed, else one on its way.
+    pub state: Option<Read<()>>,
+    /// The sprint of All active sprints whose read failed.
+    pub failed_in: Option<String>,
+    /// How many issues are read, sub-tasks left out.
+    pub read: usize,
+    /// How many its filter finds, as counted: the Backlog's `Showing 50 of 214`.
+    pub found: Option<usize>,
+    /// It holds issues not read yet: the Backlog's Load more, a big board's.
+    pub more: bool,
+    /// When it was read whole last.
+    pub at: Option<i64>,
+}
+
+/// The slice `slices` shows of a board as `info` lists it, once one is picked.
+fn slice_shown(sl: &Slices, info: &BoardInfo) -> Option<SliceShown> {
+    let id = sl.view.clone()?;
+    let past = match &sl.past {
+        Some(Read::Done(past)) => past.as_slice(),
+        _ => &[],
+    };
+    let reads: Vec<(Option<&Sprint>, &slices::SliceRead)> = match &id {
+        SliceId::All => slices::active(info)
+            .filter_map(|s| Some((Some(s), sl.reads.get(&SliceId::Sprint(s.id))?)))
+            .collect(),
+        one => sl.reads.get(one).map(|r| (None, r)).into_iter().collect(),
+    };
+    let failed = reads.iter().find_map(|(s, r)| match &r.state {
+        Some(Read::Failed(why)) => Some((s.map(|s| s.name.clone()), why.clone())),
+        _ => None,
+    });
+    let state = match &failed {
+        Some((_, why)) => Some(Read::Failed(why.clone())),
+        None if reads.is_empty() || reads.iter().any(|(_, r)| r.state != Some(Read::Done(()))) => {
+            Some(Read::Reading)
+        }
+        None => Some(Read::Done(())),
+    };
+    let (count, _) = sl.counts(&id, info);
+    let one = reads.first().filter(|_| reads.len() == 1).map(|(_, r)| *r);
+    Some(SliceShown {
+        name: slices::name(&id, Some(info), past),
+        sprint: (id.sprint())
+            .and_then(|n| info.sprints.iter().chain(past).find(|s| s.id == n).cloned()),
+        count,
+        state,
+        failed_in: failed.and_then(|f| f.0),
+        read: reads.iter().map(|(_, r)| r.read()).sum(),
+        found: one.and_then(|r| r.found).or(count),
+        more: one.is_some_and(|r| r.more()),
+        at: reads.iter().filter_map(|(_, r)| r.at).max(),
+        id,
+    })
 }
 
 impl Shown {
     /// The rows in the order the list draws them, folded groups left out: what ↑ ↓ walk.
     pub fn order(&self, folded: &dyn Fn(&str) -> bool) -> Vec<String> {
+        if let Some(rows) = &self.ranked {
+            return rows.iter().map(|r| r.key.clone()).collect();
+        }
         if !self.parts.is_empty() {
             return (self.parts.iter())
                 .filter(|p| !folded(&part_id(p.sprint.id)))
@@ -422,36 +558,68 @@ impl Page {
     pub fn board_shown(&self, cx: &Context<Self>) -> Option<Shown> {
         let s = self.store.read(cx);
         let board = s.picked()?.clone();
-        let rows = s.board_rows()?;
         let info = s.board_info().cloned().unwrap_or_default();
+        let slices = s.board_slices();
+        let slice = slices.and_then(|sl| slice_shown(sl, &info));
+        // A slice not read yet, or not read, shows none of its issues; a board of one list waits for its rows.
+        let none = Vec::new();
+        let rows = match &slice {
+            Some(_) => s.board_rows().unwrap_or(&none),
+            None => s.board_rows()?,
+        };
         let view = s.kept.view(&board.key());
         let me = s.me.get(&board.site).cloned();
         let play = in_play(rows);
+        let asked = slice.as_ref().is_some_and(|sl| sl.id == SliceId::Backlog);
         let filter = Filter {
             mine: s.mine,
             faces: s.faces.clone(),
             words: self.frame.filter(cx),
         };
-        let kept = shown(&play, &filter, me.as_ref());
-        let slices = s.board_slices();
-        let slice = slices.and_then(|sl| {
-            let id = sl.view.clone()?;
-            let past = match &sl.past {
-                Some(Read::Done(past)) => past.as_slice(),
-                _ => &[],
-            };
-            let (count, _) = sl.counts(&id, &info);
-            Some(SliceShown {
-                name: slices::name(&id, Some(&info), past),
-                sprint: (id.sprint())
-                    .and_then(|n| info.sprints.iter().chain(past).find(|s| s.id == n).cloned()),
-                id,
-                count,
-            })
+        // The Backlog's words are asked of the tracker, which finds by more than the row shows.
+        let local = Filter {
+            words: if asked {
+                String::new()
+            } else {
+                filter.words.clone()
+            },
+            ..filter.clone()
+        };
+        let kept = shown(&play, &local, me.as_ref());
+        let all = play.iter().filter(|r| r.parent.is_none()).count();
+        let shown_n = kept.iter().filter(|r| r.parent.is_none()).count();
+        let empty = match &slice {
+            Some(sl) => {
+                let sprint = sl.sprint.as_ref().map(|s| s.name.as_str());
+                empty_of(
+                    sl.state.as_ref(),
+                    sprint,
+                    all,
+                    shown_n,
+                    &filter,
+                    asked,
+                    sl.count,
+                )
+            }
+            None => empty_of(
+                Some(&Read::Done(())),
+                None,
+                all,
+                shown_n,
+                &filter,
+                false,
+                Some(all),
+            ),
+        };
+        let ranked = asked.then(|| {
+            (kept.iter())
+                .filter(|r| r.parent.is_none())
+                .map(|r| (*r).clone())
+                .collect()
         });
         let parts = match (slices, &slice) {
             (Some(sl), Some(shown)) if shown.id == SliceId::All => {
-                parts(&info, sl, view.group, &filter, me.as_ref())
+                parts(&info, sl, view.group, &local, me.as_ref())
             }
             _ => Vec::new(),
         };
@@ -459,8 +627,10 @@ impl Page {
             host: board.site.clone(),
             slice,
             parts,
+            ranked,
+            empty,
             board_name: board.name.clone(),
-            shelves: shelves(&play, &info, view.group, &filter, me.as_ref()),
+            shelves: shelves(&play, &info, view.group, &local, me.as_ref()),
             count: kept.iter().filter(|r| r.parent.is_none()).count(),
             subtasks: kept.iter().filter(|r| r.parent.is_some()).count(),
             all: play.iter().map(|r| (*r).clone()).collect(),
@@ -527,14 +697,17 @@ impl Page {
                         })),
                 );
         }
-        let picker = (shown.slice.as_ref()).filter(|_| !shown.info.sprintless);
-        let mut line = match picker {
-            Some(slice) => line.child(self.sprint_picker(slice, cx)),
-            None => line.child(
+        let slice_name = shown.slice.as_ref().map(|sl| sl.name.as_str());
+        let mut line = match (
+            lead_words(&shown.board_name, &shown.info, slice_name),
+            &shown.slice,
+        ) {
+            (Lead::Picker(_), Some(slice)) => line.child(self.sprint_picker(slice, cx)),
+            (Lead::Picker(name) | Lead::Board(name), _) => line.child(
                 div()
                     .font_weight(FontWeight::SEMIBOLD)
                     .text_color(theme::text())
-                    .child(shown.board_name.clone()),
+                    .child(name),
             ),
         };
         let unit = item_word(&shown.host);
@@ -586,6 +759,11 @@ impl Page {
             return line.child(div().flex_1()).child(shown.host.clone());
         }
         let group = shown.group;
+        let line = line.children(self.read_words(shown));
+        // The Backlog is in the tracker's rank, ungrouped: its epic filter stands where Group does.
+        if let Some(epic) = self.backlog_epic(shown, cx) {
+            return line.child(div().flex_1()).child(epic);
+        }
         line.child(div().flex_1())
             // Painted as the Mac kept it, until the tracker answers.
             .children(
@@ -611,6 +789,118 @@ impl Page {
                         this.group_menu(Some(e.position()), cx)
                     })),
             )
+    }
+
+    /// How far the slice shown is read: `Reading 31 of 78 issues…`, then `Read 78 of 78` a moment.
+    fn read_words(&self, shown: &Shown) -> Option<Div> {
+        let slice = shown.slice.as_ref()?;
+        let unit = item_word(&shown.host);
+        let of = slice.count.unwrap_or(slice.read).max(slice.read);
+        match &slice.state {
+            Some(Read::Reading) => {
+                Some(div().text_color(theme::accent()).child(match slice.count {
+                    Some(_) => format!(
+                        "Reading {} of {} {unit}s…",
+                        slices::grouped(slice.read),
+                        slices::grouped(of)
+                    ),
+                    None => format!("Reading {unit}s…"),
+                }))
+            }
+            Some(Read::Done(()))
+                if slice
+                    .at
+                    .is_some_and(|at| crate::store::now() - at < READ_TOLD) =>
+            {
+                Some(div().text_color(theme::faint()).child(format!(
+                    "Read {} of {}",
+                    slices::grouped(slice.read),
+                    slices::grouped(of)
+                )))
+            }
+            _ => None,
+        }
+    }
+
+    /// The Backlog's epic filter, asked of the tracker: `Epic: All ▾`.
+    fn backlog_epic(&mut self, shown: &Shown, cx: &mut Context<Self>) -> Option<AnyElement> {
+        if shown.slice.as_ref()?.id != SliceId::Backlog {
+            return None;
+        }
+        let s = self.store.read(cx);
+        let picked = s.board_slices().and_then(|sl| sl.filter.epic.clone());
+        let name = match &picked {
+            Some(key) => (shown.info.epics.iter())
+                .find(|e| &e.key == key)
+                .map_or(key.clone(), |e| e.name.clone()),
+            None => "All".into(),
+        };
+        Some(
+            look::small_button("tasks-backlog-epic", "")
+                .child("Epic:")
+                .child(
+                    div()
+                        .max_w(px(200.))
+                        .truncate()
+                        .font_weight(FontWeight::SEMIBOLD)
+                        .text_color(theme::text())
+                        .child(name),
+                )
+                .child(
+                    icons::icon("chevron")
+                        .size(px(12.))
+                        .text_color(theme::muted()),
+                )
+                .tip("The Backlog’s issues of one epic, asked of Jira")
+                .on_click(cx.listener(|this, e: &ClickEvent, _, cx| {
+                    this.backlog_epic_menu(e.position(), cx)
+                }))
+                .into_any_element(),
+        )
+    }
+
+    /// Epic ▾ of the Backlog: All, or one of the board's epics.
+    fn backlog_epic_menu(&mut self, at: gpui::Point<gpui::Pixels>, cx: &mut Context<Self>) {
+        let s = self.store.read(cx);
+        let Some(board) = s.board.clone() else {
+            return;
+        };
+        let now = s.board_slices().and_then(|sl| sl.filter.epic.clone());
+        let epics = s.board_info().map(|i| i.epics.clone()).unwrap_or_default();
+        let page = cx.entity().downgrade();
+        let pick = move |epic: Option<String>| {
+            let (page, board) = (page.clone(), board.clone());
+            move |_: &mut gpui::Window, cx: &mut App| {
+                page.update(cx, |p, cx| {
+                    p.store.update(cx, |s, cx| {
+                        let mut filter = (s.slices.get(&board))
+                            .map(|sl| sl.filter.clone())
+                            .unwrap_or_default();
+                        filter.epic = epic.clone();
+                        s.filter_backlog(&board, filter, cx);
+                        cx.notify();
+                    })
+                })
+                .ok();
+            }
+        };
+        let mut items = vec![MenuItem::new("All", pick(None)).checked(now.is_none())];
+        for e in epics.iter().filter(|e| !e.done) {
+            let on = now.as_deref() == Some(e.key.as_str());
+            items.push(MenuItem::new(e.name.clone(), pick(Some(e.key.clone()))).checked(on));
+        }
+        self.frame.menu(at, vec![items], cx);
+    }
+
+    /// Where the slice shown is, as an epic's tooltip says it: `in this sprint`, `in the Backlog`.
+    fn slice_here(&self, cx: &App) -> &'static str {
+        let s = self.store.read(cx);
+        match s.board_slices().and_then(|sl| sl.view.as_ref()) {
+            Some(SliceId::Sprint(_)) => "in this sprint",
+            Some(SliceId::Backlog) => "in the Backlog",
+            Some(SliceId::All) => "in the active sprints",
+            _ => "on this board",
+        }
     }
 
     /// The facts line's sprint picker: the slice shown and ▾, its menu the board's slices.
@@ -799,6 +1089,8 @@ impl Page {
         let s = self.store.read(cx);
         let board = s.picked().cloned();
         let rows_read = s.board.as_ref().and_then(|b| s.rows.get(b)).cloned();
+        // A board read by slice draws its facts line whatever its slice's read: the other slices stay a click away.
+        let by_slice = s.board_slices().is_some_and(|sl| sl.view.is_some());
         let stale = self.stale(cx);
         let Some(board) = board else {
             return self
@@ -807,6 +1099,7 @@ impl Page {
                 .into_any_element();
         };
         match rows_read {
+            _ if by_slice => {}
             None | Some(Read::Reading) => {
                 return self
                     .page_frame()
@@ -828,6 +1121,7 @@ impl Page {
         let Some(shown) = self.board_shown(cx) else {
             return self.page_frame().into_any_element();
         };
+        self.ask_slice(&shown, cx);
         // The pick stays among the rows shown, the first when it is not.
         let order = shown.order(&|id| self.folded(id));
         if self
@@ -837,37 +1131,13 @@ impl Page {
         {
             self.pick = order.first().cloned();
         }
-        let mine_empty = shown.count == 0 && self.store.read(cx).mine;
-        if mine_empty {
-            let all = shown.all.iter().filter(|r| r.parent.is_none()).count();
-            let empty = div()
-                .flex_1()
-                .flex()
-                .flex_col()
-                .items_center()
-                .justify_center()
-                .gap(px(8.))
-                .child(
-                    div()
-                        .text_size(px(14.))
-                        .font_weight(FontWeight::SEMIBOLD)
-                        .text_color(theme::text())
-                        .child(format!("Nothing of yours on {}", board.name)),
-                )
-                .child(
-                    div()
-                        .id("tasks-all")
-                        .text_size(px(13.))
-                        .text_color(theme::accent())
-                        .cursor_pointer()
-                        .child(format!("All {all}"))
-                        .on_click(
-                            cx.listener(|this, _: &ClickEvent, _, cx| this.set_mine(false, cx)),
-                        ),
-                );
+        let banner = self.slice_banner(&shown, cx);
+        if let Some(empty) = shown.empty.clone() {
+            let body = self.empty_body(&empty, &shown, cx);
             return (self.page_frame())
                 .child(self.facts_line(&shown, stale, cx))
-                .child(empty)
+                .children(banner)
+                .child(body)
                 .into_any_element();
         }
         // One sprint shown: its head over its issues. All active sprints: each sprint's over its part.
@@ -887,19 +1157,23 @@ impl Page {
                 .border_color(theme::border())
                 .child(self.composer(cx))
         });
+        let foot = self.slice_foot(&shown, cx);
         if shown.columns {
             return (self.page_frame())
                 .when(stale.is_some(), |d| d.opacity(STALE))
                 .child(self.facts_line(&shown, stale, cx))
                 .children(head)
+                .children(banner)
                 .children(note)
                 .child(self.columns(&shown, cx))
+                .children(foot)
                 .into_any_element();
         }
         let list = (self.list_frame())
             .when(stale.is_some(), |d| d.opacity(STALE))
             .child(self.facts_line(&shown, stale.clone(), cx))
             .children(head)
+            .children(banner)
             .children(note)
             .child(
                 div()
@@ -910,9 +1184,343 @@ impl Page {
                     .track_scroll(&self.rows_scroll)
                     .child(self.shelves(&shown, cx)),
             )
+            .children(foot)
             .into_any_element();
         let preview = self.preview(&shown, cx);
         self.frame.list_page(list, preview, cx)
+    }
+
+    /// What the slice shown asks of the tracker as the page stands: the Backlog's filter (its words, Mine, its
+    /// epic), each epic's whole count while grouped by epic, and a moment's `Read 78 of 78` once a read is whole.
+    fn ask_slice(&mut self, shown: &Shown, cx: &mut Context<Self>) {
+        let Some(slice) = &shown.slice else {
+            return;
+        };
+        let s = self.store.read(cx);
+        let Some(board) = s.board.clone() else {
+            return;
+        };
+        if slice.id == SliceId::Backlog {
+            let epic = s.board_slices().and_then(|sl| sl.filter.epic.clone());
+            let filter = slices::Filter {
+                words: self.frame.filter(cx),
+                mine: s.mine,
+                epic,
+            };
+            self.store
+                .update(cx, |s, cx| s.filter_backlog(&board, filter, cx));
+        }
+        if shown.group == Group::Epic {
+            let epics: Vec<String> = (shown.shelves.iter())
+                .filter_map(|g| match &g.head {
+                    Head::Epic { epic: Some(e), .. } => Some(e.key.clone()),
+                    _ => None,
+                })
+                .collect();
+            self.store.update(cx, |s, cx| {
+                for epic in &epics {
+                    s.read_epic_count(&board, epic, cx);
+                }
+            });
+        }
+        if let (Some(Read::Done(())), Some(at)) = (&slice.state, slice.at)
+            && self.read_told != Some(at)
+            && crate::store::now() - at < READ_TOLD
+        {
+            self.read_told = Some(at);
+            cx.spawn(async move |page, cx| {
+                cx.background_executor()
+                    .timer(std::time::Duration::from_secs(READ_TOLD as u64))
+                    .await;
+                page.update(cx, |_, cx| cx.notify()).ok();
+            })
+            .detach();
+        }
+    }
+
+    /// Over the slice's issues: no sprint running (the Backlog shown, the next sprint offered), or the slice not read
+    /// again (why, Retry; what was read stays, faint).
+    fn slice_banner(&mut self, shown: &Shown, cx: &mut Context<Self>) -> Option<AnyElement> {
+        let slice = shown.slice.as_ref()?;
+        let bar = |id: &'static str, warn: bool| {
+            div()
+                .id(id)
+                .flex_none()
+                .mx(px(12.))
+                .my(px(8.))
+                .px(px(12.))
+                .h(px(32.))
+                .flex()
+                .items_center()
+                .gap(px(8.))
+                .rounded(px(6.))
+                .border_1()
+                .border_color(if warn {
+                    theme::warning()
+                } else {
+                    theme::border()
+                })
+                .text_size(px(12.))
+                .text_color(theme::muted())
+                .whitespace_nowrap()
+        };
+        let strong = |words: String| {
+            div()
+                .font_weight(FontWeight::SEMIBOLD)
+                .text_color(theme::text())
+                .child(words)
+        };
+        if let Some(Read::Failed(why)) = &slice.state
+            && slice.read > 0
+        {
+            let what = match (&slice.failed_in, &slice.id) {
+                (Some(name), _) => format!("Couldn’t read {name}"),
+                (None, SliceId::Sprint(_)) => "Couldn’t read this sprint".into(),
+                (None, SliceId::Backlog) => "Couldn’t read the Backlog".into(),
+                _ => "Couldn’t read this board".into(),
+            };
+            return Some(
+                bar("tasks-slice-failed", true)
+                    .child(
+                        icons::icon("alert")
+                            .size(px(14.))
+                            .text_color(theme::warning()),
+                    )
+                    .child(strong(what))
+                    .child(div().min_w_0().truncate().child(why.clone()))
+                    .child(self.retry_link(cx))
+                    .into_any_element(),
+            );
+        }
+        let running = slices::active(&shown.info).next().is_some();
+        if slice.id != SliceId::Backlog || running || shown.info.sprintless {
+            return None;
+        }
+        let next = slices::next_sprint(&shown.info).map(|s| s.id);
+        Some(
+            bar("tasks-no-sprint", false)
+                .child(
+                    icons::icon("clock")
+                        .size(px(14.))
+                        .text_color(theme::muted()),
+                )
+                .child(strong("No sprint is running".into()))
+                .child("Showing the Backlog")
+                .children(next.map(|id| {
+                    div()
+                        .id("tasks-next-sprint")
+                        .text_color(theme::accent())
+                        .cursor_pointer()
+                        .child("Open the next sprint")
+                        .on_click(cx.listener(move |this, _: &ClickEvent, _, cx| {
+                            this.show_slice(SliceId::Sprint(id), cx)
+                        }))
+                }))
+                .into_any_element(),
+        )
+    }
+
+    /// Retry: the slice shown read again.
+    fn retry_link(&mut self, cx: &mut Context<Self>) -> AnyElement {
+        div()
+            .id("tasks-slice-retry")
+            .text_color(theme::accent())
+            .cursor_pointer()
+            .child("Retry")
+            .tip("Read again  ⌘R")
+            .on_click(cx.listener(|this, _: &ClickEvent, _, cx| {
+                this.store
+                    .update(cx, |s, cx| s.read_board(crate::store::Ask::Reload, cx))
+            }))
+            .into_any_element()
+    }
+
+    /// Slice `slice` of the board picked shown.
+    pub fn show_slice(&mut self, slice: SliceId, cx: &mut Context<Self>) {
+        self.store.update(cx, |s, cx| {
+            if let Some(board) = s.board.clone() {
+                s.show_slice(&board, slice, cx);
+            }
+        });
+    }
+
+    /// Under the list: the Backlog's `Showing 50 of 2,123 issues · Load 50 more`, a big board's `Showing 2,000 of
+    /// 3,412 issues`.
+    fn slice_foot(&mut self, shown: &Shown, cx: &mut Context<Self>) -> Option<AnyElement> {
+        let slice = shown.slice.as_ref()?;
+        let backlog = slice.id == SliceId::Backlog;
+        if !(backlog || slice.id == SliceId::Board && slice.more) {
+            return None;
+        }
+        let of = slice.found.unwrap_or(slice.read).max(slice.read);
+        let unit = item_word(&shown.host);
+        let units = if of == 1 {
+            unit.to_owned()
+        } else {
+            format!("{unit}s")
+        };
+        let more = (backlog && slice.more).then(|| {
+            look::small_button("tasks-load-more", "")
+                .child(format!("Load {} more", slices::PAGE.min(of - slice.read)))
+                .tip("The next page, in the Backlog’s rank")
+                .on_click(cx.listener(|this, _: &ClickEvent, _, cx| {
+                    this.store.update(cx, |s, cx| {
+                        if let Some(board) = s.board.clone() {
+                            s.load_more(&board, cx);
+                        }
+                    })
+                }))
+        });
+        Some(
+            div()
+                .flex_none()
+                .flex()
+                .items_center()
+                .gap(px(4.))
+                .h(px(40.))
+                .px(px(16.))
+                .border_t_1()
+                .border_color(theme::border())
+                .text_size(px(12.))
+                .text_color(theme::muted())
+                .child("Showing")
+                .child(
+                    div()
+                        .font_weight(FontWeight::SEMIBOLD)
+                        .text_color(theme::text())
+                        .child(slices::grouped(slice.read)),
+                )
+                .child("of")
+                .child(
+                    div()
+                        .font_weight(FontWeight::SEMIBOLD)
+                        .text_color(theme::text())
+                        .child(slices::grouped(of)),
+                )
+                .child(units)
+                .child(div().flex_1())
+                .children(more)
+                .into_any_element(),
+        )
+    }
+
+    /// What the slice shows in place of its issues: one line, one action.
+    fn empty_body(&mut self, empty: &Empty, shown: &Shown, cx: &mut Context<Self>) -> AnyElement {
+        if *empty == Empty::Reading {
+            return skeleton_in_page("tasks-rows", 8).into_any_element();
+        }
+        let unit = item_word(&shown.host);
+        let here = match shown.slice.as_ref().map(|sl| &sl.id) {
+            Some(SliceId::Sprint(_)) => "in this sprint",
+            Some(SliceId::Backlog) => "in the Backlog",
+            Some(SliceId::All) => "in the active sprints",
+            _ => "on this board",
+        };
+        let action = |id: &'static str, words: String| {
+            div()
+                .id(id)
+                .text_size(px(13.))
+                .text_color(theme::accent())
+                .cursor_pointer()
+                .child(words)
+        };
+        let (line, act): (String, Option<AnyElement>) = match empty {
+            Empty::Reading => unreachable!(),
+            Empty::Failed(why) => {
+                let what = match shown.slice.as_ref().map(|sl| &sl.id) {
+                    Some(SliceId::Sprint(_)) => "this sprint",
+                    Some(SliceId::Backlog) => "the Backlog",
+                    _ => "this board",
+                };
+                (
+                    format!("Couldn’t read {what} · {why}"),
+                    Some(self.retry_link(cx)),
+                )
+            }
+            Empty::Unplanned(name) => (
+                format!("Nothing planned in {name} yet"),
+                Some(
+                    action("tasks-plan", "Plan from Backlog".into())
+                        .tip("The Backlog, to move issues in from")
+                        .on_click(cx.listener(|this, _: &ClickEvent, _, cx| {
+                            this.show_slice(SliceId::Backlog, cx)
+                        }))
+                        .into_any_element(),
+                ),
+            ),
+            Empty::Nothing => (format!("No {unit}s {here}"), None),
+            Empty::Hidden { words, people } => {
+                let names = self.people_names(people, shown);
+                let mut said = names.clone();
+                if !words.is_empty() {
+                    said.push(format!("“{words}”"));
+                }
+                // The filter's words are the tab's to clear; the people picked are the page's.
+                let act = (!people.is_empty()).then(|| {
+                    action("tasks-show-everyone", "Show everyone".into())
+                        .on_click(cx.listener(|this, _: &ClickEvent, _, cx| {
+                            this.store.update(cx, |s, cx| {
+                                s.faces.clear();
+                                cx.notify();
+                            })
+                        }))
+                        .into_any_element()
+                });
+                (format!("No {unit} matches {}", said.join(" and ")), act)
+            }
+            Empty::NotYours(count) => (
+                format!("Nothing assigned to you {here}"),
+                Some(
+                    action(
+                        "tasks-all",
+                        match count {
+                            Some(n) => format!(
+                                "Show all {} {unit}{}",
+                                slices::grouped(*n),
+                                if *n == 1 { "" } else { "s" }
+                            ),
+                            None => "Show all".into(),
+                        },
+                    )
+                    .on_click(cx.listener(|this, _: &ClickEvent, _, cx| this.set_mine(false, cx)))
+                    .into_any_element(),
+                ),
+            ),
+        };
+        div()
+            .flex_1()
+            .flex()
+            .flex_col()
+            .items_center()
+            .justify_center()
+            .gap(px(8.))
+            .px(px(24.))
+            .child(
+                div()
+                    .text_size(px(14.))
+                    .font_weight(FontWeight::SEMIBOLD)
+                    .text_color(theme::text())
+                    .child(line),
+            )
+            .children(act)
+            .into_any_element()
+    }
+
+    /// The names of people `ids` on the board's issues (`NONE` Unassigned).
+    fn people_names(&self, ids: &[String], shown: &Shown) -> Vec<String> {
+        (ids.iter())
+            .map(|id| match id.as_str() {
+                NONE => "Unassigned".to_owned(),
+                id => (shown.all.iter())
+                    .find_map(|r| {
+                        r.assignee
+                            .as_ref()
+                            .filter(|p| p.id == id)
+                            .map(|p| p.name.clone())
+                    })
+                    .unwrap_or_else(|| id.to_owned()),
+            })
+            .collect()
     }
 
     fn list_frame(&self) -> Div {
@@ -927,6 +1535,13 @@ impl Page {
 
     /// The list's groups, each with its head and rows.
     fn shelves(&mut self, shown: &Shown, cx: &mut Context<Self>) -> Div {
+        if let Some(rows) = &shown.ranked {
+            let mut out = div().flex().flex_col();
+            for r in rows {
+                out = out.child(self.row(r, shown, cx));
+            }
+            return out;
+        }
         if shown.parts.is_empty() {
             return self.shelf_list(&shown.shelves, shown, cx);
         }
@@ -1077,12 +1692,45 @@ impl Page {
                 done,
                 all,
             } => {
-                let e = self.store.read(cx).epic(e);
+                let s = self.store.read(cx);
+                let e = s.epic(e);
+                let whole = s
+                    .board
+                    .as_ref()
+                    .and_then(|b| s.epic_counts.get(&(b.0.clone(), e.key.clone())))
+                    .and_then(Read::done)
+                    .copied();
+                let here = self.slice_here(cx);
+                let where_else = match whole {
+                    Some(n) => format!(
+                        "{} has {} in all: {all} {here}, {} elsewhere",
+                        e.name,
+                        artoo_plugin_sdk::kit::format::plural(n, "issue"),
+                        n.saturating_sub(*all)
+                    ),
+                    None => format!("{}: {all} {here}; its whole count is being read", e.name),
+                };
                 head.child(look::kind_mark("Epic", false))
                     .child(look::key(&e.key))
                     .child(look::epic_lozenge(&e))
                     .child(div().flex_1())
-                    .child(count(format!("{done} of {all}")))
+                    .child(
+                        div()
+                            .id(SharedString::from(format!("epic-else-{}", e.key)))
+                            .child(
+                                icons::icon("layers")
+                                    .size(px(12.))
+                                    .text_color(theme::muted()),
+                            )
+                            .tip(where_else),
+                    )
+                    .child(
+                        div()
+                            .px(px(6.))
+                            .rounded(px(4.))
+                            .bg(theme::hover())
+                            .child(count(format!("{done} of {all} done"))),
+                    )
                     .child(add(cx, e.name.clone(), Some(e.key.clone()), None))
                     .child(chevron)
             }
@@ -2528,6 +3176,92 @@ mod tests {
             parts[1].rows.len(),
             1,
             "a part's progress counts all it holds"
+        );
+    }
+
+    #[test]
+    fn each_empty_slice_says_why_in_one_line() {
+        let done = Read::Done(());
+        let none = Filter::default();
+        let mine = Filter {
+            mine: true,
+            ..Default::default()
+        };
+        let hidden = Filter {
+            words: "payments".into(),
+            faces: vec!["kestrel".into()],
+            ..Default::default()
+        };
+        let sprint = Some("Sprint 35");
+        // a. an empty sprint
+        assert_eq!(
+            empty_of(Some(&done), sprint, 0, 0, &none, false, Some(0)),
+            Some(Empty::Unplanned("Sprint 35".into()))
+        );
+        // b. Mine empty in a busy sprint
+        assert_eq!(
+            empty_of(Some(&done), sprint, 78, 0, &mine, false, Some(78)),
+            Some(Empty::NotYours(Some(78)))
+        );
+        // c. a filter and a person hiding everything
+        assert_eq!(
+            empty_of(Some(&done), sprint, 78, 0, &hidden, false, Some(78)),
+            Some(Empty::Hidden {
+                words: "payments".into(),
+                people: vec!["kestrel".into()]
+            })
+        );
+        // c. in the Backlog, whose rows are what Jira found for the words
+        assert_eq!(
+            empty_of(Some(&done), None, 0, 0, &hidden, true, Some(300)),
+            Some(Empty::Hidden {
+                words: "payments".into(),
+                people: vec!["kestrel".into()]
+            })
+        );
+        // e. being read, none yet; then some shown
+        let reading = Read::Reading;
+        assert_eq!(
+            empty_of(Some(&reading), sprint, 0, 0, &none, false, Some(78)),
+            Some(Empty::Reading)
+        );
+        assert_eq!(
+            empty_of(Some(&reading), None, 0, 0, &hidden, true, None),
+            Some(Empty::Reading)
+        );
+        assert_eq!(
+            empty_of(Some(&reading), sprint, 31, 31, &none, false, Some(78)),
+            None
+        );
+        // f. not read, none read before
+        let failed = Read::Failed("Jira answered 504".into());
+        assert_eq!(
+            empty_of(Some(&failed), sprint, 0, 0, &none, false, None),
+            Some(Empty::Failed("Jira answered 504".into()))
+        );
+        // An empty Backlog or board
+        assert_eq!(
+            empty_of(Some(&done), None, 0, 0, &none, true, Some(0)),
+            Some(Empty::Nothing)
+        );
+    }
+
+    #[test]
+    fn a_board_without_sprints_leads_with_its_name_and_no_picker() {
+        let mut info = info();
+        assert_eq!(
+            lead_words("Payments", &info, Some("Sprint 34")),
+            Lead::Picker("Sprint 34".into())
+        );
+        assert_eq!(
+            lead_words("Trello", &info, None),
+            Lead::Board("Trello".into())
+        );
+        info.sprintless = true;
+        info.sprints.clear();
+        assert_eq!(
+            lead_words("Platform", &info, Some("")),
+            Lead::Board("Platform".into())
         );
     }
 
