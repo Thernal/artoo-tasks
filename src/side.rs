@@ -2,6 +2,7 @@
 //! site not reached saying so with when its boards were read; `+` connecting another, a host's menu leaving it; a
 //! filter over them (⌘P); Drafts at the foot, with how many.
 
+use crate::keep::KeptSlice;
 use crate::model::{Board, BoardId};
 use crate::page::{INPUT_BOARDS, Page, SPACE};
 use crate::store::{Read, Store};
@@ -187,41 +188,62 @@ pub fn side(page: &Entity<Page>, width: f32, cx: &mut App) -> Option<AnyElement>
                     let (id, store, frame, page) =
                         (b.key(), store.clone(), frame.clone(), page.clone());
                     let on = !drafts_on && s.board.as_ref() == Some(&id);
-                    body =
-                        body.child(
-                            artoo_plugin_sdk::kit::row(
-                                SharedString::from(format!("board-{}-{}", b.site, b.id)),
-                                on,
-                            )
-                            .h(px(28.))
-                            .gap(px(8.))
-                            .child(
-                                icons::icon("layers")
-                                    .size(px(14.))
-                                    .text_color(theme::muted()),
-                            )
-                            .child(
+                    let key = b.project.clone().filter(|_| keys);
+                    let left = s.kept.slices.get(&id).and_then(left_on);
+                    let mut tip = b.name.clone();
+                    if let Some(k) = &key {
+                        tip = format!("{tip} · {k}");
+                    }
+                    if let Some(left) = &left {
+                        tip = format!("{tip} · {}", left.words());
+                    }
+                    let name = div()
+                        .text_size(px(13.))
+                        .text_color(theme::text())
+                        .truncate()
+                        .child(b.name.clone());
+                    let row = artoo_plugin_sdk::kit::row(
+                        SharedString::from(format!("board-{}-{}", b.site, b.id)),
+                        on,
+                    )
+                    .gap(px(8.))
+                    .child(
+                        icons::icon("layers")
+                            .size(px(14.))
+                            .text_color(theme::muted())
+                            .when(left.is_some(), |i| i.mt(px(2.))),
+                    );
+                    // Where the board was left, on a line of its own: the slice's name cut, its count whole.
+                    let row = match &left {
+                        Some(left) => row.h(px(44.)).items_start().py(px(6.)).child(
+                            div().flex_1().min_w_0().child(name).child(
                                 div()
-                                    .flex_1()
-                                    .min_w_0()
-                                    .text_size(px(13.))
-                                    .text_color(theme::text())
-                                    .truncate()
-                                    .child(b.name.clone()),
-                            )
+                                    .flex()
+                                    .gap(px(6.))
+                                    .mt(px(1.))
+                                    .text_size(px(11.))
+                                    .text_color(theme::faint())
+                                    .children((!left.name.is_empty()).then(|| {
+                                        div().min_w_0().truncate().child(left.name.clone())
+                                    }))
+                                    .children(
+                                        (left.count.clone()).map(|n| div().flex_none().child(n)),
+                                    ),
+                            ),
+                        ),
+                        None => row.h(px(28.)).child(name.flex_1().min_w_0()),
+                    };
+                    body = body.child(
+                        row
                             // A tracker without project keys (Trello: the board's own short link) shows none.
-                            .children(b.project.clone().filter(|_| keys).map(|k| {
-                                div().text_size(px(11.)).text_color(theme::faint()).child(k)
+                            .children(key.map(|k| {
+                                div()
+                                    .text_size(px(11.))
+                                    .text_color(theme::faint())
+                                    .when(left.is_some(), |k| k.mt(px(3.)))
+                                    .child(k)
                             }))
-                            .tip(format!(
-                                "{}{}",
-                                b.name,
-                                b.project
-                                    .as_ref()
-                                    .filter(|_| keys)
-                                    .map(|k| format!(" · {k}"))
-                                    .unwrap_or_default()
-                            ))
+                            .tip(tip)
                             .on_click(move |_, _, cx| {
                                 page.update(cx, |p, cx| {
                                     p.drafts = false;
@@ -230,7 +252,7 @@ pub fn side(page: &Entity<Page>, width: f32, cx: &mut App) -> Option<AnyElement>
                                 store.update(cx, |s, cx| s.pick_board(id.clone(), cx));
                                 frame.go_space(SPACE, cx);
                             }),
-                        );
+                    );
                 }
             }
         }
@@ -384,6 +406,37 @@ fn lately(recent: &[BoardId], b: &Board) -> usize {
     (recent.iter().position(|r| *r == key)).unwrap_or(usize::MAX)
 }
 
+/// Where a board was left, as its row in Boards says it.
+#[derive(Debug, PartialEq)]
+struct Left {
+    /// The slice's name as the tracker names it; empty for a board without sprints, read whole.
+    name: String,
+    /// `78 issues`, as of the slice's last read.
+    count: Option<String>,
+}
+
+impl Left {
+    /// The tooltip's part: the slice's whole name and its count.
+    fn words(&self) -> String {
+        let at = (!self.name.is_empty()).then(|| format!("opens on {}", self.name));
+        at.into_iter()
+            .chain(self.count.clone())
+            .collect::<Vec<_>>()
+            .join(" · ")
+    }
+}
+
+/// `None` for a board never opened, or opened and never counted on a slice without a name: its name alone shows.
+fn left_on(kept: &KeptSlice) -> Option<Left> {
+    let count = kept
+        .count
+        .map(|n| format!("{n} {}", if n == 1 { "issue" } else { "issues" }));
+    (!kept.name.is_empty() || count.is_some()).then(|| Left {
+        name: kept.name.clone(),
+        count,
+    })
+}
+
 /// The boards the side panel shows for project `project` with `typed` in its filter, in its order: by site, as the
 /// sites are kept, each site's opened lately first.
 fn shown_boards(s: &Store, project: &str, typed: &str) -> Vec<Board> {
@@ -469,5 +522,27 @@ mod tests {
         for typed in ["ledger", "pay ledger"] {
             assert!(!matches(&b, typed), "{typed}");
         }
+    }
+
+    #[test]
+    fn a_board_shows_where_it_was_left_and_never_opened_its_name_alone() {
+        let kept = |name: &str, count| KeptSlice {
+            slice: "sprint:34".into(),
+            name: name.into(),
+            count,
+        };
+        let sprint = left_on(&kept("Sprint 34", Some(78))).unwrap();
+        assert_eq!(sprint.count.as_deref(), Some("78 issues"));
+        assert_eq!(sprint.words(), "opens on Sprint 34 · 78 issues");
+        let whole = left_on(&kept("", Some(1))).unwrap();
+        assert_eq!(
+            (whole.name.as_str(), whole.words().as_str()),
+            ("", "1 issue")
+        );
+        assert_eq!(
+            left_on(&kept("Backlog", None)).unwrap().words(),
+            "opens on Backlog"
+        );
+        assert_eq!(left_on(&kept("", None)), None);
     }
 }
