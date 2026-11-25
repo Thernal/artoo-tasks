@@ -18,6 +18,7 @@ use artoo_plugin_sdk::kit::hover::Hover;
 use artoo_plugin_sdk::kit::{controls, icons, markdown, px, theme};
 use artoo_plugin_sdk::shell::MenuItem;
 use std::collections::HashSet;
+use std::rc::Rc;
 
 /// Who the people filter picks, by person id; `NONE` for Unassigned.
 pub const NONE: &str = "-";
@@ -523,7 +524,127 @@ fn slice_shown(sl: &Slices, info: &BoardInfo) -> Option<SliceShown> {
     })
 }
 
+/// How long a group may be to fold moving: a longer one is drawn a line at a time, and opens and shuts at once.
+const FOLDS_MOVING: usize = 40;
+
+/// A line of the list: a sprint's head among the active ones, a group's head, a row of a group or of the ranked
+/// Backlog, or a part's or a group's rows whole while they fold. `Option` is the sprint's part, if any.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum Line {
+    Sprint(usize),
+    Head(Option<usize>, usize),
+    Row(Option<usize>, usize, usize),
+    Ranked(usize),
+    PartFolding(usize),
+    Folding(Option<usize>, usize),
+}
+
+/// The name of issue `key`'s line.
+pub fn row_line(key: &str) -> String {
+    format!("row-{key}")
+}
+
+/// The list's lines in order, each with the name it keeps from one read to the next.
+pub fn list_lines(
+    shown: &Shown,
+    folded: &dyn Fn(&str) -> bool,
+    moving: &dyn Fn(&str) -> bool,
+) -> Vec<(String, Line)> {
+    let mut out = Vec::new();
+    if let Some(rows) = &shown.ranked {
+        out.extend((rows.iter().enumerate()).map(|(i, r)| (row_line(&r.key), Line::Ranked(i))));
+    } else if shown.parts.is_empty() {
+        shelf_lines(&mut out, None, &shown.shelves, folded, moving);
+    } else {
+        for (p, part) in shown.parts.iter().enumerate() {
+            let id = part_id(part.sprint.id);
+            out.push((id.clone(), Line::Sprint(p)));
+            let key = format!("shelf-{id}");
+            if moving(&key) && part.rows.len() <= FOLDS_MOVING {
+                out.push((format!("fold-{id}"), Line::PartFolding(p)));
+            } else if !folded(&id) {
+                shelf_lines(&mut out, Some(p), &part.shelves, folded, moving);
+            }
+        }
+    }
+    out
+}
+
+fn shelf_lines(
+    out: &mut Vec<(String, Line)>,
+    part: Option<usize>,
+    shelves: &[Shelf],
+    folded: &dyn Fn(&str) -> bool,
+    moving: &dyn Fn(&str) -> bool,
+) {
+    for (s, shelf) in shelves.iter().enumerate() {
+        // A story's head is its row.
+        let head = match &shelf.head {
+            Head::Story { row, .. } => row_line(&row.key),
+            _ => format!("head-{}", shelf.id),
+        };
+        out.push((head, Line::Head(part, s)));
+        if moving(&format!("shelf-{}", shelf.id)) && shelf.rows.len() <= FOLDS_MOVING {
+            out.push((format!("fold-{}", shelf.id), Line::Folding(part, s)));
+        } else if !folded(&shelf.id) {
+            out.extend(
+                (shelf.rows.iter().enumerate())
+                    .map(|(r, row)| (row_line(&row.key), Line::Row(part, s, r))),
+            );
+        }
+    }
+}
+
+/// A line of the swimlanes, by its group: the lane whole, or a long lane's head and then its nth cards across.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum LaneLine {
+    Whole(usize),
+    Head(usize),
+    Cards(usize, usize),
+}
+
+/// How many cards the lane's longest column holds.
+fn deepest(shelf: &Shelf, info: &BoardInfo) -> usize {
+    let mut held = vec![0; info.columns.len()];
+    for r in &shelf.rows {
+        if let Some(n) = held.get_mut(info.column_of(&r.state)) {
+            *n += 1;
+        }
+    }
+    held.into_iter().max().unwrap_or(0)
+}
+
+/// The swimlanes' lines. A lane no deeper than a screen or two is one line; a deeper one is cut into a line for each
+/// card down its columns, so only those on screen are drawn, and it opens and shuts at once.
+pub fn lane_lines(shown: &Shown, folded: &dyn Fn(&str) -> bool) -> Vec<(String, LaneLine)> {
+    let mut out = Vec::new();
+    for (s, shelf) in shown.shelves.iter().enumerate() {
+        let deep = deepest(shelf, &shown.info);
+        let long = deep > FOLDS_MOVING / 2;
+        let lane = format!("lane-{}", shelf.id);
+        if !long {
+            out.push((lane, LaneLine::Whole(s)));
+            continue;
+        }
+        out.push((lane, LaneLine::Head(s)));
+        if !folded(&shelf.id) {
+            out.extend(
+                (0..deep).map(|n| (format!("lane-{}-{n}", shelf.id), LaneLine::Cards(s, n))),
+            );
+        }
+    }
+    out
+}
+
 impl Shown {
+    /// The groups of sprint part `part`, or the list's own.
+    fn shelves_of(&self, part: Option<usize>) -> Option<&[Shelf]> {
+        match part {
+            Some(p) => self.parts.get(p).map(|p| p.shelves.as_slice()),
+            None => Some(&self.shelves),
+        }
+    }
+
     /// The rows in the order the list draws them, folded groups left out: what ↑ ↓ walk.
     pub fn order(&self, folded: &dyn Fn(&str) -> bool) -> Vec<String> {
         if let Some(rows) = &self.ranked {
@@ -651,6 +772,11 @@ impl Page {
     }
 
     fn fold(&mut self, id: &str, cx: &mut Context<Self>) {
+        // An open group's rows are drawn each by itself: the fold learns it was open, to move as it shuts.
+        let open = !self.folded(id);
+        for key in [format!("shelf-{id}"), format!("lane-{id}")] {
+            self.folds.shutting(&key, open);
+        }
         if done_group(id) {
             if !self.unfolded.remove(id) {
                 self.unfolded.insert(id.to_owned());
@@ -1088,7 +1214,12 @@ impl Page {
     pub fn board(&mut self, cx: &mut Context<Self>) -> AnyElement {
         let s = self.store.read(cx);
         let board = s.picked().cloned();
-        let rows_read = s.board.as_ref().and_then(|b| s.rows.get(b)).cloned();
+        let rows_read = match s.board.as_ref().and_then(|b| s.rows.get(b)) {
+            Some(Read::Done(_)) => Some(Read::Done(())),
+            Some(Read::Failed(why)) => Some(Read::Failed(why.clone())),
+            Some(Read::Reading) => Some(Read::Reading),
+            None => None,
+        };
         // A board read by slice draws its facts line whatever its slice's read: the other slices stay a click away.
         let by_slice = s.board_slices().is_some_and(|sl| sl.view.is_some());
         let stale = self.stale(cx);
@@ -1118,7 +1249,7 @@ impl Page {
             }
             Some(Read::Done(_)) => {}
         }
-        let Some(shown) = self.board_shown(cx) else {
+        let Some(shown) = self.board_shown(cx).map(Rc::new) else {
             return self.page_frame().into_any_element();
         };
         self.ask_slice(&shown, cx);
@@ -1166,7 +1297,7 @@ impl Page {
                 .children(head)
                 .children(banner)
                 .children(note)
-                .child(self.columns(&shown, cx))
+                .child(self.columns(shown.clone(), cx))
                 .children(selection)
                 .children(foot)
                 .into_any_element();
@@ -1177,15 +1308,7 @@ impl Page {
             .children(head)
             .children(banner)
             .children(note)
-            .child(
-                div()
-                    .id("tasks-rows")
-                    .flex_1()
-                    .min_h_0()
-                    .overflow_y_scroll()
-                    .track_scroll(&self.rows_scroll)
-                    .child(self.shelves(&shown, cx)),
-            )
+            .child(self.list_body(shown.clone(), cx))
             .children(selection)
             .children(foot)
             .into_any_element();
@@ -1536,42 +1659,77 @@ impl Page {
             .bg(theme::editor())
     }
 
-    /// The list's groups, each with its head and rows.
-    fn shelves(&mut self, shown: &Shown, cx: &mut Context<Self>) -> Div {
-        if let Some(rows) = &shown.ranked {
-            let mut out = div().flex().flex_col();
-            for r in rows {
-                out = out.child(self.row(r, shown, cx));
-            }
-            return out;
-        }
-        if shown.parts.is_empty() {
-            return self.shelf_list(&shown.shelves, shown, cx);
-        }
-        let mut out = div().flex().flex_col();
-        let unit = item_word(&shown.host);
-        for part in &shown.parts {
-            let id = part_id(part.sprint.id);
-            let folded = self.folded(&id);
-            out = out.child(self.sprint_head(
-                &part.sprint,
-                &part.rows,
-                part.count,
-                unit,
-                Some(folded),
-                cx,
-            ));
-            let key = format!("shelf-{id}");
-            if folded && !self.motion.recent(&key) {
-                continue;
-            }
-            let groups = self.shelf_list(&part.shelves, shown, cx);
-            out = out.children(self.folding(&key, !folded, groups));
-        }
-        out
+    /// The list's groups, each with its head and rows: of them, what is on screen.
+    fn list_body(&mut self, shown: Rc<Shown>, cx: &mut Context<Self>) -> AnyElement {
+        let lines = list_lines(&shown, &|id| self.folded(id), &|key| {
+            self.motion.recent(key)
+        });
+        let (ids, lines): (Vec<_>, Vec<_>) = lines.into_iter().unzip();
+        let state = self.list_lines.show(ids);
+        let draw = cx.processor(
+            move |this: &mut Self, ix: usize, _, cx| match lines.get(ix) {
+                Some(line) => div()
+                    .w_full()
+                    .flex()
+                    .flex_col()
+                    .children(this.list_line(&shown, *line, cx))
+                    .into_any_element(),
+                None => div().into_any_element(),
+            },
+        );
+        gpui::list(state, draw)
+            .flex_1()
+            .min_h_0()
+            .into_any_element()
     }
 
-    /// Groups `shelves`, each with its head and rows.
+    fn list_line(
+        &mut self,
+        shown: &Shown,
+        line: Line,
+        cx: &mut Context<Self>,
+    ) -> Option<AnyElement> {
+        let unit = item_word(&shown.host);
+        Some(match line {
+            Line::Sprint(p) => {
+                let part = shown.parts.get(p)?;
+                let folded = self.folded(&part_id(part.sprint.id));
+                self.sprint_head(&part.sprint, &part.rows, part.count, unit, Some(folded), cx)
+            }
+            Line::Head(p, s) => {
+                let shelf = shown.shelves_of(p)?.get(s)?;
+                let folded = self.folded(&shelf.id);
+                self.shelf_head(shelf, folded, cx)
+            }
+            Line::Row(p, s, r) => {
+                let row = shown.shelves_of(p)?.get(s)?.rows.get(r)?;
+                self.row(row, shown, cx)
+            }
+            Line::Ranked(r) => self.row(shown.ranked.as_ref()?.get(r)?, shown, cx),
+            Line::PartFolding(p) => {
+                let id = part_id(shown.parts.get(p)?.sprint.id);
+                let folded = self.folded(&id);
+                let groups = self.shelf_list(&shown.parts[p].shelves, shown, cx);
+                return self.folding(&format!("shelf-{id}"), !folded, groups);
+            }
+            Line::Folding(p, s) => {
+                let shelf = shown.shelves_of(p)?.get(s)?;
+                let folded = self.folded(&shelf.id);
+                let rows = self.shelf_rows(shelf, shown, cx);
+                return self.folding(&format!("shelf-{}", shelf.id), !folded, rows);
+            }
+        })
+    }
+
+    fn shelf_rows(&mut self, shelf: &Shelf, shown: &Shown, cx: &mut Context<Self>) -> Div {
+        let mut rows = div().flex().flex_col();
+        for r in &shelf.rows {
+            rows = rows.child(self.row(r, shown, cx));
+        }
+        rows
+    }
+
+    /// Groups `shelves`, each with its head and rows, drawn whole: a part folding.
     fn shelf_list(&mut self, shelves: &[Shelf], shown: &Shown, cx: &mut Context<Self>) -> Div {
         let mut out = div().flex().flex_col();
         for shelf in shelves {
@@ -1582,10 +1740,7 @@ impl Page {
             if folded && !self.motion.recent(&key) {
                 continue;
             }
-            let mut rows = div().flex().flex_col();
-            for r in &shelf.rows {
-                rows = rows.child(self.row(r, shown, cx));
-            }
+            let rows = self.shelf_rows(shelf, shown, cx);
             out = out.children(self.folding(&key, !folded, rows));
         }
         out
@@ -2118,7 +2273,7 @@ impl Page {
 
     /// The board's columns side by side, each with its cards; grouped by story or epic, a lane for each across
     /// them (`lanes`).
-    fn columns(&mut self, shown: &Shown, cx: &mut Context<Self>) -> AnyElement {
+    fn columns(&mut self, shown: Rc<Shown>, cx: &mut Context<Self>) -> AnyElement {
         if shown.group != Group::State {
             return self.lanes(shown, cx);
         }
@@ -2131,29 +2286,48 @@ impl Page {
             .p(px(10.))
             .overflow_x_scroll();
         for (ix, shelf) in shown.shelves.iter().enumerate() {
-            let Head::State { name, state } = &shelf.head else {
+            let Head::State { name, .. } = &shelf.head else {
                 continue;
             };
-            let mut col = div()
-                .id(SharedString::from(format!("col-{ix}")))
-                .flex_1()
-                .min_w(px(180.))
-                .flex()
-                .flex_col()
-                .gap(px(6.))
-                .p(px(6.))
-                .rounded(px(8.))
-                .bg(theme::base())
-                .overflow_y_scroll()
-                .drag_over::<Dragged>(|d, _, _, _| d.bg(theme::hover()))
-                .on_drop(
-                    cx.listener(move |this, d: &Dragged, _, cx| this.drop_card(&d.key, ix, cx)),
-                )
-                .child(self.column_head(ix, name, state, shelf.rows.len(), cx));
-            for r in &shelf.rows {
-                col = col.child(self.card(r, state.done(), shown, cx));
-            }
-            cols = cols.child(col);
+            // The head scrolls with the cards, as the first line.
+            let ids = std::iter::once(String::new())
+                .chain(shelf.rows.iter().map(|r| row_line(&r.key)))
+                .collect();
+            let state = self.column_lines.entry(name.clone()).or_default().show(ids);
+            let of = shown.clone();
+            let draw = cx.processor(move |this: &mut Self, line: usize, _, cx| {
+                let cell = div().w_full().flex().flex_col().pb(px(6.));
+                let Some(shelf) = of.shelves.get(ix) else {
+                    return cell.into_any_element();
+                };
+                let Head::State { name, state } = &shelf.head else {
+                    return cell.into_any_element();
+                };
+                match line.checked_sub(1) {
+                    None => cell.child(this.column_head(ix, name, state, shelf.rows.len(), cx)),
+                    Some(r) => cell
+                        .children((shelf.rows.get(r)).map(|r| this.card(r, state.done(), &of, cx))),
+                }
+                .into_any_element()
+            });
+            cols = cols.child(
+                div()
+                    .id(SharedString::from(format!("col-{ix}")))
+                    .flex_1()
+                    .min_w(px(180.))
+                    .flex()
+                    .flex_col()
+                    .overflow_hidden()
+                    .p(px(6.))
+                    .pb(px(0.))
+                    .rounded(px(8.))
+                    .bg(theme::base())
+                    .drag_over::<Dragged>(|d, _, _, _| d.bg(theme::hover()))
+                    .on_drop(
+                        cx.listener(move |this, d: &Dragged, _, cx| this.drop_card(&d.key, ix, cx)),
+                    )
+                    .child(gpui::list(state, draw).flex_1().min_h_0()),
+            );
         }
         cols.into_any_element()
     }
@@ -2214,7 +2388,7 @@ impl Page {
     /// Grouped by story or epic, as Jira's swimlanes: the columns' heads across the top, then a lane for each group
     /// of the list — its head across the columns, its cards in each, folding as the list's group does —, Other
     /// issues or No epic last.
-    fn lanes(&mut self, shown: &Shown, cx: &mut Context<Self>) -> AnyElement {
+    fn lanes(&mut self, shown: Rc<Shown>, cx: &mut Context<Self>) -> AnyElement {
         let columns = shown.info.columns.clone();
         let states: Vec<State> = (0..columns.len())
             .map(|ix| column_state(&shown.info, shown.all.iter(), ix))
@@ -2236,41 +2410,16 @@ impl Page {
                 cx,
             )));
         }
-        let mut body = div()
-            .id("tasks-lanes")
-            .flex_1()
-            .min_h_0()
-            .flex()
-            .flex_col()
-            .gap(px(8.))
-            .pb(px(10.))
-            .overflow_y_scroll();
-        for shelf in &shown.shelves {
-            let folded = self.folded(&shelf.id);
-            let key = format!("lane-{}", shelf.id);
-            let mut lane = div()
-                .flex_none()
-                .flex()
-                .flex_col()
-                .px(px(6.))
-                .pb(px(6.))
-                .rounded(px(8.))
-                .bg(theme::base())
-                .child(self.lane_head(shelf, folded, shown, cx));
-            // Its cards fold in and out moving; folded and still, they are not drawn.
-            if !folded || self.motion.recent(&key) {
-                let mut cells = div().flex().gap(px(8.));
-                for (ix, state) in states.iter().enumerate() {
-                    let mut cell = div().flex_1().min_w(px(180.)).flex().flex_col().gap(px(6.));
-                    for r in shelf.rows.iter().filter(|r| col(r) == ix) {
-                        cell = cell.child(self.card(r, state.done(), shown, cx));
-                    }
-                    cells = cells.child(cell);
-                }
-                lane = lane.children(self.folding(&key, !folded, cells));
-            }
-            body = body.child(lane);
-        }
+        let lines = lane_lines(&shown, &|id| self.folded(id));
+        let (ids, lines): (Vec<_>, Vec<_>) = lines.into_iter().unzip();
+        let state = self.lane_lines.show(ids);
+        let draw = cx.processor(
+            move |this: &mut Self, ix: usize, _, cx| match lines.get(ix) {
+                Some(line) => this.lane_line(&shown, &states, *line, cx),
+                None => div().into_any_element(),
+            },
+        );
+        let body = gpui::list(state, draw).flex_1().min_h_0().pb(px(2.));
         div()
             .id("tasks-lanes-across")
             .flex_1()
@@ -2291,6 +2440,76 @@ impl Page {
                     .child(heads)
                     .child(body),
             )
+            .into_any_element()
+    }
+
+    /// A line of the swimlanes: a lane whole, or a long lane's head and its cards a row across the columns at a
+    /// time, each drawn as its part of the lane's box.
+    fn lane_line(
+        &mut self,
+        shown: &Shown,
+        states: &[State],
+        line: LaneLine,
+        cx: &mut Context<Self>,
+    ) -> AnyElement {
+        let (LaneLine::Whole(s) | LaneLine::Head(s) | LaneLine::Cards(s, _)) = line;
+        let Some(shelf) = shown.shelves.get(s) else {
+            return div().into_any_element();
+        };
+        let column =
+            |ix: usize| (shelf.rows.iter()).filter(move |r| shown.info.column_of(&r.state) == ix);
+        let part = div()
+            .flex_none()
+            .flex()
+            .flex_col()
+            .px(px(6.))
+            .bg(theme::base());
+        let folded = self.folded(&shelf.id);
+        let cell = || div().flex_1().min_w(px(180.)).flex().flex_col().gap(px(6.));
+        let (lane, last) = match line {
+            LaneLine::Whole(_) => {
+                let mut lane = (part.pb(px(6.)).rounded(px(8.)))
+                    .child(self.lane_head(shelf, folded, shown, cx));
+                // Its cards fold in and out moving; folded and still, they are not drawn.
+                let key = format!("lane-{}", shelf.id);
+                if !folded || self.motion.recent(&key) {
+                    let mut cells = div().flex().gap(px(8.));
+                    for (ix, state) in states.iter().enumerate() {
+                        let mut cards = cell();
+                        for r in column(ix) {
+                            cards = cards.child(self.card(r, state.done(), shown, cx));
+                        }
+                        cells = cells.child(cards);
+                    }
+                    lane = lane.children(self.folding(&key, !folded, cells));
+                }
+                (lane, true)
+            }
+            LaneLine::Head(_) => {
+                let lane = (part.rounded_t(px(8.)))
+                    .when(folded, |d| d.pb(px(6.)).rounded_b(px(8.)))
+                    .child(self.lane_head(shelf, folded, shown, cx));
+                (lane, folded)
+            }
+            LaneLine::Cards(_, at) => {
+                let mut cells = div().flex().gap(px(8.));
+                for (ix, state) in states.iter().enumerate() {
+                    let card = column(ix).nth(at);
+                    cells = cells.child(
+                        cell().children(card.map(|r| self.card(r, state.done(), shown, cx))),
+                    );
+                }
+                let last = at + 1 == deepest(shelf, &shown.info);
+                let lane = part.pb(px(6.)).when(last, |d| d.rounded_b(px(8.)));
+                (lane.child(cells), last)
+            }
+        };
+        div()
+            .w_full()
+            .flex()
+            .flex_col()
+            .when(last, |d| d.pb(px(8.)))
+            .child(lane)
             .into_any_element()
     }
 
@@ -3493,5 +3712,52 @@ mod tests {
         let rows = vec![row("PAY-1", "todo", "new", None), later, epic];
         let keys: Vec<&str> = in_play(&rows).iter().map(|r| r.key.as_str()).collect();
         assert_eq!(keys, ["PAY-1", "PAY-500"]);
+    }
+
+    /// Only the lines on screen are drawn, so the list is a line for each head and row.
+    #[test]
+    fn the_list_is_a_line_for_each_head_and_row_and_a_folded_group_has_its_head_alone() {
+        let rows = [
+            row("A-1", "todo", "new", None),
+            row("A-2", "todo", "new", None),
+            row("A-3", "done", "done", None),
+        ];
+        let play: Vec<&Row> = rows.iter().collect();
+        let info = info();
+        let shown = Shown {
+            host: String::new(),
+            slice: None,
+            parts: Vec::new(),
+            ranked: None,
+            empty: None,
+            board_name: String::new(),
+            shelves: shelves(&play, &info, Group::State, &Filter::default(), None),
+            info,
+            all: rows.to_vec(),
+            me: None,
+            group: Group::State,
+            columns: false,
+            count: 3,
+            subtasks: 0,
+            people_picked: Vec::new(),
+        };
+        let still = |_: &str| false;
+        let lines = list_lines(&shown, &|id| id == "state:Done", &still);
+        let names: Vec<&str> = lines.iter().map(|(n, _)| n.as_str()).collect();
+        assert_eq!(
+            names,
+            [
+                "head-state:To do",
+                "row-A-1",
+                "row-A-2",
+                "head-state:In progress",
+                "head-state:Done"
+            ]
+        );
+        // A group short enough to move is one line while it folds.
+        let moving = list_lines(&shown, &|_| false, &|key| key == "shelf-state:To do");
+        assert_eq!(moving[1].1, Line::Folding(None, 0));
+        // A lane longer than the screen is a head and a line for each card down it.
+        assert_eq!(deepest(&shown.shelves[0], &shown.info), 2);
     }
 }

@@ -18,6 +18,7 @@ mod flights;
 mod issue;
 mod jira;
 mod keep;
+mod lines;
 mod links;
 mod look;
 mod model;

@@ -4,7 +4,9 @@
 //! page bar in `side.rs` and `bar.rs`.
 
 use crate::agents::{self as places_of, ISSUE};
+use crate::board::row_line;
 use crate::keep::{Group, View};
+use crate::lines::Lines;
 use crate::model::BoardId;
 use crate::store::{Ask, Read, Store};
 use artoo_plugin_sdk::agents::places;
@@ -18,7 +20,7 @@ use artoo_plugin_sdk::gpui::{
 use artoo_plugin_sdk::kit::composer::{Compose, ComposeAct, Look, Short, Target, Typed as Written};
 use artoo_plugin_sdk::kit::{controls, icons, markdown, motion, px, room, theme};
 use artoo_plugin_sdk::shell::{Frame, MenuItem, Typed};
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::rc::Rc;
 use std::time::Duration;
 
@@ -214,7 +216,10 @@ pub struct Page {
     /// The drafts on screen in place of the board, the one picked.
     pub drafts: bool,
     pub draft_pick: Option<u64>,
-    pub rows_scroll: ScrollHandle,
+    /// The list's lines, the swimlanes' and each column's cards (by the column's name), each drawn as far as seen.
+    pub list_lines: Lines,
+    pub lane_lines: Lines,
+    pub column_lines: HashMap<String, Lines>,
     pub issue_scroll: ScrollHandle,
     /// The issue page's composers and fields.
     pub issue: crate::issue::IssueState,
@@ -277,7 +282,9 @@ impl Page {
             workflow: None,
             drafts: false,
             draft_pick: None,
-            rows_scroll: ScrollHandle::new(),
+            list_lines: Lines::default(),
+            lane_lines: Lines::default(),
+            column_lines: HashMap::new(),
             issue_scroll: ScrollHandle::new(),
             issue: Default::default(),
             sheet: None,
@@ -437,7 +444,7 @@ impl Page {
         };
         if let Some(key) = order.get(next).cloned() {
             self.pick_row(&key, cx);
-            self.rows_scroll.scroll_to_item(next);
+            self.list_lines.reveal(&row_line(&key));
         }
     }
 
