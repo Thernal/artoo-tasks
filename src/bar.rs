@@ -9,7 +9,7 @@ use crate::page::Page;
 use artoo_plugin_sdk::core::route::Route;
 use artoo_plugin_sdk::gpui::{self, App, Entity, IntoElement, Stateful, div, prelude::*};
 use artoo_plugin_sdk::kit::hover::Hover;
-use artoo_plugin_sdk::kit::{controls, icons, px, theme};
+use artoo_plugin_sdk::kit::{controls, fresh, icons, px, theme};
 use artoo_plugin_sdk::shell::bar::BarAction;
 use artoo_plugin_sdk::shell::{BarParts, MenuItem, PagePath, PathUp};
 
@@ -133,25 +133,44 @@ pub fn bar(page: &Entity<Page>, route: Option<&Route>, cx: &mut App) -> Option<B
         .site_of(&board.site)
         .map(|site| model::board_url(&site, &board.id));
     let count = |n: Option<usize>| n.map(|n| format!(" {n}")).unwrap_or_default();
+    // While the first read runs, a count not known yet is a tint in its place.
+    let reading = s.reading_shown();
+    let unknown = |n: Option<usize>| {
+        (n.is_none() && reading).then(|| div().ml(px(4.)).child(fresh::tint(px(10.).into(), 12.)))
+    };
+    let slot = s.slot();
     let (m1, m2) = (page.clone(), page.clone());
     let tabs = controls::group()
         .child(
             controls::chip("tasks-mine", format!("Mine{}", count(mine_n)), mine)
+                .flex()
+                .items_center()
+                .children(unknown(mine_n))
                 .tip("Your issues  ⌃⇥")
                 .on_click(move |_, _, cx| m1.update(cx, |p, cx| p.set_mine(true, cx))),
         )
         .child(
             controls::chip("tasks-all", format!("All{}", count(all_n)), !mine)
+                .flex()
+                .items_center()
+                .children(unknown(all_n))
                 .tip("Everyone’s issues  ⌃⇥")
                 .on_click(move |_, _, cx| m2.update(cx, |p, cx| p.set_mine(false, cx))),
         );
     let faces = page.update(cx, |p, cx| p.faces(cx));
+    let on_slot = page.clone();
+    let slot = slot.map(|slot| {
+        page.read(cx).fresh.slot(slot, move |action, cx| {
+            on_slot.update(cx, |p, cx| p.slot_clicked(action, cx))
+        })
+    });
     let view = div()
         .flex()
         .items_center()
         .gap(px(10.))
         .child(tabs)
         .children(faces)
+        .children(slot)
         .into_any_element();
     let (v1, v2, v3) = (page.clone(), page.clone(), page.clone());
     let layout = controls::group()

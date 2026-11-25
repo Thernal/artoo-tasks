@@ -19,6 +19,7 @@ use artoo_plugin_sdk::gpui::{
     ScrollHandle, Window, div, prelude::*,
 };
 use artoo_plugin_sdk::kit::composer::{Compose, ComposeAct, Look, Short, Target, Typed as Written};
+use artoo_plugin_sdk::kit::fresh::SlotAction;
 use artoo_plugin_sdk::kit::{controls, icons, markdown, motion, px, room, theme};
 use artoo_plugin_sdk::shell::{Frame, MenuItem, Typed, spaces};
 use std::cell::RefCell;
@@ -247,6 +248,8 @@ pub struct Page {
     pub selected: Vec<String>,
     /// Whether the tab's window is in front: what is on screen is read again each minute only while it is.
     pub front: bool,
+    /// The board's freshness slot, hairline and skeleton, as they move between frames (round 41).
+    pub fresh: crate::fresh::Freshness,
     /// Whether this tab's agents tell the page of their notes (`watch_notes`).
     notes_watched: bool,
     /// The issue pages this tab said hold a note not sent: the menu's rows that wear the note's dot.
@@ -320,6 +323,7 @@ impl Page {
             undo_sprint: None,
             selected: Vec::new(),
             front: true,
+            fresh: Default::default(),
             notes_watched: false,
             noted: Rc::default(),
         }
@@ -404,6 +408,28 @@ impl Page {
     /// The issue or the board on screen read again, quietly.
     pub fn refresh(&mut self, cx: &mut Context<Self>) {
         self.read_shown(Ask::Refresh, cx);
+    }
+
+    /// The board in a state of round 41's page for a snapshot (`Store::force_fresh`), its read begun long enough ago
+    /// that the hairline and the tints show.
+    pub fn force_fresh(&mut self, state: &str, cx: &mut Context<Self>) {
+        self.store.update(cx, |s, cx| s.force_fresh(state, cx));
+        let long = std::time::Instant::now() - Duration::from_secs(2);
+        let (reading, nothing) = match state {
+            "loading" | "slice" => (true, true),
+            "refreshing" => (true, false),
+            _ => (false, false),
+        };
+        self.fresh.force(reading, nothing, long);
+        cx.notify();
+    }
+
+    /// The board's freshness slot clicked: what waits shown (`1 moved ↑`), or the board read again (`↻`).
+    pub fn slot_clicked(&mut self, action: SlotAction, cx: &mut Context<Self>) {
+        match action {
+            SlotAction::ShowHeld => self.store.update(cx, |s, cx| s.let_in(cx)),
+            SlotAction::Retry | SlotAction::Reconnect => self.read_again(cx),
+        }
     }
 
     fn read_shown(&mut self, ask: Ask, cx: &mut Context<Self>) {

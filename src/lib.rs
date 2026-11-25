@@ -15,6 +15,8 @@ mod board;
 mod cache;
 mod connect;
 mod flights;
+mod fresh;
+mod held;
 mod issue;
 mod jira;
 mod keep;
@@ -541,7 +543,8 @@ fn install(cx: &mut App) {
             // past sprints read), `slice=<kept slice>` (`sprint:36`, `backlog`, `all`), `mine`, `columns`,
             // `group=epic`, `pick` (the sprint picker open), `move=<key>` (its Move to open on its row),
             // `select=<key>+<key>` (checked, the bar's Move to open), `moved=<key>>slice` (moved there, its toast
-            // shown). Each step waits 1.5 s for the reads before it: the window is saved later than that only with
+            // shown), `fresh=<state>` (a state of round 41's `tasks.html?s=`, `Store::force_fresh`). Each step waits
+            // 1.5 s for the reads before it: the window is saved later than that only with
             // `ARTOO_SNAPSHOT_MOTION=5000`.
             if let Some(rest) = arg.strip_prefix("board=") {
                 let mut parts = rest.split('&');
@@ -582,6 +585,7 @@ fn install(cx: &mut App) {
                                 ("columns", _) => p.set_columns(true, cx),
                                 ("group", "epic") => p.set_group(crate::keep::Group::Epic, cx),
                                 ("pick", _) => p.open_sprints(cx),
+                                ("fresh", state) => p.force_fresh(state, cx),
                                 ("move", key) => p.open_move_to(Anchor::Row(key.into()), key, cx),
                                 ("select", keys) => {
                                     p.selected = keys.split('+').map(str::to_owned).collect();

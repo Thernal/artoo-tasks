@@ -2,6 +2,7 @@
 //! slice is read, counted and failed on its own. Here is what is held of a board's slices, which one opens, and a
 //! move's bookkeeping; the reads themselves are the store's.
 
+use crate::held::{self, Waiting};
 use crate::model::{Ask, BoardInfo, Page, Person, Row, Sprint, Write, day_words, stamp};
 use crate::store::Read;
 use std::collections::HashMap;
@@ -114,6 +115,10 @@ pub struct SliceRead {
     want: usize,
     /// A read again's pages, gathered apart and shown once whole: what was read before stays on screen meanwhile.
     fresh: Option<Vec<Row>>,
+    /// The read on its way is the minute's refresh: what moved is held.
+    quiet: bool,
+    /// What the last refresh brought that waits to be shown: the slot's `1 moved ↑`.
+    pub held: Option<Waiting>,
 }
 
 impl SliceRead {
@@ -160,8 +165,10 @@ pub struct Step {
 pub enum How {
     /// To be shown: read when it was not.
     Show,
-    /// Read again, as far as it was read (⌘R, Retry, a refresh, a filter changed).
+    /// Read again, as far as it was read (⌘R, Retry, a filter changed).
     Again,
+    /// The minute's refresh: read again as `Again`, what moved held until it is let in (`held`).
+    Refresh,
     /// The Backlog's next page.
     More,
 }
@@ -481,19 +488,22 @@ impl Slices {
             How::Show if r.state.is_some() => return None,
             How::More if r.state != Some(Read::Done(())) || !r.more() => return None,
             How::More => r.rows.len(),
-            How::Show | How::Again => 0,
+            How::Show | How::Again | How::Refresh => 0,
         };
         let same = *slice != SliceId::Backlog || r.filter == typed;
         r.want = match how {
             How::More => start + PAGE,
             // The Backlog read again as far as it was, while its filter stays.
-            How::Again if *slice == SliceId::Backlog && same => r.rows.len().max(PAGE),
+            How::Again | How::Refresh if *slice == SliceId::Backlog && same => {
+                r.rows.len().max(PAGE)
+            }
             _ => slice.most(),
         };
         if *slice == SliceId::Backlog && how != How::More {
             r.filter = typed;
         }
         r.fresh = (start == 0 && !r.rows.is_empty()).then(Vec::new);
+        r.quiet = how == How::Refresh;
         r.state = Some(Read::Reading);
         r.ask(slice, start)
     }
@@ -526,12 +536,40 @@ impl Slices {
             return r.ask(slice, next);
         }
         if let Some(fresh) = r.fresh.take() {
-            r.rows = fresh;
+            (r.rows, r.held) = if r.quiet {
+                held::merge(&r.rows, fresh)
+            } else {
+                (fresh, None)
+            };
             r.rows_filter = r.filter.clone();
         }
         r.state = Some(Read::Done(()));
         r.at = Some(now);
         None
+    }
+
+    /// What waits to be shown in `slices` (the active sprints' together), if anything.
+    pub fn waiting<'a>(&self, slices: impl IntoIterator<Item = &'a SliceId>) -> Option<Waiting> {
+        let mut all: Option<Waiting> = None;
+        for held in slices
+            .into_iter()
+            .filter_map(|s| self.reads.get(s)?.held.as_ref())
+        {
+            all.get_or_insert_with(Waiting::default).add(held);
+        }
+        all.filter(|w| w.count() > 0)
+    }
+
+    /// What every slice holds shown; whether anything was.
+    pub fn let_in(&mut self) -> bool {
+        let mut any = false;
+        for r in self.reads.values_mut() {
+            if let Some(held) = r.held.take() {
+                r.rows = held.rows;
+                any = true;
+            }
+        }
+        any
     }
 
     /// `slice`'s read failed: why, over what was read before.

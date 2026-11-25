@@ -11,6 +11,7 @@ use crate::cache;
 use crate::flights::Flights;
 use crate::jira::{self, Site};
 use crate::keep;
+use artoo_plugin_sdk::kit::fresh::Slot;
 // The store's own `Ask` is why a board is read.
 use crate::model::Ask as SliceAsk;
 use crate::model::{
@@ -112,6 +113,10 @@ pub struct Store {
     pub stale: HashMap<BoardId, String>,
     /// The boards painted as kept on the Mac, not read since the start.
     pub from_disk: HashSet<BoardId>,
+    /// What the minute's refresh of a board read whole brought that waits to be shown: `1 moved ↑`.
+    pub held: HashMap<BoardId, crate::held::Waiting>,
+    /// A snapshot's read that never answers (`force_fresh`): the board is drawn as being read.
+    forced_reading: bool,
     /// When each board's columns, epics and sprints were read last.
     info_at: HashMap<BoardId, i64>,
     row_reads: Flights<BoardId>,
@@ -231,6 +236,8 @@ impl Store {
             read_at: HashMap::new(),
             stale: HashMap::new(),
             from_disk: HashSet::new(),
+            held: HashMap::new(),
+            forced_reading: false,
             info_at: HashMap::new(),
             row_reads: Flights::default(),
             info_reads: Flights::default(),
@@ -741,7 +748,12 @@ impl Store {
         if ask != Ask::Show
             && let Some(view) = self.slices.get(&board).and_then(|s| s.view.clone())
         {
-            self.read_slice(&board, view, How::Again, cx);
+            let how = if ask == Ask::Refresh {
+                How::Refresh
+            } else {
+                How::Again
+            };
+            self.read_slice(&board, view, how, cx);
         }
         // A board read by slice reads only the slice in view.
         if self.by_slice(&board) {
@@ -749,11 +761,12 @@ impl Store {
         }
         if let Some(number) = self.begin_rows(&board, ask) {
             let (id, key) = (board.1.clone(), board.clone());
+            let quiet = ask == Ask::Refresh;
             let task = read_task(
                 cx,
                 move || model::board_issues(&site, &id),
                 move |this, read, cx| {
-                    if this.put_rows(&key, number, read, now()) {
+                    if this.put_rows(&key, number, read, quiet, now()) {
                         this.keep_board(&key, cx);
                     }
                 },
@@ -823,12 +836,14 @@ impl Store {
         }
     }
 
-    /// Read `number` of `board`'s issues answered; whether they were taken.
+    /// Read `number` of `board`'s issues answered; whether they were taken. A `quiet` one (the minute's refresh)
+    /// holds what moved (`held`).
     fn put_rows(
         &mut self,
         board: &BoardId,
         number: u64,
         read: Result<Vec<Row>, String>,
+        quiet: bool,
         now: i64,
     ) -> bool {
         if !self.row_reads.land(board, number) {
@@ -836,6 +851,20 @@ impl Store {
         }
         match read {
             Ok(rows) => {
+                let rows = match self.rows.get(board) {
+                    Some(Read::Done(before)) if quiet && !self.from_disk.contains(board) => {
+                        let (shown, waiting) = crate::held::merge(before, rows);
+                        match waiting {
+                            Some(waiting) => self.held.insert(board.clone(), waiting),
+                            None => self.held.remove(board),
+                        };
+                        shown
+                    }
+                    _ => {
+                        self.held.remove(board);
+                        rows
+                    }
+                };
                 self.rows.insert(board.clone(), Read::Done(rows));
                 self.read_at.insert(board.clone(), now);
                 self.stale.remove(board);
@@ -1613,6 +1642,209 @@ impl Store {
         self.slices.get(board)
     }
 
+    /// The slices the board `board` shows, when it is read by slice: the active sprints' for All.
+    fn view_slices(&self, board: &BoardId) -> Vec<SliceId> {
+        let Some(view) = self.slices.get(board).and_then(|s| s.view.clone()) else {
+            return Vec::new();
+        };
+        match view {
+            SliceId::All => (self.info.get(board).and_then(Read::done))
+                .map(|i| slices::active(i).map(|s| SliceId::Sprint(s.id)).collect())
+                .unwrap_or_default(),
+            view => vec![view],
+        }
+    }
+
+    /// Whether a read of what the board picked shows is on its way: its issues (its slice's), or its columns while
+    /// none were read.
+    pub fn reading_shown(&self) -> bool {
+        let Some(board) = self.board.as_ref() else {
+            return false;
+        };
+        if self.forced_reading {
+            return true;
+        }
+        let info =
+            self.info_reads.running(board) && !matches!(self.info.get(board), Some(Read::Done(_)));
+        if self.by_slice(board) {
+            return info
+                || (self.view_slices(board).into_iter())
+                    .any(|slice| self.slice_reads.running(&(board.clone(), slice)));
+        }
+        info || self.row_reads.running(board)
+    }
+
+    /// Why the last read of what the board picked shows failed, and whether issues read before it are shown.
+    pub fn failure_shown(&self) -> Option<(String, bool)> {
+        let board = self.board.as_ref()?;
+        let kept = matches!(self.rows.get(board), Some(Read::Done(_)));
+        if let Some(why) = self.stale.get(board) {
+            return Some((why.clone(), kept));
+        }
+        if let Some(Read::Failed(why)) = self.rows.get(board) {
+            return Some((why.clone(), false));
+        }
+        if let Some(Read::Failed(why)) = self.info.get(board)
+            && !kept
+        {
+            return Some((why.clone(), false));
+        }
+        let slices = self.slices.get(board)?;
+        (self.view_slices(board).iter())
+            .filter_map(|slice| slices.reads.get(slice))
+            .find_map(|r| match &r.state {
+                Some(Read::Failed(why)) => Some((why.clone(), kept && !r.rows.is_empty())),
+                _ => None,
+            })
+    }
+
+    /// What the board picked holds back from its last refresh: `1 moved ↑`.
+    pub fn waiting(&self) -> Option<crate::held::Waiting> {
+        let board = self.board.as_ref()?;
+        if let Some(held) = self.held.get(board).filter(|h| h.count() > 0) {
+            return Some(held.clone());
+        }
+        self.slices.get(board)?.waiting(&self.view_slices(board))
+    }
+
+    /// What the board's freshness slot says (round 41): read for the first time, read again under what is shown, as
+    /// the Mac kept it, current, changes waiting, its site not reached, nothing read.
+    pub fn slot(&self) -> Option<Slot> {
+        let board = self.board.as_ref()?;
+        let at = (self.read_at.get(board)).map(|at| artoo_plugin_sdk::kit::format::clock(*at));
+        let kept = matches!(self.rows.get(board), Some(Read::Done(_)));
+        let from_disk = self.from_disk.contains(board);
+        if self.reading_shown() {
+            return Some(match (&at, kept) {
+                (Some(at), true) if from_disk => Slot::Kept(at.clone()),
+                (_, true) => Slot::Refreshing,
+                (_, false) => Slot::Reading,
+            });
+        }
+        if let Some((_, kept)) = self.failure_shown() {
+            return Some(match at {
+                Some(at) if kept => Slot::CantReach(at),
+                _ => Slot::CantRead,
+            });
+        }
+        let Some(at) = at.filter(|_| kept) else {
+            return Some(Slot::Reading);
+        };
+        if from_disk {
+            return Some(Slot::Kept(at));
+        }
+        Some(match self.waiting() {
+            Some(waiting) => Slot::Waiting(at, waiting.count(), waiting.kind()),
+            None => Slot::Updated(at),
+        })
+    }
+
+    /// What the board picked holds back shown: the slot's `1 moved ↑` clicked.
+    pub fn let_in(&mut self, cx: &mut Context<Self>) {
+        let Some(board) = self.board.clone() else {
+            return;
+        };
+        if let Some(held) = self.held.remove(&board) {
+            self.rows.insert(board.clone(), Read::Done(held.rows));
+        }
+        if self.slices.get_mut(&board).is_some_and(|s| s.let_in()) {
+            self.show_rows(&board, cx);
+            self.keep_slice(&board);
+        }
+        cx.notify();
+    }
+
+    /// The board picked in a state of round 41's page (`tasks.html?s=`) for a snapshot, from what the fixture read and
+    /// with no tracker: `loading` / `slice` (read again from nothing), `refreshing`, `new` (a refresh that moved one
+    /// issue to another column and gave another a comment), `error` (the refresh not answered, the board kept),
+    /// `failed` (nothing kept), `kept` (as the Mac kept it). The reads on their way are dropped.
+    pub fn force_fresh(&mut self, state: &str, cx: &mut Context<Self>) {
+        let Some(board) = self.board.clone() else {
+            return;
+        };
+        self.drop_reads(|_| true);
+        let views = self.view_slices(&board);
+        let by_slice = self.by_slice(&board) && !views.is_empty();
+        let why = "acme.atlassian.net did not answer in 10 s".to_owned();
+        match state {
+            "loading" | "slice" | "failed" => {
+                self.forced_reading = state != "failed";
+                self.read_at.remove(&board);
+                let failed = state == "failed";
+                if let Some(slices) = self.slices.get_mut(&board) {
+                    for view in &views {
+                        let r = slices.reads.entry(view.clone()).or_default();
+                        r.rows.clear();
+                        r.state = Some(match failed {
+                            true => Read::Failed(why.clone()),
+                            false => Read::Reading,
+                        });
+                        if state == "loading" {
+                            (r.count, r.mine) = (None, None);
+                        }
+                    }
+                }
+                let read = match failed {
+                    true => Read::Failed(why.clone()),
+                    false => Read::Reading,
+                };
+                self.rows.insert(board.clone(), read);
+                if by_slice {
+                    self.show_rows(&board, cx);
+                }
+            }
+            "refreshing" => self.forced_reading = true,
+            "kept" => {
+                self.from_disk.insert(board.clone());
+            }
+            "error" => {
+                if let Some(slices) = self.slices.get_mut(&board) {
+                    for view in &views {
+                        if let Some(r) = slices.reads.get_mut(view) {
+                            r.state = Some(Read::Failed(why.clone()));
+                        }
+                    }
+                }
+                if !by_slice {
+                    self.stale.insert(board.clone(), why);
+                }
+            }
+            "new" => {
+                let change = |rows: &[Row]| {
+                    let mut read = rows.to_vec();
+                    let top = |r: &&mut Row| r.parent.is_none();
+                    let other = (rows.iter().rev()).find_map(|r| {
+                        (rows.first()?.state.id != r.state.id).then(|| r.state.clone())
+                    });
+                    if let (Some(first), Some(state)) = (read.iter_mut().find(top), other) {
+                        first.state = state;
+                    }
+                    if let Some(talked) = read.iter_mut().skip(1).find(|r| r.comments > 0) {
+                        talked.comments += 1;
+                    }
+                    read
+                };
+                if by_slice {
+                    if let Some(r) = (self.slices.get_mut(&board))
+                        .and_then(|sl| sl.reads.get_mut(views.first()?))
+                    {
+                        let read = change(&r.rows);
+                        (r.rows, r.held) = crate::held::merge(&r.rows, read);
+                    }
+                    self.show_rows(&board, cx);
+                } else if let Some(Read::Done(rows)) = self.rows.get(&board) {
+                    let (shown, waiting) = crate::held::merge(rows, change(rows));
+                    self.rows.insert(board.clone(), Read::Done(shown));
+                    if let Some(waiting) = waiting {
+                        self.held.insert(board.clone(), waiting);
+                    }
+                }
+            }
+            _ => {}
+        }
+        cx.notify();
+    }
+
     /// Slice `slice` of board `board` read as `how` asks, page after page while it reads on, each shown as it comes.
     pub fn read_slice(
         &mut self,
@@ -2016,6 +2248,7 @@ impl Store {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use artoo_plugin_sdk::kit::{format::clock, fresh};
 
     fn board(id: &str) -> Board {
         Board {
@@ -2054,13 +2287,75 @@ mod tests {
     }
 
     #[test]
+    fn a_card_moved_by_someone_else_waits_in_its_place_until_let_in() {
+        let mut store = test_store();
+        let id = board("1").key();
+        store.board = Some(id.clone());
+        let moved = |r: Row| Row {
+            state: model::State {
+                id: "3".into(),
+                ..r.state.clone()
+            },
+            ..r
+        };
+        let first = store.begin_rows(&id, Ask::Show).unwrap();
+        store.put_rows(&id, first, Ok(vec![row("PAY-1"), row("PAY-2")]), false, 60);
+        assert_eq!(store.slot(), Some(Slot::Updated(clock(60))));
+        // The minute's refresh: PAY-1 moved to another column, PAY-2 has a comment more.
+        let read = vec![
+            moved(row("PAY-1")),
+            Row {
+                comments: 1,
+                ..row("PAY-2")
+            },
+        ];
+        let refresh = store.begin_rows(&id, Ask::Refresh).unwrap();
+        assert_eq!(store.slot(), Some(Slot::Refreshing));
+        store.put_rows(&id, refresh, Ok(read.clone()), true, 120);
+        let shown = store.board_rows().unwrap();
+        assert_eq!(shown[0], row("PAY-1"));
+        assert_eq!(shown[1].comments, 1);
+        assert_eq!(
+            store.slot(),
+            Some(Slot::Waiting(clock(120), 1, fresh::Held::MovedAbove))
+        );
+        // Shown: what was read whole; ⌘R's read shows all at once.
+        let waiting = store.held.remove(&id).unwrap();
+        assert_eq!(waiting.rows, read);
+        let again = store.begin_rows(&id, Ask::Reload).unwrap();
+        store.put_rows(&id, again, Ok(vec![row("PAY-1")]), false, 180);
+        assert!(store.held.is_empty());
+        assert_eq!(store.slot(), Some(Slot::Updated(clock(180))));
+    }
+
+    #[test]
+    fn the_slot_says_a_site_not_reached_over_what_was_read_and_nothing_read() {
+        let mut store = test_store();
+        let id = board("1").key();
+        store.board = Some(id.clone());
+        let first = store.begin_rows(&id, Ask::Show).unwrap();
+        assert_eq!(store.slot(), Some(Slot::Reading));
+        store.put_rows(&id, first, Err("no answer".into()), false, 60);
+        assert_eq!(store.slot(), Some(Slot::CantRead));
+        let again = store.begin_rows(&id, Ask::Reload).unwrap();
+        store.put_rows(&id, again, Ok(vec![row("PAY-1")]), false, 90);
+        let refresh = store.begin_rows(&id, Ask::Refresh).unwrap();
+        store.put_rows(&id, refresh, Err("no answer".into()), true, 150);
+        assert_eq!(store.slot(), Some(Slot::CantReach(clock(90))));
+        assert_eq!(store.board_rows().map(Vec::len), Some(1));
+        store.from_disk.insert(id);
+        store.stale.clear();
+        assert_eq!(store.slot(), Some(Slot::Kept(clock(90))));
+    }
+
+    #[test]
     fn an_older_answer_is_ignored() {
         let mut store = test_store();
         let id = board("1").key();
         let old = store.begin_rows(&id, Ask::Show).unwrap();
         let new = store.begin_rows(&id, Ask::Written).unwrap();
-        assert!(store.put_rows(&id, new, Ok(vec![row("PAY-2")]), 2));
-        assert!(!store.put_rows(&id, old, Ok(vec![row("PAY-1")]), 3));
+        assert!(store.put_rows(&id, new, Ok(vec![row("PAY-2")]), false, 2));
+        assert!(!store.put_rows(&id, old, Ok(vec![row("PAY-1")]), false, 3));
         assert_eq!(store.rows[&id], Read::Done(vec![row("PAY-2")]));
         assert_eq!(store.read_at[&id], 2);
     }
@@ -2072,7 +2367,7 @@ mod tests {
         let number = store.begin_rows(&left, Ask::Show).unwrap();
         store.drop_reads(|b| *b != shown);
         assert!(!store.rows.contains_key(&left));
-        assert!(!store.put_rows(&left, number, Ok(vec![row("PAY-1")]), 1));
+        assert!(!store.put_rows(&left, number, Ok(vec![row("PAY-1")]), false, 1));
         assert!(store.begin_rows(&left, Ask::Show).is_some());
     }
 
@@ -2085,7 +2380,7 @@ mod tests {
             store.begin_rows(&id, Ask::Show).unwrap(),
         );
         store.put_info(&id, info, Ok(BoardInfo::default()), 100);
-        store.put_rows(&id, rows, Ok(Vec::new()), 100);
+        store.put_rows(&id, rows, Ok(Vec::new()), false, 100);
         assert_eq!(store.begin_rows(&id, Ask::Show), None);
         assert!(store.begin_rows(&id, Ask::Refresh).is_some());
         assert_eq!(store.begin_info(&id, Ask::Show, 160), None);
@@ -2192,7 +2487,7 @@ mod tests {
         let mut boards = Vec::new();
         store.add_kept(&mut boards, &unread);
         assert_eq!(boards, [board("1")]);
-        store.put_rows(&id, read, Err("no answer".into()), 90);
+        store.put_rows(&id, read, Err("no answer".into()), false, 90);
         assert_eq!(store.stale[&id], "no answer");
         assert_eq!(store.read_at[&id], 50);
         assert_eq!(store.board_rows(), Some(&vec![row("PAY-1")]));

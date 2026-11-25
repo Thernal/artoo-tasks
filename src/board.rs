@@ -3,6 +3,7 @@
 //! cards, a lane across them for each story or epic. What is drawn here reads plain data (`Shown`); the page's state
 //! and its clicks are the page's (`page.rs`).
 
+use crate::fresh;
 use crate::keep::Group;
 use crate::look::{self, sep};
 use crate::model::{self, BoardInfo, Epic, Issue, Person, Row, Sprint, State};
@@ -19,6 +20,7 @@ use artoo_plugin_sdk::kit::{controls, icons, markdown, px, theme};
 use artoo_plugin_sdk::shell::MenuItem;
 use std::collections::HashSet;
 use std::rc::Rc;
+use std::time::Instant;
 
 /// Who the people filter picks, by person id; `NONE` for Unassigned.
 pub const NONE: &str = "-";
@@ -65,9 +67,6 @@ fn short_ago(at: &str) -> String {
         None => ago,
     }
 }
-
-/// How a board is drawn while its site is not reached: as last read, dimmed.
-const STALE: f32 = 0.72;
 
 /// How long `Read 78 of 78` is said once a slice is read whole, in seconds.
 const READ_TOLD: i64 = 3;
@@ -471,8 +470,6 @@ pub struct SliceShown {
     pub count: Option<usize>,
     /// Its read: on its way, done, or why not; All's the first of its sprints' that failed, else one on its way.
     pub state: Option<Read<()>>,
-    /// The sprint of All active sprints whose read failed.
-    pub failed_in: Option<String>,
     /// How many issues are read, sub-tasks left out.
     pub read: usize,
     /// How many its filter finds, as counted: the Backlog's `Showing 50 of 214`.
@@ -490,36 +487,35 @@ fn slice_shown(sl: &Slices, info: &BoardInfo) -> Option<SliceShown> {
         Some(Read::Done(past)) => past.as_slice(),
         _ => &[],
     };
-    let reads: Vec<(Option<&Sprint>, &slices::SliceRead)> = match &id {
+    let reads: Vec<&slices::SliceRead> = match &id {
         SliceId::All => slices::active(info)
-            .filter_map(|s| Some((Some(s), sl.reads.get(&SliceId::Sprint(s.id))?)))
+            .filter_map(|s| sl.reads.get(&SliceId::Sprint(s.id)))
             .collect(),
-        one => sl.reads.get(one).map(|r| (None, r)).into_iter().collect(),
+        one => sl.reads.get(one).into_iter().collect(),
     };
-    let failed = reads.iter().find_map(|(s, r)| match &r.state {
-        Some(Read::Failed(why)) => Some((s.map(|s| s.name.clone()), why.clone())),
+    let failed = reads.iter().find_map(|r| match &r.state {
+        Some(Read::Failed(why)) => Some(why.clone()),
         _ => None,
     });
-    let state = match &failed {
-        Some((_, why)) => Some(Read::Failed(why.clone())),
-        None if reads.is_empty() || reads.iter().any(|(_, r)| r.state != Some(Read::Done(()))) => {
+    let state = match failed {
+        Some(why) => Some(Read::Failed(why)),
+        None if reads.is_empty() || reads.iter().any(|r| r.state != Some(Read::Done(()))) => {
             Some(Read::Reading)
         }
         None => Some(Read::Done(())),
     };
     let (count, _) = sl.counts(&id, info);
-    let one = reads.first().filter(|_| reads.len() == 1).map(|(_, r)| *r);
+    let one = reads.first().filter(|_| reads.len() == 1).copied();
     Some(SliceShown {
         name: slices::name(&id, Some(info), past),
         sprint: (id.sprint())
             .and_then(|n| info.sprints.iter().chain(past).find(|s| s.id == n).cloned()),
         count,
         state,
-        failed_in: failed.and_then(|f| f.0),
-        read: reads.iter().map(|(_, r)| r.read()).sum(),
+        read: reads.iter().map(|r| r.read()).sum(),
         found: one.and_then(|r| r.found).or(count),
         more: one.is_some_and(|r| r.more()),
-        at: reads.iter().filter_map(|(_, r)| r.at).max(),
+        at: reads.iter().filter_map(|r| r.at).max(),
         id,
     })
 }
@@ -799,12 +795,7 @@ impl Page {
     }
 
     /// The board's line of facts: its sprint and when it ends, how many issues; the people picked; Group ▾.
-    fn facts_line(
-        &mut self,
-        shown: &Shown,
-        stale: Option<(String, String)>,
-        cx: &mut Context<Self>,
-    ) -> Div {
+    fn facts_line(&mut self, shown: &Shown, cx: &mut Context<Self>) -> Div {
         let line = div()
             .flex_none()
             .flex()
@@ -817,21 +808,6 @@ impl Page {
             .text_size(px(12.))
             .text_color(theme::muted())
             .whitespace_nowrap();
-        if let Some((host, at)) = stale {
-            return line
-                .text_color(theme::warning())
-                .child(div().size(px(8.)).rounded_full().bg(theme::warning()))
-                .child(format!("Can’t reach {host} · boards from {at}"))
-                .child(div().flex_1())
-                .child(
-                    look::small_button("tasks-retry", "Retry")
-                        .tip("Read again  ⌘R")
-                        .on_click(cx.listener(|this, _: &ClickEvent, _, cx| {
-                            this.store
-                                .update(cx, |s, cx| s.read_board(crate::store::Ask::Reload, cx))
-                        })),
-                );
-        }
         let slice_name = shown.slice.as_ref().map(|sl| sl.name.as_str());
         let mut line = match (
             lead_words(&shown.board_name, &shown.info, slice_name),
@@ -899,31 +875,25 @@ impl Page {
         if let Some(epic) = self.backlog_epic(shown, cx) {
             return line.child(div().flex_1()).child(epic);
         }
-        line.child(div().flex_1())
-            // Painted as the Mac kept it, until the tracker answers.
-            .children(
-                self.kept_at(cx)
-                    .map(|at| div().text_color(theme::faint()).child(format!("from {at}"))),
-            )
-            .child(
-                look::small_button("tasks-group", "")
-                    .child("Group:")
-                    .child(
-                        div()
-                            .font_weight(FontWeight::SEMIBOLD)
-                            .text_color(theme::text())
-                            .child(group.word()),
-                    )
-                    .child(
-                        icons::icon("chevron")
-                            .size(px(12.))
-                            .text_color(theme::muted()),
-                    )
-                    .tip("Group by state, story or epic  G")
-                    .on_click(cx.listener(|this, e: &ClickEvent, _, cx| {
-                        this.group_menu(Some(e.position()), cx)
-                    })),
-            )
+        line.child(div().flex_1()).child(
+            look::small_button("tasks-group", "")
+                .child("Group:")
+                .child(
+                    div()
+                        .font_weight(FontWeight::SEMIBOLD)
+                        .text_color(theme::text())
+                        .child(group.word()),
+                )
+                .child(
+                    icons::icon("chevron")
+                        .size(px(12.))
+                        .text_color(theme::muted()),
+                )
+                .tip("Group by state, story or epic  G")
+                .on_click(cx.listener(|this, e: &ClickEvent, _, cx| {
+                    this.group_menu(Some(e.position()), cx)
+                })),
+        )
     }
 
     /// How far the slice shown is read: `Reading 31 of 78 issues…`, then `Read 78 of 78` a moment.
@@ -932,15 +902,13 @@ impl Page {
         let unit = item_word(&shown.host);
         let of = slice.count.unwrap_or(slice.read).max(slice.read);
         match &slice.state {
-            Some(Read::Reading) => {
-                Some(div().text_color(theme::accent()).child(match slice.count {
-                    Some(_) => format!(
-                        "Reading {} of {} {unit}s…",
-                        slices::grouped(slice.read),
-                        slices::grouped(of)
-                    ),
-                    None => format!("Reading {unit}s…"),
-                }))
+            // Nothing shown yet, the slot says `Reading…` over the tints; a big slice read page by page says how far.
+            Some(Read::Reading) if slice.read > 0 && slice.count.is_some() => {
+                Some(div().text_color(theme::accent()).child(format!(
+                    "Reading {} of {} {unit}s…",
+                    slices::grouped(slice.read),
+                    slices::grouped(of)
+                )))
             }
             Some(Read::Done(()))
                 if slice
@@ -1231,35 +1199,24 @@ impl Page {
         };
         // A board read by slice draws its facts line whatever its slice's read: the other slices stay a click away.
         let by_slice = s.board_slices().is_some_and(|sl| sl.view.is_some());
-        let stale = self.stale(cx);
-        let Some(board) = board else {
-            return self
-                .page_frame()
-                .child(skeleton_in_page("tasks-rows", 8))
-                .into_any_element();
-        };
+        let failure = s.failure_shown();
+        let now = Instant::now();
+        let nothing = !matches!(rows_read, Some(Read::Done(_)));
+        self.fresh.track(s.reading_shown(), nothing, now);
+        if board.is_none() {
+            return self.loading_page(None, false, cx);
+        }
         match rows_read {
             _ if by_slice => {}
-            None | Some(Read::Reading) => {
-                return self
-                    .page_frame()
-                    .child(skeleton_in_page("tasks-rows", 8))
-                    .into_any_element();
-            }
-            Some(Read::Failed(why)) => {
-                return (self.page_frame())
-                    .child(controls::empty_state(
-                        "alert",
-                        format!("{} not read", board.name),
-                        why,
-                        None,
-                    ))
-                    .into_any_element();
-            }
+            None | Some(Read::Reading) => return self.loading_page(None, false, cx),
+            Some(Read::Failed(why)) => return self.cant_read(None, why, cx),
             Some(Read::Done(_)) => {}
         }
         let Some(shown) = self.board_shown(cx).map(Rc::new) else {
-            return self.page_frame().into_any_element();
+            return match failure {
+                Some((why, false)) => self.cant_read(None, why, cx),
+                _ => self.loading_page(None, false, cx),
+            };
         };
         self.ask_slice(&shown, cx);
         // The pick stays among the rows shown, the first when it is not.
@@ -1273,11 +1230,19 @@ impl Page {
         }
         let banner = self.slice_banner(&shown, cx);
         if let Some(empty) = shown.empty.clone() {
+            let facts = self.facts_line(&shown, cx);
+            match empty {
+                Empty::Reading => return self.loading_page(Some(facts), true, cx),
+                Empty::Failed(why) => return self.cant_read(Some(facts), why, cx),
+                _ => {}
+            }
             let body = self.empty_body(&empty, &shown, cx);
             return (self.page_frame())
-                .child(self.facts_line(&shown, stale, cx))
+                .relative()
+                .child(facts)
                 .children(banner)
                 .child(body)
+                .child(self.fresh.hairline(cx))
                 .into_any_element();
         }
         // One sprint shown: its head over its issues. All active sprints: each sprint's over its part.
@@ -1299,27 +1264,52 @@ impl Page {
         });
         let foot = self.slice_foot(&shown, cx);
         let selection = self.selection_bar(&shown, cx);
+        // The board fades in over its tints when they were shown.
+        let phase = self.fresh.phase(now);
+        let arriving = phase.content < 1.;
         if shown.columns {
             return (self.page_frame())
-                .when(stale.is_some(), |d| d.opacity(STALE))
-                .child(self.facts_line(&shown, stale, cx))
+                .relative()
+                .child(self.facts_line(&shown, cx))
                 .children(head)
                 .children(banner)
                 .children(note)
-                .child(self.columns(shown.clone(), cx))
+                .child(
+                    div()
+                        .flex_1()
+                        .min_h_0()
+                        .flex()
+                        .flex_col()
+                        .when(arriving, |d| {
+                            d.opacity(phase.content).child(fresh::frames())
+                        })
+                        .child(self.columns(shown.clone(), cx)),
+                )
                 .children(selection)
                 .children(foot)
+                .child(self.fresh.hairline(cx))
                 .into_any_element();
         }
         let list = (self.list_frame())
-            .when(stale.is_some(), |d| d.opacity(STALE))
-            .child(self.facts_line(&shown, stale.clone(), cx))
+            .relative()
+            .child(self.facts_line(&shown, cx))
             .children(head)
             .children(banner)
             .children(note)
-            .child(self.list_body(shown.clone(), cx))
+            .child(
+                div()
+                    .flex_1()
+                    .min_h_0()
+                    .flex()
+                    .flex_col()
+                    .when(arriving, |d| {
+                        d.opacity(phase.content).child(fresh::frames())
+                    })
+                    .child(self.list_body(shown.clone(), cx)),
+            )
             .children(selection)
             .children(foot)
+            .child(self.fresh.hairline(cx))
             .into_any_element();
         let preview = self.preview(&shown, cx);
         self.frame.list_page(list, preview, cx)
@@ -1405,28 +1395,6 @@ impl Page {
                 .text_color(theme::text())
                 .child(words)
         };
-        if let Some(Read::Failed(why)) = &slice.state
-            && slice.read > 0
-        {
-            let what = match (&slice.failed_in, &slice.id) {
-                (Some(name), _) => format!("Couldn’t read {name}"),
-                (None, SliceId::Sprint(_)) => "Couldn’t read this sprint".into(),
-                (None, SliceId::Backlog) => "Couldn’t read the Backlog".into(),
-                _ => "Couldn’t read this board".into(),
-            };
-            return Some(
-                bar("tasks-slice-failed", true)
-                    .child(
-                        icons::icon("alert")
-                            .size(px(14.))
-                            .text_color(theme::warning()),
-                    )
-                    .child(strong(what))
-                    .child(div().min_w_0().truncate().child(why.clone()))
-                    .child(self.retry_link(cx))
-                    .into_any_element(),
-            );
-        }
         let running = slices::active(&shown.info).next().is_some();
         if slice.id != SliceId::Backlog || running || shown.info.sprintless {
             return None;
@@ -2804,7 +2772,6 @@ impl Page {
     /// The picked issue beside the list: its kind and key, its title, its facts, its description's first part,
     /// Open and Open in Jira.
     fn preview(&mut self, shown: &Shown, cx: &mut Context<Self>) -> AnyElement {
-        let stale = self.stale(cx).is_some();
         let frame = || {
             artoo_plugin_sdk::kit::island()
                 .size_full()
@@ -2813,7 +2780,6 @@ impl Page {
                 .flex_col()
                 .overflow_hidden()
                 .bg(theme::editor())
-                .when(stale, |d| d.opacity(STALE))
         };
         let Some(r) = self
             .pick
@@ -3316,21 +3282,54 @@ impl Page {
         Some(out.into_any_element())
     }
 
-    /// The board picked, when its last read failed after one that did not: its site's host and when it was read.
-    fn stale(&self, cx: &App) -> Option<(String, String)> {
-        let s = self.store.read(cx);
-        (s.board.as_ref())
-            .filter(|b| s.stale.contains_key(*b))
-            .and_then(|b| Some((b.0.clone(), s.read_at.get(b).copied()?)))
-            .map(|(host, at)| (host, artoo_plugin_sdk::kit::format::clock(at)))
+    /// The board being read with nothing to show yet (round 41): the facts line when its slice is known, still tints
+    /// where the sprint's head (`sprint`), the issues and the preview will be, the hairline once the read is long.
+    fn loading_page(
+        &mut self,
+        facts: Option<Div>,
+        sprint: bool,
+        cx: &mut Context<Self>,
+    ) -> AnyElement {
+        let now = Instant::now();
+        let phase = self.fresh.phase(now);
+        let moving = self.fresh.skeleton_moves(now);
+        let tints = div()
+            .flex_1()
+            .min_h_0()
+            .flex()
+            .flex_col()
+            .when(sprint, |d| d.child(fresh::skeleton_sprint_head()))
+            .child(fresh::skeleton_list());
+        let list = (self.list_frame())
+            .relative()
+            .children(facts)
+            .child(fresh::veil(tints, phase, moving))
+            .child(self.fresh.hairline(cx))
+            .into_any_element();
+        let preview = (artoo_plugin_sdk::kit::island())
+            .size_full()
+            .min_w_0()
+            .overflow_hidden()
+            .bg(theme::editor())
+            .child(fresh::veil(fresh::skeleton_preview(), phase, false))
+            .into_any_element();
+        self.frame.list_page(list, preview, cx)
     }
 
-    /// When the board picked was read, while it is shown as the Mac kept it.
-    fn kept_at(&self, cx: &App) -> Option<String> {
-        let s = self.store.read(cx);
-        let board = s.board.as_ref().filter(|b| s.from_disk.contains(*b))?;
-        let at = s.read_at.get(board).copied()?;
-        Some(artoo_plugin_sdk::kit::format::clock(at))
+    /// Nothing read and the read failed (round 41): the facts line kept when its slice is known, what is the case and
+    /// why where the issues would be, Retry; the slot says `Can't read the list ↻`.
+    fn cant_read(&mut self, facts: Option<Div>, why: String, cx: &mut Context<Self>) -> AnyElement {
+        let retry = self.retry_link(cx);
+        (self.page_frame())
+            .relative()
+            .children(facts)
+            .child(fresh::message(
+                "Can’t read the list".into(),
+                why,
+                Some(retry),
+            ))
+            .child(self.fresh.hairline(cx))
+            .into_any_element()
     }
 
     fn page_frame(&self) -> Div {
