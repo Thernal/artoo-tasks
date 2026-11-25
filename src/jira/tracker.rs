@@ -3,8 +3,8 @@
 
 use super as jira;
 use crate::model::{
-    Attachment, Board, BoardInfo, Brief, Column, Comment, Epic, Field, Issue, Kind, Link, Move,
-    News, Person, Row, Site, Sprint, State, Told, Tracker, Write, stamp,
+    Ask, Attachment, Board, BoardInfo, Brief, Column, Comment, Epic, Field, Issue, Kind, Link,
+    Move, News, Page, Person, Row, Site, Sprint, State, Told, Tracker, Write, stamp,
 };
 use crate::trackers::SiteExt;
 use crate::wiki;
@@ -217,34 +217,43 @@ fn myself(site: &Site) -> Result<Person, String> {
     person(&v).ok_or_else(|| format!("{} did not say who the token is", site.host()))
 }
 
-/// A page of boards as Jira gives it: at most 50, whatever is asked.
-const BOARDS_PAGE: usize = 50;
+/// A `GET` of a path on the site, its refusal's status kept: `jira::read`, or a test's answers.
+type Read<'a> = &'a (dyn Fn(&str) -> Result<Value, jira::Refused> + Sync);
 
-/// How many boards a site is read up to: a guard against a server that never says its last page is.
-const BOARDS_MAX: usize = 5000;
+/// A page of a list of values (boards, sprints) as Jira gives it: at most 50, whatever is asked.
+const VALUES_PAGE: usize = 50;
 
-/// The boards of `site`, every page of them, oldest first as Jira lists them.
-fn boards(site: &Site) -> Result<Vec<Board>, String> {
-    let mut boards = Vec::new();
+/// How many values a list is read up to: a guard against a server that never says its last page is.
+const VALUES_MAX: usize = 5000;
+
+/// Every value of the list at `path` (its own query or none), page by page while a page says it is not the last.
+fn values(read: Read, path: &str) -> Result<Vec<Value>, jira::Refused> {
+    let join = if path.contains('?') { '&' } else { '?' };
+    let mut all = Vec::new();
     loop {
-        let v = jira::get(
-            site,
-            &format!(
-                "/rest/agile/1.0/board?maxResults={BOARDS_PAGE}&startAt={}",
-                boards.len()
-            ),
-        )?;
+        let v = read(&format!(
+            "{path}{join}startAt={}&maxResults={VALUES_PAGE}",
+            all.len()
+        ))?;
         let page = v["values"].as_array().cloned().unwrap_or_default();
-        boards.extend(page.iter().map(|b| board(site, b)));
-        if !more_boards(&v, page.len(), boards.len()) {
-            return Ok(boards);
+        let got = page.len();
+        all.extend(page);
+        if !more_values(&v, got, all.len()) {
+            return Ok(all);
         }
     }
 }
 
-/// Whether a page of `got` boards (`v`), `read` so far, leaves more to read: only when it says it is not the last.
-fn more_boards(v: &Value, got: usize, read: usize) -> bool {
-    v["isLast"] == Value::Bool(false) && got > 0 && read < BOARDS_MAX
+/// Whether a page of `got` values (`v`), `read` so far, leaves more to read: only when it says it is not the last.
+fn more_values(v: &Value, got: usize, read: usize) -> bool {
+    v["isLast"] == Value::Bool(false) && got > 0 && read < VALUES_MAX
+}
+
+/// The boards of `site`, every page of them, oldest first as Jira lists them.
+fn boards(site: &Site) -> Result<Vec<Board>, String> {
+    let read = |path: &str| jira::read(site, path);
+    let boards = values(&read, "/rest/agile/1.0/board")?;
+    Ok(boards.iter().map(|b| board(site, b)).collect())
 }
 
 fn board(site: &Site, b: &Value) -> Board {
@@ -258,11 +267,35 @@ fn board(site: &Site, b: &Value) -> Board {
     }
 }
 
-/// Board `id`'s columns, epics and sprints, asked side by side; a board without epics or sprints (kanban) has none,
-/// not a failure.
-fn board_info(site: &Site, id: &str) -> Result<BoardInfo, String> {
+/// A board's active and future sprints, as read.
+enum Sprints {
+    Read(Vec<Sprint>),
+    /// The board has none: a kanban board, or one with sprints off.
+    None,
+    /// They could not be read.
+    Unread,
+}
+
+/// Board `id`'s active and future sprints, every page of them; its `kind` (`scrum`, `kanban`, `simple`) as its
+/// configuration says. A kanban board is not asked. A board of another kind that answers 400 (`The board does not
+/// support sprints`: a team-managed board with sprints off) has none, which is no failure.
+fn board_sprints(read: Read, id: &str, kind: &str) -> Sprints {
+    if kind == "kanban" {
+        return Sprints::None;
+    }
+    let path = format!("/rest/agile/1.0/board/{id}/sprint?state=active,future");
+    match values(read, &path) {
+        Ok(v) => Sprints::Read(v.iter().filter_map(sprint).collect()),
+        Err(r) if r.code == 400 && kind != "scrum" => Sprints::None,
+        Err(_) => Sprints::Unread,
+    }
+}
+
+/// Board `id`'s columns, epics and sprints: its configuration first, which says whether it has sprints, its epics
+/// asked alongside. Epics or sprints that could not be read are said so, not a failure.
+fn board_info(read: Read, id: &str) -> Result<BoardInfo, String> {
     let list = |path: String| -> Option<Vec<Value>> {
-        jira::get(site, &path)
+        read(&path)
             .ok()
             .and_then(|v| v["values"].as_array().cloned())
     };
@@ -272,18 +305,10 @@ fn board_info(site: &Site, id: &str) -> Result<BoardInfo, String> {
                 "/rest/agile/1.0/board/{id}/epic?done=false&maxResults=100"
             ))
         });
-        let sprints = scope.spawn(|| {
-            list(format!(
-                "/rest/agile/1.0/board/{id}/sprint?state=active,future&maxResults=50"
-            ))
-        });
-        let config = jira::get(site, &format!("/rest/agile/1.0/board/{id}/configuration"));
+        let config = read(&format!("/rest/agile/1.0/board/{id}/configuration"));
+        let sprints = (config.as_ref().ok()).map(|c| board_sprints(read, id, &text(&c["type"])));
         // A read that panicked is one not made.
-        (
-            config,
-            epics.join().ok().flatten(),
-            sprints.join().ok().flatten(),
-        )
+        (config, epics.join().ok().flatten(), sprints)
     });
     let columns = (config?["columnConfig"]["columns"]
         .as_array()
@@ -297,14 +322,32 @@ fn board_info(site: &Site, id: &str) -> Result<BoardInfo, String> {
     })
     .filter(|c| !c.states.is_empty())
     .collect();
+    let sprints = sprints.unwrap_or(Sprints::Unread);
     Ok(BoardInfo {
         columns,
         epics_unread: epics.is_none(),
-        sprints_unread: sprints.is_none(),
+        sprints_unread: matches!(sprints, Sprints::Unread),
+        sprintless: matches!(sprints, Sprints::None),
         epics: epics.iter().flatten().filter_map(epic).collect(),
-        sprints: sprints.iter().flatten().filter_map(sprint).collect(),
-        sprintless: false,
+        sprints: match sprints {
+            Sprints::Read(sprints) => sprints,
+            _ => Vec::new(),
+        },
     })
+}
+
+/// Board `id`'s closed sprints, every page of them, the last closed first. A board without sprints has none.
+fn past_sprints(read: Read, id: &str) -> Result<Vec<Sprint>, String> {
+    let mut closed = match values(
+        read,
+        &format!("/rest/agile/1.0/board/{id}/sprint?state=closed"),
+    ) {
+        Ok(closed) => closed,
+        Err(r) if r.code == 400 => return Ok(Vec::new()),
+        Err(r) => return Err(r.said),
+    };
+    closed.sort_by_key(|s| std::cmp::Reverse(s["completeDate"].as_str().and_then(stamp)));
+    Ok(closed.iter().filter_map(sprint).collect())
 }
 
 /// Board `id`'s issues, newest change first.
@@ -322,6 +365,107 @@ fn board_issues(site: &Site, id: &str) -> Result<Vec<Row>, String> {
         .flatten()
         .map(row)
         .collect())
+}
+
+/// Where slice `ask` of board `board` is read: the Agile API's address of its issues, which lists them in Jira's rank
+/// order.
+fn slice_path(board: &str, ask: &Ask) -> Result<String, String> {
+    let agile = "/rest/agile/1.0";
+    match (ask.slice.as_str(), ask.sprint_id(), ask.epic_key()) {
+        ("backlog", ..) => Ok(format!("{agile}/board/{board}/backlog")),
+        ("board", ..) => Ok(format!("{agile}/board/{board}/issue")),
+        (_, Some(id), _) => Ok(format!("{agile}/sprint/{id}/issue")),
+        (_, _, Some(key)) => Ok(format!("{agile}/epic/{}/issue", jira::encode(key))),
+        (other, ..) => Err(format!("A Jira board has no slice {other}")),
+    }
+}
+
+/// Whether `words` are one issue's key alone (`PAY-412`, `pay-412`).
+fn is_key(words: &str) -> bool {
+    words.split_once('-').is_some_and(|(project, n)| {
+        project.starts_with(|c: char| c.is_ascii_alphabetic())
+            && project
+                .chars()
+                .all(|c| c.is_ascii_alphanumeric() || c == '_')
+            && !n.is_empty()
+            && n.chars().all(|c| c.is_ascii_digit())
+    })
+}
+
+/// `text` as a JQL string: in quotes, its backslashes and quotes escaped.
+fn quoted(text: &str) -> String {
+    format!("\"{}\"", text.replace('\\', "\\\\").replace('"', "\\\""))
+}
+
+/// What slice `ask` asks of Jira beyond its address, as JQL, or none: its words (a key alone by its key, `label:x` a
+/// label, the rest Jira's text search), yours, its epic (Cloud names it the parent, `cloud`; Server its Epic Link).
+/// A count (`count`) leaves sub-tasks out, as Jira's own counts of a sprint do.
+fn slice_jql(ask: &Ask, cloud: bool, count: bool) -> Option<String> {
+    let mut clauses = Vec::new();
+    let words = ask.words.trim();
+    if is_key(words) {
+        clauses.push(format!("key = {}", quoted(&words.to_uppercase())));
+    } else {
+        let (labels, rest): (Vec<&str>, Vec<&str>) = words
+            .split_whitespace()
+            .partition(|w| w.to_lowercase().starts_with("label:"));
+        clauses.extend(
+            labels
+                .iter()
+                .map(|l| format!("labels = {}", quoted(&l["label:".len()..]))),
+        );
+        if !rest.is_empty() {
+            clauses.push(format!("text ~ {}", quoted(&rest.join(" "))));
+        }
+    }
+    if ask.mine {
+        clauses.push("assignee = currentUser()".to_owned());
+    }
+    if let Some(epic) = &ask.epic {
+        let field = if cloud { "parent" } else { "\"Epic Link\"" };
+        clauses.push(format!("{field} = {}", quoted(epic)));
+    }
+    if count {
+        clauses.push("issuetype not in subTaskIssueTypes()".to_owned());
+    }
+    (!clauses.is_empty()).then(|| clauses.join(" AND "))
+}
+
+/// Board `board`'s slice `ask`, on a Cloud site or not (`cloud`). A count (`max` 0) is one request, its total Jira's
+/// count without sub-tasks. Else the issues from `start` on, sub-tasks among them, read on page by page by what each
+/// answer gave (Jira may give fewer than asked) until `max` are read or the slice ends; the total is then how many
+/// issues the slice holds with its sub-tasks, where its reading ends.
+fn slice(read: Read, cloud: bool, board: &str, ask: &Ask) -> Result<Page, String> {
+    let path = slice_path(board, ask)?;
+    let jql = |count: bool| {
+        slice_jql(ask, cloud, count)
+            .map(|q| format!("&jql={}", jira::encode(&q)))
+            .unwrap_or_default()
+    };
+    let total = |v: &Value, at_least: usize| v["total"].as_u64().map_or(at_least, |n| n as usize);
+    if ask.max == 0 {
+        let v = read(&format!("{path}?maxResults=0{}", jql(true)))?;
+        return Ok(Page {
+            rows: Vec::new(),
+            total: total(&v, 0),
+        });
+    }
+    let mut page = Page::default();
+    loop {
+        let start = ask.start + page.rows.len();
+        let v = read(&format!(
+            "{path}?startAt={start}&maxResults={}&fields={ROW_FIELDS}{}",
+            ask.max - page.rows.len(),
+            jql(false)
+        ))?;
+        let got = v["issues"].as_array().map_or(0, Vec::len);
+        page.rows
+            .extend(v["issues"].as_array().into_iter().flatten().map(row));
+        page.total = total(&v, start + got);
+        if got == 0 || page.rows.len() >= ask.max || start + got >= page.total {
+            return Ok(page);
+        }
+    }
 }
 
 /// Issue `key` whole, through the Agile API, which adds its epic and sprint on Server and Cloud alike.
@@ -660,6 +804,13 @@ fn attach(site: &Site, key: &str, file: &std::path::Path) -> Result<Value, Strin
 /// token).
 pub struct Jira(pub Site);
 
+impl Jira {
+    /// A `GET` on its site, its refusal's status kept.
+    fn read(&self, path: &str) -> Result<Value, jira::Refused> {
+        jira::read(&self.0, path)
+    }
+}
+
 impl Tracker for Jira {
     fn myself(&self) -> Result<Person, String> {
         myself(&self.0)
@@ -668,10 +819,16 @@ impl Tracker for Jira {
         boards(&self.0)
     }
     fn board_info(&self, board: &str) -> Result<BoardInfo, String> {
-        board_info(&self.0, board)
+        board_info(&|path: &str| self.read(path), board)
     }
     fn board_issues(&self, board: &str) -> Result<Vec<Row>, String> {
         board_issues(&self.0, board)
+    }
+    fn slice(&self, board: &str, ask: &Ask) -> Result<Page, String> {
+        slice(&|path: &str| self.read(path), self.0.cloud(), board, ask)
+    }
+    fn past_sprints(&self, board: &str) -> Result<Vec<Sprint>, String> {
+        past_sprints(&|path: &str| self.read(path), board)
     }
     fn board_url(&self, board: &str) -> String {
         board_url(&self.0, board)
@@ -727,8 +884,10 @@ impl Tracker for Jira {
         attach(&self.0, key, file)
     }
     fn write(&self, w: &Write) -> Result<Value, String> {
-        let (method, path, body) = request(w, self.0.cloud());
-        jira::send(&self.0, method, &path, body.as_ref())
+        let send = |method: &str, path: &str, body: Option<&Value>| {
+            jira::send(&self.0, method, path, body)
+        };
+        send_write(&send, w, self.0.cloud())
     }
 }
 
@@ -770,12 +929,23 @@ fn request(w: &Write, cloud: bool) -> (&'static str, String, Option<Value>) {
             );
             ("POST", path, Some(json!({ "issues": [key] })))
         }
-        Write::Sprint { key, sprint, .. } => {
+        // Into a sprint, ranked before `before` there; into the Backlog, which takes no rank (`rank` follows).
+        Write::Sprint {
+            key,
+            sprint,
+            before,
+        } => {
+            let mut body = json!({ "issues": [key] });
             let path = match sprint {
-                Some(id) => format!("/rest/agile/1.0/sprint/{id}/issue"),
+                Some(id) => {
+                    if let Some(before) = before {
+                        body["rankBeforeIssue"] = json!(before);
+                    }
+                    format!("/rest/agile/1.0/sprint/{id}/issue")
+                }
                 None => "/rest/agile/1.0/backlog/issue".to_owned(),
             };
-            ("POST", path, Some(json!({ "issues": [key] })))
+            ("POST", path, Some(body))
         }
         Write::Comment { key, body } => (
             "POST",
@@ -800,6 +970,36 @@ fn request(w: &Write, cloud: bool) -> (&'static str, String, Option<Value>) {
             Some(json!({ "fields": fields })),
         ),
     }
+}
+
+/// A request sent: its method, path and body; the answer, or why not.
+type Send<'a> = &'a dyn Fn(&str, &str, Option<&Value>) -> Result<Value, String>;
+
+/// Intent `w` sent as `request` makes it. An issue put at the Backlog's top (`Write::Sprint` with no sprint and
+/// `before`) is two requests: the move, then its rank. When the rank is refused, the issue stays in the Backlog where
+/// Jira put it, and the answer is `{"unranked": "<Jira's words>"}`, to be said.
+fn send_write(send: Send, w: &Write, cloud: bool) -> Result<Value, String> {
+    let (method, path, body) = request(w, cloud);
+    let answer = send(method, &path, body.as_ref())?;
+    let Write::Sprint {
+        key,
+        sprint: None,
+        before: Some(before),
+    } = w
+    else {
+        return Ok(answer);
+    };
+    let (method, path, body) = rank(key, before);
+    Ok(match send(method, &path, Some(&body)) {
+        Ok(_) => answer,
+        Err(said) => json!({ "unranked": said }),
+    })
+}
+
+/// Issue `key` ranked before issue `before`: the Backlog's top, after a move there.
+fn rank(key: &str, before: &str) -> (&'static str, String, Value) {
+    let body = json!({ "issues": [key], "rankBeforeIssue": before });
+    ("PUT", "/rest/agile/1.0/issue/rank".to_owned(), body)
 }
 
 #[cfg(test)]
@@ -987,12 +1187,12 @@ mod tests {
     #[test]
     fn boards_are_read_on_while_a_page_says_it_is_not_the_last() {
         let page = |last: Value| json!({"isLast": last, "values": []});
-        assert!(more_boards(&page(json!(false)), 50, 50));
-        assert!(!more_boards(&page(json!(true)), 7, 307));
+        assert!(more_values(&page(json!(false)), 50, 50));
+        assert!(!more_values(&page(json!(true)), 7, 307));
         // An older server's page, or a fixture's, says nothing: it is the last.
-        assert!(!more_boards(&json!({"values": []}), 3, 3));
-        assert!(!more_boards(&page(json!(false)), 0, 50));
-        assert!(!more_boards(&page(json!(false)), 50, BOARDS_MAX));
+        assert!(!more_values(&json!({"values": []}), 3, 3));
+        assert!(!more_values(&page(json!(false)), 0, 50));
+        assert!(!more_values(&page(json!(false)), 50, VALUES_MAX));
     }
 
     #[test]
@@ -1005,5 +1205,342 @@ mod tests {
         };
         assert_eq!(search_path(&cloud), "/rest/api/2/search/jql");
         assert_eq!(search_path(&site()), "/rest/api/2/search");
+    }
+
+    use std::sync::Mutex;
+
+    /// Query parameter `name` of `path`, as a number.
+    fn query(path: &str, name: &str) -> Option<usize> {
+        let (_, q) = path.split_once('?')?;
+        q.split('&')
+            .find_map(|p| p.strip_prefix(&format!("{name}="))?.parse().ok())
+    }
+
+    /// A list of `all` issues answered as Jira answers `path`: at most `most` an answer, whatever is asked.
+    fn issues_from(path: &str, all: usize, most: usize) -> Value {
+        let start = query(path, "startAt").unwrap_or(0);
+        let max = query(path, "maxResults").unwrap_or(most).min(most);
+        let issues: Vec<Value> = (start..all.min(start + max))
+            .map(|i| json!({"key": format!("PAY-{i}"), "fields": {}}))
+            .collect();
+        json!({"startAt": start, "maxResults": max, "total": all, "issues": issues})
+    }
+
+    #[test]
+    fn a_slice_is_read_on_by_what_jira_gave_until_its_end_or_what_was_asked() {
+        let asked = Mutex::new(Vec::new());
+        let read = |p: &str| {
+            asked.lock().unwrap().push(p.to_owned());
+            Ok(issues_from(p, 78, 30))
+        };
+        let pages = || -> Vec<(Option<usize>, Option<usize>)> {
+            let mut asked = asked.lock().unwrap();
+            let pages = asked
+                .iter()
+                .map(|p| (query(p, "startAt"), query(p, "maxResults")))
+                .collect();
+            asked.clear();
+            pages
+        };
+        let whole = Ask {
+            max: 100,
+            ..Ask::sprint(34)
+        };
+        let page = slice(&read, true, "7", &whole).unwrap();
+        assert_eq!((page.rows.len(), page.total), (78, 78));
+        assert_eq!(page.rows.last().map(|r| r.key.as_str()), Some("PAY-77"));
+        // It ends at the slice's total.
+        assert_eq!(
+            pages(),
+            [
+                (Some(0), Some(100)),
+                (Some(30), Some(70)),
+                (Some(60), Some(40))
+            ]
+        );
+        let fifty = Ask {
+            start: 10,
+            max: 50,
+            ..Ask::backlog()
+        };
+        let page = slice(&read, true, "7", &fifty).unwrap();
+        assert_eq!(page.rows.first().map(|r| r.key.as_str()), Some("PAY-10"));
+        // It ends at what was asked.
+        assert_eq!(page.rows.len(), 50);
+        assert_eq!(pages(), [(Some(10), Some(50)), (Some(40), Some(20))]);
+        // An answer with nothing in it ends the read, whatever its total says.
+        let empty = |_: &str| Ok(json!({"total": 9, "issues": []}));
+        assert_eq!(slice(&empty, true, "7", &whole).unwrap().rows.len(), 0);
+    }
+
+    #[test]
+    fn each_slice_read_is_the_request_jira_documents() {
+        let asked = Mutex::new(String::new());
+        let read = |p: &str| {
+            *asked.lock().unwrap() = p.to_owned();
+            Ok(json!({"total": 0, "issues": []}))
+        };
+        let sent = |ask: Ask, cloud: bool| {
+            slice(&read, cloud, "7", &ask).unwrap();
+            asked.lock().unwrap().clone()
+        };
+        let rows = |ask: Ask| Ask { max: 50, ..ask };
+        let jql = |q: &str| format!("&jql={}", jira::encode(q));
+        let no_subs = "issuetype not in subTaskIssueTypes()";
+        assert_eq!(
+            sent(Ask::sprint(34), true),
+            format!(
+                "/rest/agile/1.0/sprint/34/issue?maxResults=0{}",
+                jql(no_subs)
+            )
+        );
+        assert_eq!(
+            sent(rows(Ask::sprint(34)), true),
+            format!("/rest/agile/1.0/sprint/34/issue?startAt=0&maxResults=50&fields={ROW_FIELDS}")
+        );
+        assert_eq!(
+            sent(rows(Ask::backlog()), true),
+            format!("/rest/agile/1.0/board/7/backlog?startAt=0&maxResults=50&fields={ROW_FIELDS}")
+        );
+        assert_eq!(
+            sent(rows(Ask::board()), true),
+            format!("/rest/agile/1.0/board/7/issue?startAt=0&maxResults=50&fields={ROW_FIELDS}")
+        );
+        assert_eq!(
+            sent(Ask::epic("PAY-400"), true),
+            format!(
+                "/rest/agile/1.0/epic/PAY-400/issue?maxResults=0{}",
+                jql(no_subs)
+            )
+        );
+        let mine = Ask {
+            mine: true,
+            ..Ask::backlog()
+        };
+        assert_eq!(
+            sent(mine, true),
+            format!(
+                "/rest/agile/1.0/board/7/backlog?maxResults=0{}",
+                jql(&format!("assignee = currentUser() AND {no_subs}"))
+            )
+        );
+        let filtered = Ask {
+            words: "refund".into(),
+            epic: Some("PAY-400".into()),
+            ..rows(Ask::backlog())
+        };
+        assert!(
+            sent(filtered.clone(), true)
+                .ends_with(&jql("text ~ \"refund\" AND parent = \"PAY-400\""))
+        );
+        assert!(
+            sent(filtered, false)
+                .ends_with(&jql("text ~ \"refund\" AND \"Epic Link\" = \"PAY-400\""))
+        );
+        let key = Ask {
+            words: " pay-412 ".into(),
+            ..rows(Ask::backlog())
+        };
+        assert!(sent(key, true).ends_with(&jql("key = \"PAY-412\"")));
+        assert!(slice(&read, true, "7", &Ask::default()).is_err());
+    }
+
+    #[test]
+    fn the_words_asked_of_jira_are_escaped() {
+        let ask = Ask {
+            words: r#"say "hi" \ now label:ledger"#.into(),
+            ..Ask::backlog()
+        };
+        assert_eq!(
+            slice_jql(&ask, true, false).as_deref(),
+            Some(r#"labels = "ledger" AND text ~ "say \"hi\" \\ now""#)
+        );
+        assert_eq!(slice_jql(&Ask::backlog(), true, false), None);
+        assert!(is_key("PAY-412") && is_key("ab_2-7"));
+        assert!(!is_key("PAY-") && !is_key("412-PAY") && !is_key("pay 412"));
+    }
+
+    #[test]
+    fn a_board_says_whether_it_has_sprints() {
+        let info = |kind: &'static str, sprints: Result<Value, jira::Refused>| {
+            let asked = Mutex::new(Vec::new());
+            let read = |p: &str| {
+                asked.lock().unwrap().push(p.to_owned());
+                if p.contains("/configuration") {
+                    let to_do = json!({"name": "To do", "statuses": [{"id": "1"}]});
+                    Ok(json!({"type": kind, "columnConfig": {"columns": [to_do]}}))
+                } else if p.contains("/sprint") {
+                    sprints.clone()
+                } else {
+                    Ok(json!({"values": []}))
+                }
+            };
+            let info = board_info(&read, "7").unwrap();
+            let asked = asked.lock().unwrap().iter().any(|p| p.contains("/sprint"));
+            (info, asked)
+        };
+        let refused = |code| {
+            Err(jira::Refused {
+                code,
+                said: "The board does not support sprints".into(),
+            })
+        };
+        let one = json!({"isLast": true, "values": [{"id": 34, "name": "Sprint 34", "state": "active",
+            "startDate": "2026-11-03T09:00:00.000Z", "goal": "Refunds that add up"}]});
+        let (kanban, asked) = info("kanban", Ok(one.clone()));
+        assert!(kanban.sprintless && !kanban.sprints_unread && kanban.sprints.is_empty());
+        assert!(!asked, "a kanban board is asked no sprint");
+        let (simple, asked) = info("simple", refused(400));
+        assert!(simple.sprintless && !simple.sprints_unread && asked);
+        let (scrum, _) = info("scrum", refused(400));
+        assert!(!scrum.sprintless && scrum.sprints_unread);
+        let (failed, _) = info("simple", refused(504));
+        assert!(!failed.sprintless && failed.sprints_unread);
+        let (scrum, _) = info("scrum", Ok(one));
+        assert_eq!(scrum.columns.len(), 1);
+        let s = &scrum.sprints[0];
+        assert_eq!(
+            (s.id, s.start.as_deref(), s.goal.as_str()),
+            (34, Some("2026-11-03T09:00:00.000Z"), "Refunds that add up")
+        );
+    }
+
+    #[test]
+    fn past_sprints_are_read_on_while_a_page_says_it_is_not_the_last() {
+        let asked = Mutex::new(Vec::new());
+        let read = |p: &str| {
+            asked.lock().unwrap().push(p.to_owned());
+            let at = query(p, "startAt").unwrap_or(0);
+            let done = format!("2026-0{}-05T16:30:00.000Z", at + 1);
+            Ok(
+                json!({"isLast": at >= 2, "values": [{"id": 30 + at, "state": "closed", "completeDate": done}]}),
+            )
+        };
+        let past = past_sprints(&read, "7").unwrap();
+        assert_eq!(past.iter().map(|s| s.id).collect::<Vec<_>>(), [32, 31, 30]);
+        let asked = asked.lock().unwrap();
+        assert_eq!(asked.len(), 3);
+        assert_eq!(
+            asked[0],
+            "/rest/agile/1.0/board/7/sprint?state=closed&startAt=0&maxResults=50"
+        );
+        let none = |_: &str| {
+            Err(jira::Refused {
+                code: 400,
+                said: "The board does not support sprints".into(),
+            })
+        };
+        assert_eq!(past_sprints(&none, "10"), Ok(Vec::new()));
+    }
+
+    #[test]
+    fn a_move_names_the_issue_it_goes_before() {
+        let into = |sprint| Write::Sprint {
+            key: "PAY-412".into(),
+            sprint,
+            before: Some("PAY-300".into()),
+        };
+        assert_eq!(
+            request(&into(Some(35)), true),
+            (
+                "POST",
+                "/rest/agile/1.0/sprint/35/issue".to_owned(),
+                Some(json!({"issues": ["PAY-412"], "rankBeforeIssue": "PAY-300"}))
+            )
+        );
+        let sent = Mutex::new(Vec::new());
+        let refuse_rank = |method: &str, path: &str, body: Option<&Value>| {
+            sent.lock()
+                .unwrap()
+                .push((method.to_owned(), path.to_owned(), body.cloned()));
+            match path.ends_with("/rank") {
+                true => Err("Ranking is not enabled".to_owned()),
+                false => Ok(Value::Null),
+            }
+        };
+        // The Backlog's top: the move, then the rank; a rank refused leaves it moved, Jira's words said.
+        assert_eq!(
+            send_write(&refuse_rank, &into(None), true),
+            Ok(json!({"unranked": "Ranking is not enabled"}))
+        );
+        assert_eq!(
+            *sent.lock().unwrap(),
+            [
+                (
+                    "POST".to_owned(),
+                    "/rest/agile/1.0/backlog/issue".to_owned(),
+                    Some(json!({"issues": ["PAY-412"]}))
+                ),
+                (
+                    "PUT".to_owned(),
+                    "/rest/agile/1.0/issue/rank".to_owned(),
+                    Some(json!({"issues": ["PAY-412"], "rankBeforeIssue": "PAY-300"}))
+                ),
+            ]
+        );
+        sent.lock().unwrap().clear();
+        // A move into a sprint, or to the Backlog with no place, is one request.
+        assert_eq!(
+            send_write(&refuse_rank, &into(Some(35)), true),
+            Ok(Value::Null)
+        );
+        send_write(&refuse_rank, &Write::in_sprint("PAY-412", None), true).unwrap();
+        assert_eq!(sent.lock().unwrap().len(), 2);
+        let refuse = |_: &str, _: &str, _: Option<&Value>| Err("PAY-412 is closed".to_owned());
+        assert_eq!(
+            send_write(&refuse, &into(None), true),
+            Err("PAY-412 is closed".to_owned())
+        );
+    }
+
+    #[test]
+    fn the_fixture_board_reads_as_slices() {
+        let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("fixtures");
+        let site = Site {
+            url: "https://acme.atlassian.net".into(),
+            kind: "jira".into(),
+            ..Default::default()
+        };
+        let read = |p: &str| jira::from_fixture(&dir, &site, p, "");
+        let count = |ask: Ask| slice(&read, site.cloud(), "7", &ask).unwrap().total;
+        assert_eq!(
+            (
+                count(Ask::sprint(34)),
+                count(Ask::sprint(36)),
+                count(Ask::backlog())
+            ),
+            (78, 136, 300)
+        );
+        let mine = count(Ask {
+            mine: true,
+            ..Ask::sprint(34)
+        });
+        assert!(mine > 0 && mine < 78);
+        let whole = Ask {
+            max: 1000,
+            ..Ask::sprint(36)
+        };
+        let sprint = slice(&read, site.cloud(), "7", &whole).unwrap();
+        assert!(sprint.total >= 136);
+        assert_eq!(sprint.rows.len(), sprint.total);
+        let backlog = Ask {
+            max: 50,
+            ..Ask::backlog()
+        };
+        let first = slice(&read, site.cloud(), "7", &backlog).unwrap();
+        assert_eq!(first.rows.len(), 50);
+        let info = board_info(&read, "7").unwrap();
+        assert!(!info.sprintless && !info.sprints_unread);
+        assert_eq!(
+            info.sprints.iter().map(|s| s.id).collect::<Vec<_>>(),
+            [34, 35, 36]
+        );
+        assert!(board_info(&read, "8").unwrap().sprintless);
+        assert!(board_info(&read, "10").unwrap().sprintless);
+        let past = past_sprints(&read, "7").unwrap();
+        assert_eq!(
+            past.iter().map(|s| s.id).collect::<Vec<_>>(),
+            [33, 32, 31, 30, 29]
+        );
     }
 }

@@ -262,6 +262,24 @@ pub fn get(site: &Site, path: &str) -> Result<Value, String> {
     get_for(site, path, "")
 }
 
+/// A request not answered: the status the tracker gave (0 when nothing answered) and why, in a sentence.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Refused {
+    pub code: u64,
+    pub said: String,
+}
+
+impl From<Refused> for String {
+    fn from(r: Refused) -> String {
+        r.said
+    }
+}
+
+/// `get`, its refusal's status kept: a read that tells a refusal (400) from a failure.
+pub fn read(site: &Site, path: &str) -> Result<Value, Refused> {
+    read_for(site, path, "")
+}
+
 /// `get`, for `purpose` (`news`): a fixture answers it from `<path>@<purpose>.json` when it has one, so two reads of
 /// one address with other queries (JQL) can answer apart. Without one, the query names it (`fixture_purpose`).
 ///
@@ -269,6 +287,11 @@ pub fn get(site: &Site, path: &str) -> Result<Value, String> {
 /// `values`) is paged by the query's `startAt` and `maxResults`, and `ARTOO_TASKS_FIXTURE_FAIL=<part>` fails every
 /// read whose address holds it, as a slice that could not be read.
 pub fn get_for(site: &Site, path: &str, purpose: &str) -> Result<Value, String> {
+    Ok(read_for(site, path, purpose)?)
+}
+
+/// `get_for`, its refusal's status kept.
+fn read_for(site: &Site, path: &str, purpose: &str) -> Result<Value, Refused> {
     if let Some(dir) = fixture() {
         if let Ok(part) = std::env::var("ARTOO_TASKS_FIXTURE_FAIL")
             && !part.is_empty()
@@ -283,21 +306,36 @@ pub fn get_for(site: &Site, path: &str, purpose: &str) -> Result<Value, String> 
         {
             std::thread::sleep(std::time::Duration::from_millis(ms));
         }
-        let purpose = match purpose {
-            "" => fixture_purpose(path),
-            given => given,
-        };
-        let own = (!purpose.is_empty())
-            .then(|| fixture_file(&dir, site, &format!("{}@{purpose}", bare(path))));
-        let file = own
-            .filter(|f| f.is_file())
-            .unwrap_or_else(|| fixture_file(&dir, site, path));
-        let text = std::fs::read_to_string(&file)
-            .map_err(|_| format!("{} has no {}", site.host(), bare(path)))?;
-        let v = serde_json::from_str(&text).map_err(|e| e.to_string())?;
-        return fixture_answer(site, path, v);
+        return from_fixture(&dir, site, path, purpose);
     }
     call(site, "GET", path, None)
+}
+
+/// `GET path` on `site` answered by the fixture in `dir`, as `read_for` answers it.
+pub fn from_fixture(
+    dir: &std::path::Path,
+    site: &Site,
+    path: &str,
+    purpose: &str,
+) -> Result<Value, Refused> {
+    let purpose = match purpose {
+        "" => fixture_purpose(path),
+        given => given,
+    };
+    let own = (!purpose.is_empty())
+        .then(|| fixture_file(dir, site, &format!("{}@{purpose}", bare(path))));
+    let file = own
+        .filter(|f| f.is_file())
+        .unwrap_or_else(|| fixture_file(dir, site, path));
+    let text = std::fs::read_to_string(&file).map_err(|_| Refused {
+        code: 404,
+        said: format!("{} has no {}", site.host(), bare(path)),
+    })?;
+    let v = serde_json::from_str(&text).map_err(|e| Refused {
+        code: 0,
+        said: e.to_string(),
+    })?;
+    fixture_answer(site, path, v)
 }
 
 /// What a read of the fixture asks beyond its address, as the fixture names its files (`<path>@<purpose>.json`):
@@ -325,7 +363,7 @@ const MOST_VALUES: usize = 50;
 /// The fixture's `v` as Jira answers `GET path`: a refusal written as one refuses; a list is paged by the query, its
 /// sub-tasks left out when the JQL leaves them out, with `startAt`, `maxResults` and `total` (`isLast` for values) as
 /// Jira sets them. A read with no `startAt` or `maxResults` is answered as written.
-fn fixture_answer(site: &Site, path: &str, mut v: Value) -> Result<Value, String> {
+fn fixture_answer(site: &Site, path: &str, mut v: Value) -> Result<Value, Refused> {
     if let Some(code) = v["status"].as_u64().filter(|c| *c >= 400) {
         return Err(refusal(site, code, &v));
     }
@@ -419,11 +457,11 @@ pub fn send(site: &Site, method: &str, path: &str, body: Option<&Value>) -> Resu
             return Ok(Value::Object(Default::default()));
         };
         return match answer["status"].as_u64() {
-            Some(code) if code >= 400 => Err(refusal(site, code, answer)),
+            Some(code) if code >= 400 => Err(refusal(site, code, answer).said),
             _ => Ok(answer["body"].clone()),
         };
     }
-    call(site, method, path, body)
+    Ok(call(site, method, path, body)?)
 }
 
 /// A file sent as an attachment to `path` (`/rest/api/2/issue/PAY-412/attachments`): multipart, with the header
@@ -453,7 +491,7 @@ pub fn attach(site: &Site, path: &str, file: &std::path::Path) -> Result<Value, 
         quoted(&auth(site)),
         quoted(&file.to_string_lossy())
     );
-    run(site, path, config)
+    Ok(run(site, path, config)?)
 }
 
 /// The bytes at `url` on `site` (an attachment's content), read with its token. A fixture's are its `files/<name>`,
@@ -557,7 +595,7 @@ pub fn probe(site: &Site) -> Result<(), Probe> {
 }
 
 /// `method` of `path` on the tracker itself.
-fn call(site: &Site, method: &str, path: &str, body: Option<&Value>) -> Result<Value, String> {
+fn call(site: &Site, method: &str, path: &str, body: Option<&Value>) -> Result<Value, Refused> {
     let mut config = format!(
         "url = \"{}{}\"\nrequest = \"{method}\"\nheader = \"Authorization: {}\"\nheader = \"Accept: application/json\"\n",
         // Trello's API is its own host.
@@ -580,7 +618,7 @@ fn call(site: &Site, method: &str, path: &str, body: Option<&Value>) -> Result<V
 }
 
 /// curl with `config` on its standard input; the answer as JSON, `null` when empty.
-fn run(site: &Site, path: &str, config: String) -> Result<Value, String> {
+fn run(site: &Site, path: &str, config: String) -> Result<Value, Refused> {
     let limit = LIMIT.with(std::cell::Cell::get);
     let mut child = Command::new("curl")
         .args([
@@ -596,40 +634,45 @@ fn run(site: &Site, path: &str, config: String) -> Result<Value, String> {
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()
-        .map_err(|_| "curl is not installed".to_owned())?;
+        .map_err(|_| unanswered("curl is not installed".to_owned()))?;
     child
         .stdin
         .take()
-        .ok_or("curl took no input")?
+        .ok_or_else(|| unanswered("curl took no input".to_owned()))?
         .write_all(config.as_bytes())
-        .map_err(|e| e.to_string())?;
-    let out = child.wait_with_output().map_err(|e| e.to_string())?;
+        .map_err(|e| unanswered(e.to_string()))?;
+    let out = child
+        .wait_with_output()
+        .map_err(|e| unanswered(e.to_string()))?;
     if out.status.code() == Some(28) {
-        return Err(format!(
+        return Err(unanswered(format!(
             "Can't reach {}: no answer in {limit} s",
             site.host()
-        ));
+        )));
     }
     if !out.status.success() {
         let said = String::from_utf8_lossy(&out.stderr);
-        return Err(format!(
+        return Err(unanswered(format!(
             "Can't reach {}: {}",
             site.host(),
             said.trim().trim_start_matches("curl: ")
-        ));
+        )));
     }
     let text = String::from_utf8_lossy(&out.stdout);
     let (body, code) = text.rsplit_once('\n').unwrap_or((&text, "0"));
     let code: u64 = code.trim().parse().unwrap_or(0);
     let parsed = || {
-        serde_json::from_str::<Value>(body)
-            .map_err(|_| format!("{} answered what is not JSON", site.host()))
+        serde_json::from_str::<Value>(body).map_err(|_| Refused {
+            code,
+            said: format!("{} answered what is not JSON", site.host()),
+        })
     };
+    let refused = |said: String| Err(Refused { code, said });
     match code {
         200..=299 if body.trim().is_empty() => Ok(Value::Null),
         200..=299 => parsed(),
-        401 => Err(format!("{} refused the token", site.host())),
-        404 => Err(format!("{} has no {}", site.host(), bare(path))),
+        401 => refused(format!("{} refused the token", site.host())),
+        404 => refused(format!("{} has no {}", site.host(), bare(path))),
         code => Err(refusal(
             site,
             code,
@@ -638,8 +681,13 @@ fn run(site: &Site, path: &str, config: String) -> Result<Value, String> {
     }
 }
 
+/// Nothing answered: why, with no status.
+fn unanswered(said: String) -> Refused {
+    Refused { code: 0, said }
+}
+
 /// What a refusal says: Jira's messages and its fields' (`errorMessages`, `errors`), else its status.
-fn refusal(site: &Site, code: u64, v: &Value) -> String {
+fn refusal(site: &Site, code: u64, v: &Value) -> Refused {
     let mut said: Vec<String> = (v["errorMessages"].as_array().into_iter().flatten())
         .filter_map(|m| m.as_str().map(str::to_owned))
         .collect();
@@ -650,11 +698,12 @@ fn refusal(site: &Site, code: u64, v: &Value) -> String {
                 .filter_map(|m| m.as_str().map(str::to_owned)),
         );
     }
-    match (said.is_empty(), code) {
+    let said = match (said.is_empty(), code) {
         (false, _) => said.join(" · "),
         (true, 403) => format!("{} does not let the token do this", site.host()),
         (true, code) => format!("{} answered {code}", site.host()),
-    }
+    };
+    Refused { code, said }
 }
 
 /// `bytes` in base64, for Basic's header.
@@ -921,7 +970,10 @@ mod tests {
         let refusal = serde_json::json!({ "status": 400, "errorMessages": ["The board does not support sprints"] });
         assert_eq!(
             fixture_answer(&site, "/board/10/sprint?state=active,future", refusal),
-            Err("The board does not support sprints".into())
+            Err(Refused {
+                code: 400,
+                said: "The board does not support sprints".into()
+            })
         );
         let ask =
             |jql: &str| fixture_purpose(&format!("/b/7/backlog?maxResults=50&jql={}", encode(jql)));

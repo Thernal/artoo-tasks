@@ -8,8 +8,8 @@ use artoo_plugin_sdk::core::markdown;
 use artoo_plugin_sdk::serde_json::Value;
 
 pub use artoo_tasks_api::{
-    Attachment, Board, BoardId, BoardInfo, Brief, Caps, Column, Comment, Epic, Field, Issue, Kind,
-    Link, Move, News, Person, Row, Site, Sprint, State, Told, Tracker, Write,
+    Ask, Attachment, Board, BoardId, BoardInfo, Brief, Caps, Column, Comment, Epic, Field, Issue,
+    Kind, Link, Move, News, Page, Person, Row, Site, Sprint, State, Told, Tracker, Write,
 };
 
 /// The tracker `site` is on, opened on it.
