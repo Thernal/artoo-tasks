@@ -41,6 +41,11 @@ your own).
 - **⌘K**: the Tasks tab finds the issues read by key or words, and the boards by name; a key not read yet
   (`PAY-427`) is read and is the top hit; in All, Tasks comes first among what is found. Here offers what the page on
   screen does.
+- **Issue keys in Artoo's texts** (an Artoo after 2.0.0): the key of a Jira issue Tasks holds — one on a board it
+  read or keeps, or one opened — is a link in a request's description, a branch's name and Artoo's other texts; its
+  card says the kind, state, assignee, sub-tasks, epic and, once the issue was read whole, how its description begins,
+  and says as of when when the site was not reached; a click opens the issue's page. A key Tasks does not hold stays
+  text, and Trello's cards are not named.
 - **Notes for your agent**: `+` on a paragraph of the description (`C`), or on a board (`⋯`, Note for an agent);
   the agent reads it with its place, `PAY-412 · description · ¶4`, or the board's issues as filtered.
 - **Trello**, behind the same pages: a board's lists are its columns and states, a card an issue (its key the card's

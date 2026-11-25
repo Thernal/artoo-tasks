@@ -18,6 +18,7 @@ mod flights;
 mod issue;
 mod jira;
 mod keep;
+mod keys;
 mod lines;
 mod links;
 mod look;
@@ -70,6 +71,7 @@ gpui::actions!(
         Reply,
         CopyBranch,
         OpenNews,
+        OpenKey,
         SearchTasks,
         UndoAssign,
         FilterBoards,
@@ -324,6 +326,7 @@ fn install(cx: &mut App) {
     agents::add_tools(cx);
     agents::add_places(cx);
     news::offer(cx);
+    keys::offer(cx);
     add_parts(cx, |frame, window, cx| {
         let store = store::get(cx);
         let view = cx.new(|cx| Page::new(store.clone(), frame.clone(), cx));
@@ -348,6 +351,7 @@ fn install(cx: &mut App) {
         news::install_in(&store, &frame, cx);
         let (news_store, news_frame) = (store.clone(), frame.clone());
         let searching = frame.clone();
+        let (key_frame, key_store) = (frame.clone(), store.clone());
         let (sheet_key, sheet_close) = (view.clone(), view.clone());
         let overlay = Overlay {
             view: artoo_plugin_sdk::shell::settings::row_view(view.clone(), Page::sheet_card, cx),
@@ -376,6 +380,16 @@ fn install(cx: &mut App) {
                     if let Some((host, key)) = last {
                         news_frame.open(agents::issue_route(&key, Some(&host)), cx);
                     }
+                }),
+            ),
+            (
+                Box::new(OpenKey),
+                Rc::new(move |_, cx| {
+                    let Some(key) = keys::take_clicked(cx) else {
+                        return;
+                    };
+                    let host = keys::host_of(key_store.read(cx), &key);
+                    key_frame.open(agents::issue_route(&key, host.as_deref()), cx);
                 }),
             ),
             (

@@ -631,7 +631,11 @@ impl Page {
                                 false,
                                 KEY_TEXT,
                                 None,
-                                self.frame.selecting(cx),
+                                // The page's own key: text to select, no link to itself.
+                                self.frame.selecting(cx).map(|mut selecting| {
+                                    selecting.find = Rc::new(|_, _| Vec::new());
+                                    selecting
+                                }),
                                 cx,
                             )),
                     )
