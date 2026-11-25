@@ -78,6 +78,14 @@ pub struct Pending {
     pub at: i64,
 }
 
+/// A board's slice as Boards shows it: which (`sprint:34`, `backlog`), its name as the tracker names it, its count.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct KeptSlice {
+    pub slice: String,
+    pub name: String,
+    pub count: Option<usize>,
+}
+
 #[derive(Default)]
 pub struct Kept {
     pub last_board: Option<BoardId>,
@@ -90,6 +98,8 @@ pub struct Kept {
     pub pending: Vec<Pending>,
     /// A description being edited, by issue: its text.
     pub edits: HashMap<String, String>,
+    /// The slice each board was on last.
+    pub slices: HashMap<BoardId, KeptSlice>,
 }
 
 /// The plugin's folder: `<data>/plugins/artoo-tasks`.
@@ -173,6 +183,16 @@ impl Kept {
             edits: (v["edits"].as_object().into_iter().flatten())
                 .filter_map(|(k, t)| Some((k.clone(), t.as_str()?.to_owned())))
                 .collect(),
+            slices: (list("slices").iter())
+                .filter_map(|x| {
+                    let slice = KeptSlice {
+                        slice: x["slice"].as_str()?.to_owned(),
+                        name: x["name"].as_str().unwrap_or_default().to_owned(),
+                        count: x["count"].as_u64().map(|n| n as usize),
+                    };
+                    Some((board_id(x)?, slice))
+                })
+                .collect(),
         }
     }
 
@@ -200,6 +220,13 @@ impl Kept {
                 "id": p.id, "key": p.key, "site": p.site, "body": p.body, "agent": p.agent, "at": p.at,
             })).collect::<Vec<_>>(),
             "edits": self.edits,
+            "slices": self.slices.iter().map(|(b, s)| {
+                let mut x = board_json(b);
+                x["slice"] = json!(s.slice);
+                x["name"] = json!(s.name);
+                x["count"] = json!(s.count);
+                x
+            }).collect::<Vec<_>>(),
         })
     }
 
@@ -237,6 +264,15 @@ impl Kept {
     pub fn set_view(&mut self, id: BoardId, view: View) {
         self.views.insert(id, view);
         self.write();
+    }
+
+    /// Board `id` on slice `slice`: whether that changed what is kept, to be written.
+    pub fn remember_slice(&mut self, id: BoardId, slice: KeptSlice) -> bool {
+        if self.slices.get(&id) == Some(&slice) {
+            return false;
+        }
+        self.slices.insert(id, slice);
+        true
     }
 
     /// A new id for a draft or a pending comment.
@@ -288,7 +324,22 @@ mod tests {
             ..Default::default()
         });
         kept.edits.insert("PAY-412".into(), "A new text".into());
+        let sprint = KeptSlice {
+            slice: "sprint:36".into(),
+            name: "Reconciliation squad Q4 sprint 3".into(),
+            count: Some(136),
+        };
+        let payments = ("acme.atlassian.net".to_owned(), "7".to_owned());
+        assert!(kept.remember_slice(payments.clone(), sprint.clone()));
+        assert!(!kept.remember_slice(payments.clone(), sprint.clone()));
+        let backlog = KeptSlice {
+            slice: "backlog".into(),
+            name: "Backlog".into(),
+            count: None,
+        };
+        kept.remember_slice(("acme.atlassian.net".into(), "11".into()), backlog.clone());
         let back = Kept::from_json(&kept.to_json());
+        assert_eq!(back.slices, kept.slices);
         assert_eq!(back.recent, kept.recent);
         assert_eq!(back.last_board, kept.last_board);
         assert_eq!(back.boards, kept.boards);
@@ -303,5 +354,18 @@ mod tests {
         assert_eq!(back.pending[0].body, "Fixed in !412");
         assert_eq!(back.edits["PAY-412"], "A new text");
         assert_eq!(back.next_id(), 3);
+    }
+
+    #[test]
+    fn a_file_kept_before_slices_still_reads() {
+        let older = json!({
+            "last_board": { "site": "acme.atlassian.net", "board": 7 },
+            "recent": [{ "site": "acme.atlassian.net", "board": "7" }],
+            "views": [{ "site": "acme.atlassian.net", "board": "7", "board_view": true, "group": "Epic" }],
+        });
+        let kept = Kept::from_json(&older);
+        let payments = ("acme.atlassian.net".to_owned(), "7".to_owned());
+        assert_eq!(kept.last_board, Some(payments.clone()));
+        assert!(kept.view(&payments).board && kept.slices.is_empty());
     }
 }

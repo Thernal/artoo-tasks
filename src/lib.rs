@@ -27,6 +27,7 @@ mod pop;
 mod search;
 mod sheet;
 mod side;
+mod slices;
 mod store;
 mod trackers;
 mod trello;

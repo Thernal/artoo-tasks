@@ -46,6 +46,16 @@ pub fn board_issues(site: &Site, id: &str) -> Result<Vec<Row>, String> {
     tracker(site).board_issues(id)
 }
 
+/// Board `id`'s slice `ask`: a page of its issues and how many it holds.
+pub fn slice(site: &Site, id: &str, ask: &Ask) -> Result<Page, String> {
+    tracker(site).slice(id, ask)
+}
+
+/// Board `id`'s closed sprints, the last closed first.
+pub fn past_sprints(site: &Site, id: &str) -> Result<Vec<Sprint>, String> {
+    tracker(site).past_sprints(id)
+}
+
 /// Issue `key` whole.
 pub fn read_issue(site: &Site, key: &str) -> Result<Issue, String> {
     let mut issue = tracker(site).issue(key)?;

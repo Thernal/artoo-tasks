@@ -11,10 +11,13 @@ use crate::cache;
 use crate::flights::Flights;
 use crate::jira::{self, Site};
 use crate::keep;
+// The store's own `Ask` is why a board is read.
+use crate::model::Ask as SliceAsk;
 use crate::model::{
-    self, Board, BoardId, BoardInfo, Field, Issue, Kind, Move, News, Person, Row, Write,
+    self, Board, BoardId, BoardInfo, Field, Issue, Kind, Move, News, Person, Row, Tracker, Write,
 };
 use crate::page::Page;
+use crate::slices::{self, Filter, How, Moved, SliceId, Slices, Step};
 use artoo_plugin_sdk::gpui::{
     App, AppContext, Context, Entity, Global, Image, ImageFormat, Task, WeakEntity,
 };
@@ -113,6 +116,12 @@ pub struct Store {
     row_reads: Flights<BoardId>,
     info_reads: Flights<BoardId>,
     move_reads: Flights<String>,
+    /// Each board's slices as read (a Jira board's): which is shown, their issues and counts.
+    pub slices: HashMap<BoardId, Slices>,
+    slice_reads: Flights<(BoardId, SliceId)>,
+    count_reads: Flights<(BoardId, SliceId)>,
+    /// Each epic's issues in all, by site and epic: `41 in all`.
+    pub epic_counts: HashMap<(String, String), Read<usize>>,
     /// The boards' lists asked for so far: only the last one asked is taken.
     boards_asked: u64,
     /// The boards read last, as the Mac keeps them.
@@ -225,6 +234,10 @@ impl Store {
             row_reads: Flights::default(),
             info_reads: Flights::default(),
             move_reads: Flights::default(),
+            slices: HashMap::new(),
+            slice_reads: Flights::default(),
+            count_reads: Flights::default(),
+            epic_counts: HashMap::new(),
             boards_asked: 0,
             cache,
             pages: Vec::new(),
@@ -720,10 +733,18 @@ impl Store {
                 move |this, read, cx| {
                     if this.put_info(&key, number, read, now()) {
                         this.keep_board(&key, cx);
+                        this.start_slices(&key, cx);
                     }
                 },
             );
             self.info_reads.hold(&board, number, task);
+        }
+        self.start_slices(&board, cx);
+        // The slice in view is read again; one being read for the first time reads on by itself.
+        if ask != Ask::Show
+            && let Some(view) = self.slices.get(&board).and_then(|s| s.view.clone())
+        {
+            self.read_slice(&board, view, How::Again, cx);
         }
         if let Some(number) = self.begin_rows(&board, ask) {
             let (id, key) = (board.1.clone(), board.clone());
@@ -844,6 +865,20 @@ impl Store {
                 self.info.remove(&board);
             }
         }
+        for (board, slice) in self.slice_reads.cancel(|k| unwanted(&k.0)) {
+            if let Some(s) = self.slices.get_mut(&board) {
+                s.dropped(&slice);
+            }
+        }
+        for (board, slice) in self.count_reads.cancel(|k| unwanted(&k.0)) {
+            if let Some(r) = self
+                .slices
+                .get_mut(&board)
+                .and_then(|s| s.reads.get_mut(&slice))
+            {
+                r.counting = false;
+            }
+        }
     }
 
     /// `board` as it is read now, kept on the Mac for the next start.
@@ -889,6 +924,8 @@ impl Store {
         self.info_at.retain(|b, _| b.0 != host);
         self.stale.retain(|b, _| b.0 != host);
         self.from_disk.retain(|b| b.0 != host);
+        self.slices.retain(|b, _| b.0 != host);
+        self.epic_counts.retain(|e, _| e.0 != host);
         if self.cache.forget(host) {
             self.write_cache(cx);
         }
@@ -1334,6 +1371,510 @@ impl Store {
     }
 }
 
+/// One step of slice `ask`'s read of board `board`: its page, the first with its counts, asked alongside.
+fn read_step(site: &Site, board: &str, ask: SliceAsk) -> Result<Step, String> {
+    let t = model::tracker(site);
+    let (counts, page) = std::thread::scope(|scope| {
+        let counts = (ask.start == 0).then(|| scope.spawn(|| counts(&*t, board, &ask)));
+        let page = t.slice(board, &ask);
+        (
+            counts.map(|c| c.join().unwrap_or_else(|_| Err(String::new()))),
+            page,
+        )
+    });
+    let counts = counts.transpose()?;
+    Ok(Step {
+        start: ask.start,
+        page: page?,
+        count: counts.map(|c| c.0),
+        mine: counts.and_then(|c| c.1),
+    })
+}
+
+/// How many issues slice `ask` of board `board` holds as asked, and how many of the whole slice are yours (none when
+/// that could not be read): two counts, side by side.
+fn counts(t: &dyn Tracker, board: &str, ask: &SliceAsk) -> Result<(usize, Option<usize>), String> {
+    let mine = SliceAsk {
+        slice: ask.slice.clone(),
+        mine: true,
+        ..Default::default()
+    };
+    let count = SliceAsk {
+        start: 0,
+        max: 0,
+        ..ask.clone()
+    };
+    std::thread::scope(|scope| {
+        let mine = scope.spawn(|| t.slice(board, &mine).ok().map(|p| p.total));
+        let count = t.slice(board, &count)?.total;
+        Ok((count, mine.join().ok().flatten()))
+    })
+}
+
+impl Store {
+    /// Whether board `board` is read by slice: a Jira board. Another tracker's board is one list, its `rows`.
+    fn by_slice(&self, board: &BoardId) -> bool {
+        self.site_of(&board.0)
+            .is_some_and(|s| s.kind == crate::trackers::JIRA)
+    }
+
+    /// Board `board`'s slices once its sprints are known: each active sprint's and the Backlog's counts, and the
+    /// slice it opens on.
+    fn start_slices(&mut self, board: &BoardId, cx: &mut Context<Self>) {
+        if !self.by_slice(board) {
+            return;
+        }
+        let Some(Read::Done(info)) = self.info.get(board) else {
+            return;
+        };
+        let mut counted: Vec<SliceId> = slices::active(info)
+            .map(|s| SliceId::Sprint(s.id))
+            .collect();
+        if !info.sprintless {
+            counted.push(SliceId::Backlog);
+        }
+        for slice in counted {
+            self.read_count(board, slice, cx);
+        }
+        self.open_slice(board, cx);
+    }
+
+    /// The slice board `board` opens on, shown once what decides it is read.
+    fn open_slice(&mut self, board: &BoardId, cx: &mut Context<Self>) {
+        let Some(Read::Done(info)) = self.info.get(board) else {
+            return;
+        };
+        let remembered = (self.kept.slices.get(board)).and_then(|k| SliceId::parse(&k.slice));
+        let slices = self.slices.entry(board.clone()).or_default();
+        if slices.view.is_some() {
+            return;
+        }
+        if let Some(open) = slices.opens(remembered.as_ref(), info) {
+            self.show_slice(board, open, cx);
+        }
+    }
+
+    /// Slice `slice` of board `board` shown: read when it was not, and kept as the board's.
+    pub fn show_slice(&mut self, board: &BoardId, slice: SliceId, cx: &mut Context<Self>) {
+        self.slices.entry(board.clone()).or_default().view = Some(slice.clone());
+        self.read_slice(board, slice, How::Show, cx);
+        self.keep_slice(board);
+        cx.notify();
+    }
+
+    /// The slice in view of `board` kept with its name and count, for Boards and the next start.
+    fn keep_slice(&mut self, board: &BoardId) {
+        let Some(slices) = self.slices.get(board) else {
+            return;
+        };
+        let Some(view) = slices.view.clone() else {
+            return;
+        };
+        let info = self.info.get(board).and_then(Read::done);
+        let past = match &slices.past {
+            Some(Read::Done(past)) => past.as_slice(),
+            _ => &[],
+        };
+        let count = match &view {
+            SliceId::All => info.and_then(|info| {
+                slices::active(info)
+                    .map(|s| slices.reads.get(&SliceId::Sprint(s.id))?.count)
+                    .sum()
+            }),
+            slice => slices.reads.get(slice).and_then(|r| r.count),
+        };
+        let kept = keep::KeptSlice {
+            slice: view.key(),
+            name: slices::name(&view, info, past),
+            count,
+        };
+        if self.kept.remember_slice(board.clone(), kept) {
+            self.kept.write();
+        }
+    }
+
+    /// Slice `slice` of board `board` read as `how` asks, page after page while it reads on, each shown as it comes.
+    pub fn read_slice(
+        &mut self,
+        board: &BoardId,
+        slice: SliceId,
+        how: How,
+        cx: &mut Context<Self>,
+    ) {
+        if slice == SliceId::All {
+            let active: Vec<SliceId> = (self.info.get(board).and_then(Read::done))
+                .map(|info| {
+                    slices::active(info)
+                        .map(|s| SliceId::Sprint(s.id))
+                        .collect()
+                })
+                .unwrap_or_default();
+            for sprint in active {
+                self.read_slice(board, sprint, how, cx);
+            }
+            return;
+        }
+        let Some(site) = self.site_of(&board.0) else {
+            return;
+        };
+        let key = (board.clone(), slice);
+        if let Some((number, ask)) = self.begin_slice(&key, how) {
+            self.slice_step(site, key, number, ask, cx);
+        }
+    }
+
+    /// The read of `key`'s slice that `how` calls for, marked as on its way: its number and what is asked first. One
+    /// already on its way is left to go on, unless it is read again.
+    fn begin_slice(&mut self, key: &(BoardId, SliceId), how: How) -> Option<(u64, SliceAsk)> {
+        if how != How::Again && self.slice_reads.running(key) {
+            return None;
+        }
+        let ask = self
+            .slices
+            .entry(key.0.clone())
+            .or_default()
+            .begin(&key.1, how)?;
+        Some((self.slice_reads.begin(key, true)?, ask))
+    }
+
+    /// Step `number` of `key`'s slice read, `ask`, sent; the next one once it is in, while the slice reads on.
+    fn slice_step(
+        &mut self,
+        site: Site,
+        key: (BoardId, SliceId),
+        number: u64,
+        ask: SliceAsk,
+        cx: &mut Context<Self>,
+    ) {
+        let (s, id, k) = (site.clone(), key.0.1.clone(), key.clone());
+        let task = read_task(
+            cx,
+            move || read_step(&s, &id, ask),
+            move |this, read, cx| {
+                if let Some((number, next)) = this.put_slice(&k, number, read, now()) {
+                    this.slice_step(site, k.clone(), number, next, cx);
+                }
+                if this
+                    .slices
+                    .get(&k.0)
+                    .is_some_and(|s| s.view.as_ref() == Some(&k.1))
+                {
+                    this.keep_slice(&k.0);
+                }
+            },
+        );
+        self.slice_reads.hold(&key, number, task);
+    }
+
+    /// Step `number` of `key`'s slice read answered: taken in when it is still the one wanted; the next step's number
+    /// and ask while the slice reads on.
+    fn put_slice(
+        &mut self,
+        key: &(BoardId, SliceId),
+        number: u64,
+        read: Result<Step, String>,
+        now: i64,
+    ) -> Option<(u64, SliceAsk)> {
+        if !self.slice_reads.land(key, number) {
+            return None;
+        }
+        let slices = self.slices.get_mut(&key.0)?;
+        match read {
+            Ok(step) => {
+                let next = slices.take(&key.1, step, now)?;
+                Some((self.slice_reads.begin(key, true)?, next))
+            }
+            Err(why) => {
+                slices.fail(&key.1, why);
+                None
+            }
+        }
+    }
+
+    /// Slice `slice` of board `board` counted, unless it is or is being.
+    fn read_count(&mut self, board: &BoardId, slice: SliceId, cx: &mut Context<Self>) {
+        let key = (board.clone(), slice);
+        let Some(site) = self.site_of(&board.0) else {
+            return;
+        };
+        if self.count_reads.running(&key) {
+            return;
+        }
+        let Some(ask) = (self.slices.entry(board.clone()).or_default()).begin_count(&key.1, false)
+        else {
+            return;
+        };
+        let Some(number) = self.count_reads.begin(&key, false) else {
+            return;
+        };
+        let (id, k) = (board.1.clone(), key.clone());
+        let task = read_task(
+            cx,
+            move || counts(&*model::tracker(&site), &id, &ask),
+            move |this, read, cx| {
+                if this.put_count(&k, number, read) {
+                    this.open_slice(&k.0, cx);
+                }
+            },
+        );
+        self.count_reads.hold(&key, number, task);
+    }
+
+    /// Count read `number` of `key`'s slice answered; whether it was taken.
+    fn put_count(
+        &mut self,
+        key: &(BoardId, SliceId),
+        number: u64,
+        read: Result<(usize, Option<usize>), String>,
+    ) -> bool {
+        if !self.count_reads.land(key, number) {
+            return false;
+        }
+        if let Some(slices) = self.slices.get_mut(&key.0) {
+            slices.take_count(&key.1, read);
+        }
+        true
+    }
+}
+
+// TODO(#15): the page loads the Backlog's pages, filters it, opens Past sprints, says an epic's whole count and moves
+// issues in the work's next steps; until then nothing calls these.
+#[allow(dead_code)]
+impl Store {
+    /// The Backlog's next page of board `board`.
+    pub fn load_more(&mut self, board: &BoardId, cx: &mut Context<Self>) {
+        self.read_slice(board, SliceId::Backlog, How::More, cx);
+    }
+
+    /// The Backlog's filter of board `board` typed: asked of the tracker once typing rests, the Backlog read again.
+    pub fn filter_backlog(&mut self, board: &BoardId, filter: Filter, cx: &mut Context<Self>) {
+        let slices = self.slices.entry(board.clone()).or_default();
+        if slices.filter == filter {
+            return;
+        }
+        slices.filter = filter.clone();
+        let board = board.clone();
+        cx.spawn(async move |this, cx| {
+            cx.background_executor()
+                .timer(Duration::from_millis(300))
+                .await;
+            this.update(cx, |this, cx| {
+                if this.slices.get(&board).is_some_and(|s| s.filter == filter) {
+                    this.read_slice(&board, SliceId::Backlog, How::Again, cx);
+                }
+            })
+            .ok();
+        })
+        .detach();
+    }
+
+    /// Board `board`'s closed sprints, read once Past sprints is opened.
+    pub fn read_past(&mut self, board: &BoardId, cx: &mut Context<Self>) {
+        let Some(site) = self.site_of(&board.0) else {
+            return;
+        };
+        let slices = self.slices.entry(board.clone()).or_default();
+        if matches!(slices.past, Some(Read::Reading | Read::Done(_))) {
+            return;
+        }
+        slices.past = Some(Read::Reading);
+        let (id, board) = (board.1.clone(), board.clone());
+        spawn_read(
+            cx,
+            move || model::past_sprints(&site, &id),
+            move |this, read, _| {
+                this.slices.entry(board).or_default().past = Some(read_of(read));
+            },
+        );
+    }
+
+    /// Epic `epic`'s issues in all, on board `board`'s site, read once.
+    pub fn read_epic_count(&mut self, board: &BoardId, epic: &str, cx: &mut Context<Self>) {
+        let key = (board.0.clone(), epic.to_owned());
+        let Some(site) = self.site_of(&board.0) else {
+            return;
+        };
+        if matches!(
+            self.epic_counts.get(&key),
+            Some(Read::Reading | Read::Done(_))
+        ) {
+            return;
+        }
+        self.epic_counts.insert(key.clone(), Read::Reading);
+        let (id, ask) = (board.1.clone(), SliceAsk::epic(epic));
+        spawn_read(
+            cx,
+            move || model::slice(&site, &id, &ask).map(|p| p.total),
+            move |this, read, _| {
+                this.epic_counts.insert(key, read_of(read));
+            },
+        );
+    }
+
+    /// Issues `keys` of board `board` moved to `to` (a sprint, or the Backlog; its top with `top`): shown at once, then
+    /// sent, one write an issue. An issue the tracker refuses goes back where it was, its reason on its `sprint` field;
+    /// the others stay moved. `done` hears the move as it stands, for its toast and Undo.
+    pub fn move_to(
+        &mut self,
+        board: &BoardId,
+        keys: Vec<String>,
+        to: SliceId,
+        top: bool,
+        done: impl FnOnce(&mut Store, Moved, &mut Context<Store>) + 'static,
+        cx: &mut Context<Self>,
+    ) {
+        let Some(site) = self.site_of(&board.0) else {
+            return;
+        };
+        let sprint = (to.sprint()).map(|id| {
+            (self.info.get(board).and_then(Read::done))
+                .and_then(|i| i.sprints.iter().find(|s| s.id == id).cloned())
+                .unwrap_or(model::Sprint {
+                    id,
+                    ..Default::default()
+                })
+        });
+        let known: HashMap<String, Row> = (keys.iter())
+            .filter_map(|k| Some((k.clone(), self.row(k)?.clone())))
+            .collect();
+        let me = self.me.get(&board.0).cloned();
+        let slices = self.slices.entry(board.clone()).or_default();
+        // The Backlog's first issue, as read, that the issues go before at its top.
+        let first = (slices.reads.get(&SliceId::Backlog))
+            .and_then(|r| r.rows.iter().find(|r| !r.subtask && !keys.contains(&r.key)))
+            .map(|r| r.key.clone());
+        let moved = slices.place(&keys, &to, top, sprint.clone(), me.as_ref(), |k| {
+            known.get(k).cloned()
+        });
+        for key in moved.keys() {
+            self.edit_row(&key, |r| r.sprint = sprint.clone());
+            let at: FieldKey = (key, "sprint".to_owned());
+            self.refused.remove(&at);
+            self.saving.insert(at);
+        }
+        cx.notify();
+        let (id, board, sent) = (board.1.clone(), board.clone(), moved.clone());
+        spawn_read(
+            cx,
+            move || {
+                let t = model::tracker(&site);
+                // None read: Jira's first, an issue moved left out.
+                let first = first.or_else(|| {
+                    let ask = SliceAsk {
+                        max: sent.placed.len() + 1,
+                        ..SliceAsk::backlog()
+                    };
+                    let page = t.slice(&id, &ask).ok()?;
+                    (page.rows.into_iter())
+                        .find(|r| !r.subtask && sent.placed.iter().all(|p| p.key != r.key))
+                        .map(|r| r.key)
+                });
+                Ok(sent
+                    .placed
+                    .iter()
+                    .map(|p| {
+                        let write = Write::Sprint {
+                            key: p.key.clone(),
+                            sprint: sent.to.sprint(),
+                            before: if sent.top { first.clone() } else { None },
+                        };
+                        (p.key.clone(), t.write(&write))
+                    })
+                    .collect::<Vec<_>>())
+            },
+            move |this, read, cx| {
+                let moved = this.settle_move(&board, moved, &read.unwrap_or_default());
+                this.keep_slice(&board);
+                done(this, moved, cx);
+            },
+        );
+    }
+
+    /// Move `moved` of board `board` as the tracker answered each issue: one refused goes back where it was with its
+    /// reason on its `sprint` field; one moved to the Backlog but not ranked at its top keeps the tracker's words on its
+    /// `rank`. The move as it stands.
+    fn settle_move(
+        &mut self,
+        board: &BoardId,
+        mut moved: Moved,
+        answers: &[(String, Result<Value, String>)],
+    ) -> Moved {
+        let mut refused = Vec::new();
+        for (key, answer) in answers {
+            self.saving.remove(&(key.clone(), "sprint".to_owned()));
+            match answer {
+                Err(why) => {
+                    self.refused
+                        .insert((key.clone(), "sprint".into()), why.clone());
+                    refused.push(key.clone());
+                }
+                Ok(v) => {
+                    if let Some(said) = v["unranked"].as_str() {
+                        self.refused
+                            .insert((key.clone(), "rank".into()), said.to_owned());
+                    }
+                }
+            }
+        }
+        if refused.is_empty() {
+            return moved;
+        }
+        let me = self.me.get(&board.0).cloned();
+        if let Some(slices) = self.slices.get_mut(board) {
+            slices.take_back(&moved, &refused, me.as_ref());
+        }
+        for p in moved.placed.iter().filter(|p| refused.contains(&p.key)) {
+            let sprint = p.sprint();
+            self.edit_row(&p.key, |r| r.sprint = sprint.clone());
+        }
+        moved.placed.retain(|p| !refused.contains(&p.key));
+        moved
+    }
+
+    /// Move `moved` of board `board` taken back, with no word of its own: each issue into the slice it came from,
+    /// ranked before the issue that followed it there. One the tracker refuses to take back has its reason on its
+    /// `sprint` field, and the slices are read again.
+    pub fn undo_move(&mut self, board: &BoardId, moved: Moved, cx: &mut Context<Self>) {
+        let Some(site) = self.site_of(&board.0) else {
+            return;
+        };
+        let me = self.me.get(&board.0).cloned();
+        if let Some(slices) = self.slices.get_mut(board) {
+            slices.take_back(&moved, &moved.keys(), me.as_ref());
+        }
+        for p in &moved.placed {
+            let sprint = p.sprint();
+            self.edit_row(&p.key, |r| r.sprint = sprint.clone());
+        }
+        cx.notify();
+        let writes = slices::undo_writes(&moved);
+        let board = board.clone();
+        spawn_read(
+            cx,
+            move || {
+                let t = model::tracker(&site);
+                Ok((writes.iter())
+                    .map(|w| (w.key().unwrap_or_default().to_owned(), t.write(w)))
+                    .collect::<Vec<_>>())
+            },
+            move |this, read, cx| {
+                let mut refused = false;
+                for (key, answer) in read.unwrap_or_default() {
+                    if let Err(why) = answer {
+                        this.refused.insert((key, "sprint".into()), why);
+                        refused = true;
+                    }
+                }
+                if refused && let Some(view) = this.slices.get(&board).and_then(|s| s.view.clone())
+                {
+                    this.read_slice(&board, view, How::Again, cx);
+                }
+                this.keep_slice(&board);
+            },
+        );
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1537,5 +2078,123 @@ mod tests {
         assert_eq!(store.board_among(&boards), Some(board("2").key()));
         store.here = Some("/w/web".into());
         assert_eq!(store.board_among(&boards), Some(board("1").key()));
+    }
+
+    fn slice_key(slice: SliceId) -> (BoardId, SliceId) {
+        (board("7").key(), slice)
+    }
+
+    #[test]
+    fn a_slice_reads_on_page_by_page_and_an_overtaken_page_is_left_out() {
+        let mut store = test_store();
+        let key = slice_key(SliceId::Sprint(34));
+        let (first, ask) = store.begin_slice(&key, How::Show).unwrap();
+        assert_eq!((ask.start, ask.max), (0, slices::PAGE));
+        assert_eq!(store.begin_slice(&key, How::Show), None);
+        let page = |start: usize, n: usize| model::Page {
+            rows: (start..start + n)
+                .map(|i| row(&format!("PAY-{i}")))
+                .collect(),
+            total: 60,
+        };
+        let step = Step {
+            start: 0,
+            page: page(0, 50),
+            count: Some(58),
+            mine: Some(4),
+        };
+        let (second, next) = store.put_slice(&key, first, Ok(step), 1).unwrap();
+        assert_eq!(next.start, 50);
+        let read = &store.slices[&key.0].reads[&key.1];
+        assert_eq!((read.read(), read.count), (50, Some(58)));
+        // ⌘R overtakes the page on its way.
+        let (again, _) = store.begin_slice(&key, How::Again).unwrap();
+        let late = Step {
+            start: 50,
+            page: page(50, 10),
+            ..Default::default()
+        };
+        assert_eq!(store.put_slice(&key, second, Ok(late), 2), None);
+        assert_eq!(store.slices[&key.0].reads[&key.1].rows.len(), 50);
+        assert_eq!(store.put_slice(&key, again, Err("504".into()), 3), None);
+        let read = &store.slices[&key.0].reads[&key.1];
+        assert_eq!(read.state, Some(Read::Failed("504".into())));
+        assert_eq!(read.rows.len(), 50);
+        // Another slice of the board is not touched by it.
+        assert!(
+            store
+                .begin_slice(&slice_key(SliceId::Backlog), How::Show)
+                .is_some()
+        );
+        store.drop_reads(|_| true);
+        let backlog = &store.slices[&key.0].reads[&SliceId::Backlog];
+        assert_eq!(backlog.state, None);
+    }
+
+    #[test]
+    fn a_move_refused_goes_back_with_the_trackers_reason() {
+        let mut store = test_store();
+        let board = board("7").key();
+        let read = |keys: &[&str], sprint: Option<u64>| {
+            let mut read = slices::SliceRead::default();
+            read.rows = (keys.iter())
+                .map(|k| Row {
+                    sprint: sprint.map(|id| model::Sprint {
+                        id,
+                        ..Default::default()
+                    }),
+                    ..row(k)
+                })
+                .collect();
+            read.count = Some(keys.len());
+            read.state = Some(Read::Done(()));
+            read
+        };
+        let slices = store.slices.entry(board.clone()).or_default();
+        slices
+            .reads
+            .insert(SliceId::Sprint(34), read(&["PAY-1", "PAY-2"], Some(34)));
+        slices
+            .reads
+            .insert(SliceId::Backlog, read(&["PAY-9"], None));
+        let keys = vec!["PAY-1".to_owned(), "PAY-2".to_owned()];
+        let moved = slices.place(&keys, &SliceId::Backlog, true, None, None, |_| None);
+        let answers = vec![
+            (
+                "PAY-1".to_owned(),
+                Ok(artoo_plugin_sdk::serde_json::json!({"unranked": "Ranking is off"})),
+            ),
+            ("PAY-2".to_owned(), Err("You may not move PAY-2".to_owned())),
+        ];
+        let stands = store.settle_move(&board, moved, &answers);
+        assert_eq!(stands.keys(), ["PAY-1"]);
+        let reads = &store.slices[&board].reads;
+        let keys_in = |slice: SliceId| -> Vec<String> {
+            reads[&slice].rows.iter().map(|r| r.key.clone()).collect()
+        };
+        assert_eq!(keys_in(SliceId::Sprint(34)), ["PAY-2"]);
+        assert_eq!(keys_in(SliceId::Backlog), ["PAY-1", "PAY-9"]);
+        assert_eq!(reads[&SliceId::Sprint(34)].count, Some(1));
+        assert_eq!(reads[&SliceId::Backlog].count, Some(2));
+        let said = |key: &str, field: &str| {
+            store
+                .refused
+                .get(&(key.to_owned(), field.to_owned()))
+                .cloned()
+        };
+        assert_eq!(
+            said("PAY-2", "sprint").as_deref(),
+            Some("You may not move PAY-2")
+        );
+        assert_eq!(said("PAY-1", "rank").as_deref(), Some("Ranking is off"));
+        assert_eq!(
+            slices::undo_writes(&stands),
+            [Write::Sprint {
+                key: "PAY-1".into(),
+                sprint: Some(34),
+                // The issue after it was moved too: nothing to go back before.
+                before: None
+            }]
+        );
     }
 }

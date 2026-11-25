@@ -32,6 +32,11 @@ impl<K: Clone + Eq + Hash> Flights<K> {
         Some(self.asked)
     }
 
+    /// Whether a read of `key` is on its way.
+    pub fn running(&self, key: &K) -> bool {
+        self.running.contains_key(key)
+    }
+
     /// The task of read `number`, kept for as long as it is wanted.
     pub fn hold(&mut self, key: &K, number: u64, task: Task<()>) {
         if let Some(read) = self.running.get_mut(key).filter(|r| r.0 == number) {
