@@ -19,6 +19,7 @@ use artoo_plugin_sdk::gpui::{
     ScrollHandle, Window, div, prelude::*,
 };
 use artoo_plugin_sdk::kit::composer::{Compose, ComposeAct, Look, Short, Target, Typed as Written};
+use artoo_plugin_sdk::kit::emoji_picker::PickerKey;
 use artoo_plugin_sdk::kit::fresh::SlotAction;
 use artoo_plugin_sdk::kit::{controls, icons, markdown, motion, px, room, theme};
 use artoo_plugin_sdk::shell::{Frame, MenuItem, Typed, spaces};
@@ -179,6 +180,7 @@ pub fn compose(target: Target, text: &str) -> Compose {
         file: None,
         answers: None,
         attachments: Vec::new(),
+        emoji: None,
     }
 }
 
@@ -778,8 +780,8 @@ impl Page {
         cx.notify();
     }
 
-    /// A composer's toolbar pressed: a helper on its text, Preview, or the folded tools' menu; false for any other
-    /// act.
+    /// A composer's toolbar pressed: a helper on its text, Preview, the emoji picker, or the folded tools' menu;
+    /// false for any other act.
     pub fn compose_tool(
         &mut self,
         of: ComposeOf,
@@ -797,6 +799,26 @@ impl Page {
                     c.toggle_preview();
                 }
             }
+            ComposeAct::Emoji => {
+                if let Some(c) = of(self) {
+                    c.open_emoji();
+                }
+            }
+            ComposeAct::PutEmoji(name) => {
+                if let Some(c) = of(self) {
+                    c.put_emoji(name);
+                }
+            }
+            ComposeAct::CloseEmoji => {
+                if let Some(c) = of(self) {
+                    c.emoji = None;
+                }
+            }
+            ComposeAct::EmojiPicker(edit) => {
+                if let Some(picker) = of(self).and_then(|c| c.emoji.as_mut()) {
+                    edit(picker);
+                }
+            }
             ComposeAct::Format { at, tools } => {
                 let preview = of(self).is_some_and(|c| c.preview);
                 let page = cx.entity().downgrade();
@@ -806,7 +828,7 @@ impl Page {
                         page.update(cx, |p, cx| p.compose_tool(of, &act, cx)).ok();
                     }
                 };
-                let helpers = (tools.iter())
+                let mut helpers: Vec<MenuItem> = (tools.iter())
                     .map(|&h| {
                         // The tip's name and keys: `Link — text, then …  ⌘⇧K` as `Link` and `⌘⇧K`.
                         let (_, tip) = markdown::helper_look(h);
@@ -815,12 +837,47 @@ impl Page {
                         MenuItem::new(name, press(ComposeAct::Helper(h))).key(key)
                     })
                     .collect();
+                // ☺ after List, as along the box.
+                let list = tools.iter().position(|&h| h == Helper::Bullet);
+                let emoji = MenuItem::new("Emoji", press(ComposeAct::Emoji));
+                let key = if cfg!(target_os = "macos") {
+                    "⌃⌘E"
+                } else {
+                    ""
+                };
+                helpers.insert(list.map_or(helpers.len(), |at| at + 1), emoji.key(key));
                 let preview = MenuItem::new("Preview", press(ComposeAct::Preview))
                     .key("⌘⇧P")
                     .checked(preview);
                 self.frame.menu(*at, vec![helpers, vec![preview]], cx);
             }
             _ => return false,
+        }
+        cx.notify();
+        true
+    }
+
+    /// A key of a composer's emoji picker, done: ⌃⌘E opens or closes it, and while it is open every key is its
+    /// own, ↵ putting the emoji picked into the text. False for a key the composer is to take.
+    pub fn compose_emoji(
+        &mut self,
+        of: ComposeOf,
+        event: &KeyDownEvent,
+        cx: &mut Context<Self>,
+    ) -> bool {
+        let Some(c) = of(self) else {
+            return false;
+        };
+        let toggle = Compose::emoji_key(&event.keystroke);
+        match c.emoji.as_mut() {
+            None if toggle => c.open_emoji(),
+            None => return false,
+            Some(_) if toggle => c.emoji = None,
+            Some(picker) => match picker.key(event, false, cx) {
+                Some(PickerKey::Pick(Some(name))) => c.put_emoji(&name),
+                Some(PickerKey::Pick(None) | PickerKey::Close) => c.emoji = None,
+                None => {}
+            },
         }
         cx.notify();
         true
@@ -842,6 +899,9 @@ impl Page {
 
     /// A key while the note has the keyboard.
     pub fn note_key(&mut self, event: &KeyDownEvent, cx: &mut Context<Self>) -> Typed {
+        if self.compose_emoji(|p| p.note.as_mut().map(|n| &mut n.compose), event, cx) {
+            return Typed::Kept;
+        }
         let key = &event.keystroke;
         if key.modifiers.platform && key.key == "enter" {
             self.add_note(cx);
@@ -944,6 +1004,10 @@ impl Page {
         let page = cx.entity();
         let acts: artoo_plugin_sdk::kit::composer::ComposeActs = Rc::new(move |act, cx| {
             page.update(cx, |this, cx| {
+                // The picker takes the keyboard its box has: a press on ☺ reaches nothing else.
+                if matches!(act, ComposeAct::Emoji | ComposeAct::PutEmoji(_)) {
+                    this.frame.take_keyboard(NOTE, cx);
+                }
                 if this.compose_tool(|p| p.note.as_mut().map(|n| &mut n.compose), &act, cx) {
                     return;
                 }

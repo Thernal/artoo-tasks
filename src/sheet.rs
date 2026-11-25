@@ -432,6 +432,10 @@ impl Page {
             self.pop_key(event, cx);
             return;
         }
+        let writing = self.sheet.as_ref().is_some_and(|s| s.at == At::Description);
+        if writing && self.compose_emoji(DESCRIPTION, event, cx) {
+            return;
+        }
         let key = &event.keystroke;
         let m = &key.modifiers;
         match key.key.as_str() {
@@ -1206,7 +1210,10 @@ impl Page {
         let page = cx.entity();
         let acts: artoo_plugin_sdk::kit::composer::ComposeActs = Rc::new(move |act, cx| {
             page.update(cx, |this, cx| {
-                if let Some(s) = this.sheet.as_mut() {
+                // A press outside the emoji picker may be on another field, which then has the keyboard.
+                if !matches!(act, ComposeAct::CloseEmoji)
+                    && let Some(s) = this.sheet.as_mut()
+                {
                     s.at = At::Description;
                 }
                 if this.compose_tool(DESCRIPTION, &act, cx) {

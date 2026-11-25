@@ -904,6 +904,9 @@ impl Page {
         let page = cx.entity();
         let acts: artoo_plugin_sdk::kit::composer::ComposeActs = Rc::new(move |act, cx| {
             page.update(cx, |this, cx| {
+                if matches!(act, ComposeAct::Emoji | ComposeAct::PutEmoji(_)) {
+                    this.frame.take_keyboard(INPUT_DESC, cx);
+                }
                 if this.compose_tool(DESC, &act, cx) {
                     return this.keep_description(cx);
                 }
@@ -1131,6 +1134,10 @@ impl Page {
     }
 
     pub fn desc_key(&mut self, event: &KeyDownEvent, cx: &mut Context<Self>) -> Typed {
+        if self.compose_emoji(DESC, event, cx) {
+            self.keep_description(cx);
+            return Typed::Kept;
+        }
         let key = &event.keystroke;
         if key.modifiers.platform && key.key == "enter" {
             self.save_description(cx);
@@ -2680,7 +2687,15 @@ impl Page {
         let page = cx.entity();
         let acts: artoo_plugin_sdk::kit::composer::ComposeActs = Rc::new(move |act, cx| {
             page.update(cx, |this, cx| match act {
-                ComposeAct::Helper(_) | ComposeAct::Preview | ComposeAct::Format { .. } => {
+                ComposeAct::Emoji | ComposeAct::PutEmoji(_) => {
+                    this.frame.take_keyboard(INPUT_COMMENT, cx);
+                    this.compose_tool(COMMENT, &act, cx);
+                }
+                ComposeAct::Helper(_)
+                | ComposeAct::Preview
+                | ComposeAct::Format { .. }
+                | ComposeAct::CloseEmoji
+                | ComposeAct::EmojiPicker(_) => {
                     this.compose_tool(COMMENT, &act, cx);
                 }
                 ComposeAct::Place {
@@ -2916,6 +2931,9 @@ impl Page {
     }
 
     pub fn comment_key(&mut self, event: &KeyDownEvent, cx: &mut Context<Self>) -> Typed {
+        if self.compose_emoji(COMMENT, event, cx) {
+            return Typed::Kept;
+        }
         let key = &event.keystroke;
         if key.modifiers.platform && key.key == "enter" {
             if self.issue.comment.as_ref().is_some_and(|c| c.waiting()) {

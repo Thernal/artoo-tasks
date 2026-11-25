@@ -25,7 +25,8 @@ your own).
   yours goes; sub-tasks with an empty row (`N`), linked issues (`L`) and attachments, shown while there are none too
   (a file dropped on the page is attached), pictures where they stand in the description and the comments (a click
   opens one whole in Artoo's viewer), details from the edit screen. Comments: yours to everyone, edited and deleted, a reply mentioning who wrote last
-  (`R`), people mentioned by name (`@Juniper.Hale`); `⇥` sends it to your agent instead.
+  (`R`), people mentioned by name (`@Juniper.Hale`); `⇥` sends it to your agent instead. Every composer of Tasks has
+  Artoo's emoji picker (☺, or `⌃⌘E` on macOS; an Artoo after 2.0.0).
 - **Someone else's change**: what is on screen is read again as the window comes to the front, and each minute while
   it is there; a line over the title says who changed what, dots mark it. A board's refresh reads its issues (a Jira
   board's, the slice shown); its
@@ -44,8 +45,8 @@ your own).
 - **Issue keys in Artoo's texts** (an Artoo after 2.0.0): the key of a Jira issue Tasks holds — one on a board it
   read or keeps, or one opened — is a link in a request's description, a branch's name and Artoo's other texts; its
   card says the kind, state, assignee, sub-tasks, epic and, once the issue was read whole, how its description begins,
-  and says as of when when the site was not reached; a click opens the issue's page. A key Tasks does not hold stays
-  text, and Trello's cards are not named.
+  and says as of when when the site was not reached; a click opens the issue's page, and Artoo's link menu opens it
+  in Jira or copies its link. A key Tasks does not hold stays text, and Trello's cards are not named.
 - **Notes for your agent**: `+` on a paragraph of the description (`C`), or on a board (`⋯`, Note for an agent);
   the agent reads it with its place, `PAY-412 · description · ¶4`, or the board's issues as filtered.
 - **Trello**, behind the same pages: a board's lists are its columns and states, a card an issue (its key the card's
