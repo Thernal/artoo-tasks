@@ -11,6 +11,13 @@ your own).
   the people's faces beside them, the filter (`⌘F`). Each row's state chip moves the issue (`⌥S`), its face assigns
   it (`A`, `I` to you; a reassignment says from whom to whom in a toast with Undo, `⌘Z`); the epic, the sprint,
   Blocked by.
+- **A Jira board by slice**: the facts line's sprint name picks what is shown (`S`): an active or future sprint, All
+  active sprints (`A`, a group each), the Backlog (`B`; in Jira's rank, its filter, Mine and epic asked of Jira, 50
+  issues at a time) or a past sprint, read only; a board without sprints is shown whole, led by its name. A sprint's
+  head says its dates, days left, goal and how far it has got (`24 / 78`); the bar's `All` and `Mine` are Jira's
+  counts, and an empty slice says why in one line. An issue moves to a sprint or the Backlog (its top too) from its
+  `⋯`, a right click, `M` or the preview's Sprint (`⌥M`); issues checked move together; a toast says where, with
+  Undo (`⌘Z`), and a move Jira refuses leaves the row where it was, Jira's words on it.
 - **An issue's page**: its facts as controls (state by the workflow, the fields a move asks, assignee, priority,
   type, epic, sprint); the key and the title selected to copy (`⌘C`; the branch name and link in `⋯`); the title and
   the description edited in place, kept on this Mac until saved, a change someone else saved meanwhile compared before
@@ -19,7 +26,8 @@ your own).
   opens one whole in Artoo's viewer), details from the edit screen. Comments: yours to everyone, edited and deleted, a reply mentioning who wrote last
   (`R`), people mentioned by name (`@Juniper.Hale`); `⇥` sends it to your agent instead.
 - **Someone else's change**: what is on screen is read again as the window comes to the front, and each minute while
-  it is there; a line over the title says who changed what, dots mark it. A board's refresh reads its issues; its
+  it is there; a line over the title says who changed what, dots mark it. A board's refresh reads its issues (a Jira
+  board's, the slice shown); its
   columns, epics and sprints are read again on a reload (`⌘R`) or after ten minutes. Behind, the news is read every
   three minutes.
 - **The last boards**: the five read last are kept on the Mac (`boards.json`, yours alone) and shown at the next
@@ -115,7 +123,8 @@ its sites, a folder named for a site's host holds that site's answers (`_rest_ap
 is recorded in its `writes.log` and answered from `POST_rest_api_2_issue.json` when there is one. A list is paged by
 the read's `startAt` and `maxResults` as Jira pages it; a read of closed sprints, or with JQL for yours, for words or
 for an epic, is answered from `<file>@closed.json`, `@mine`, `@words` or `@epic` when there is one; a file
-`{"status": 400, "errorMessages": […]}` refuses. `ARTOO_TASKS_FIXTURE_SLOW=<ms>` answers each read that late, to see
+`{"status": 400, "errorMessages": […]}` refuses. Each epic's issues wherever they are answer its whole count, and a
+move of PAY-418 into the future sprint is refused (`POST_rest_agile_1.0_sprint_35_issue.json`). `ARTOO_TASKS_FIXTURE_SLOW=<ms>` answers each read that late, to see
 what draws while reading, and `ARTOO_TASKS_FIXTURE_FAIL=<part>` fails every read whose address holds it.
 
 ## Tests

@@ -53,6 +53,8 @@ pub enum Anchor {
     Sheet(String),
     /// The facts line's sprint picker.
     Picker,
+    /// The selection bar's Move to.
+    Selection,
 }
 
 impl Anchor {
@@ -66,6 +68,7 @@ impl Anchor {
             Anchor::Faces => "faces".into(),
             Anchor::Sheet(f) => format!("sheet-{f}"),
             Anchor::Picker => "picker".into(),
+            Anchor::Selection => "selection".into(),
         }
     }
 }
@@ -86,6 +89,8 @@ pub enum PopKind {
     Sheet(String),
     /// The board's slices: its sprints, the Backlog, Past sprints.
     Sprints,
+    /// Move to a sprint or the Backlog: of the issue it is about, else of the issues selected.
+    MoveTo,
 }
 
 /// A popover open.
@@ -229,6 +234,10 @@ pub struct Page {
     pub connecting: Option<usize>,
     /// The last reassignment, which its toast's Undo gives back.
     pub undo_assign: Option<crate::pop::Undo>,
+    /// The issues last moved to a sprint or the Backlog, on their board: what the toast's Undo takes back.
+    pub undo_sprint: Option<(BoardId, crate::slices::Moved)>,
+    /// The issues checked on the board, in the order checked: what the selection bar moves.
+    pub selected: Vec<String>,
     /// Whether the tab's window is in front: what is on screen is read again each minute only while it is.
     pub front: bool,
 }
@@ -278,6 +287,8 @@ impl Page {
             here: String::new(),
             connecting: None,
             undo_assign: None,
+            undo_sprint: None,
+            selected: Vec::new(),
             front: true,
         }
     }

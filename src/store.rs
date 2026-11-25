@@ -1557,7 +1557,10 @@ impl Store {
         });
         let at = reads.iter().filter_map(|r| r.at).max();
         if some {
-            let rows = reads.iter().flat_map(|r| r.rows.iter().cloned()).collect();
+            let rows = match (&view, self.info.get(board).and_then(Read::done)) {
+                (SliceId::All, Some(info)) => slices.all_rows(info).cloned().collect(),
+                _ => reads.iter().flat_map(|r| r.rows.iter().cloned()).collect(),
+            };
             self.rows.insert(board.clone(), Read::Done(rows));
             self.stale.remove(board);
             let whole = reads.iter().all(|r| r.state != Some(Read::Reading));
@@ -1816,8 +1819,6 @@ impl Store {
     }
 }
 
-// TODO(#15): the page moves issues and undoes a move in the work's next step; until then nothing calls these.
-#[allow(dead_code)]
 impl Store {
     /// Issues `keys` of board `board` moved to `to` (a sprint, or the Backlog; its top with `top`): shown at once, then
     /// sent, one write an issue. An issue the tracker refuses goes back where it was, its reason on its `sprint` field;
@@ -1860,6 +1861,7 @@ impl Store {
             self.refused.remove(&at);
             self.saving.insert(at);
         }
+        self.show_rows(board, cx);
         cx.notify();
         let (id, board, sent) = (board.1.clone(), board.clone(), moved.clone());
         spawn_read(
@@ -1892,6 +1894,7 @@ impl Store {
             },
             move |this, read, cx| {
                 let moved = this.settle_move(&board, moved, &read.unwrap_or_default());
+                this.show_rows(&board, cx);
                 this.keep_slice(&board);
                 done(this, moved, cx);
             },
@@ -1954,6 +1957,7 @@ impl Store {
             let sprint = p.sprint();
             self.edit_row(&p.key, |r| r.sprint = sprint.clone());
         }
+        self.show_rows(board, cx);
         cx.notify();
         let writes = slices::undo_writes(&moved);
         let board = board.clone();

@@ -428,6 +428,10 @@ def jira(folder):
     # A move PAY-412's validator refuses: Done while a sub-task is open.
     write(folder, 'POST/rest/api/2/issue/PAY-412/transitions', {'answers': [
         {'when': '"41"', 'status': 400, 'errorMessages': ["PAY-415 is still open"]}]})
+    # A move into sprint 35 Jira refuses for PAY-418 alone: its row stays where it was, these words on it.
+    write(folder, 'POST/rest/agile/1.0/sprint/35/issue', {'answers': [
+        {'when': '"PAY-418"', 'status': 400,
+         'errorMessages': ["PAY-418 can't join a sprint that has not started while it is ranked in another"]}]})
 
 def png(path, w, h, bars):
     """A picture of `bars` ((x, y, w, h, rgb), …) on a dark ground, as a PNG: what an attachment's bytes stand for."""

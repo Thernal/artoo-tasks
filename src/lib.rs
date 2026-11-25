@@ -72,6 +72,9 @@ gpui::actions!(
         UndoAssign,
         FilterBoards,
         PickSprint,
+        MoveToSprint,
+        SprintField,
+        UndoSprint,
     ]
 );
 
@@ -196,6 +199,24 @@ fn commands() -> Vec<Action> {
         )
         .here("Pick a sprint…")
         .order(46),
+        // M and ⌥M: the issue's sprint, from its row or from the preview; ⌥S is its state.
+        a(
+            "tasks.move-sprint",
+            Box::new(MoveToSprint),
+            "Move to a sprint…",
+            "m",
+            HERE,
+        )
+        .here("Move to a sprint…")
+        .order(38),
+        a(
+            "tasks.sprint-field",
+            Box::new(SprintField),
+            "Change the sprint…",
+            "alt-m",
+            SPACE_KEYS,
+        )
+        .order(38),
         a(
             "tasks.tracker",
             Box::new(OpenInTracker),
@@ -378,6 +399,9 @@ fn install(cx: &mut App) {
             (Box::new(ToggleLayout), on(Page::toggle_view)),
             (Box::new(GroupBy), on(|p, cx| p.group_menu(None, cx))),
             (Box::new(PickSprint), on(Page::open_sprints)),
+            (Box::new(MoveToSprint), on(Page::key_move_sprint)),
+            (Box::new(SprintField), on(Page::key_sprint_field)),
+            (Box::new(UndoSprint), on(Page::undo_sprint)),
             (Box::new(OpenInTracker), on(Page::open_in_tracker)),
             (Box::new(ReadAgain), on(Page::read_again)),
             (Box::new(NoteHere), on(Page::key_note)),

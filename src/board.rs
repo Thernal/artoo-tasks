@@ -1158,6 +1158,7 @@ impl Page {
                 .child(self.composer(cx))
         });
         let foot = self.slice_foot(&shown, cx);
+        let selection = self.selection_bar(&shown, cx);
         if shown.columns {
             return (self.page_frame())
                 .when(stale.is_some(), |d| d.opacity(STALE))
@@ -1166,6 +1167,7 @@ impl Page {
                 .children(banner)
                 .children(note)
                 .child(self.columns(&shown, cx))
+                .children(selection)
                 .children(foot)
                 .into_any_element();
         }
@@ -1184,6 +1186,7 @@ impl Page {
                     .track_scroll(&self.rows_scroll)
                     .child(self.shelves(&shown, cx)),
             )
+            .children(selection)
             .children(foot)
             .into_any_element();
         let preview = self.preview(&shown, cx);
@@ -1751,23 +1754,27 @@ impl Page {
             .into_any_element()
     }
 
-    /// A row: its summary and who has it, its state on the picked row or under the pointer (always, grouped by
-    /// story or epic); under it the kind and key, priority, sub-tasks, comments, what blocks it, its epic.
+    /// A row: who has it first (a dashed person for no one), then its title with its state and ⋯ always there, and
+    /// under them its kind and key, priority, sub-tasks, comments, what blocks it, its epic. Where moving is, a
+    /// checkbox before it selects it; a move the tracker refused tints it, Jira's words on its glyph.
     fn row(&mut self, r: &Row, shown: &Shown, cx: &mut Context<Self>) -> AnyElement {
         let picked = self.pick.as_deref() == Some(&r.key);
         let me = shown
             .me
             .as_ref()
             .is_some_and(|me| r.assignee.as_ref().is_some_and(|p| p.id == me.id));
-        let always = shown.group != Group::State;
         let s = self.store.read(cx);
-        let refused = s.refused.contains_key(&(r.key.clone(), "state".into()));
         let saving = s.saving.iter().any(|(k, _)| *k == r.key);
+        let refused = (s.refused.get(&(r.key.clone(), "sprint".into())))
+            .or_else(|| s.refused.get(&(r.key.clone(), "rank".into())))
+            .cloned();
         let epic = r.epic.as_ref().map(|e| s.epic(e));
         let key = r.key.clone();
         let anchor = Anchor::Row(r.key.clone());
         let who_open = self.pop_at(&anchor, PopKind::Assign);
-        let state_open = self.pop_at(&anchor, PopKind::Move);
+        let movable = shown.slice.is_some() && !shown.info.sprintless;
+        let checked = self.selected.contains(&r.key);
+        let selecting = !self.selected.is_empty();
         let mut facts = div()
             .flex()
             .items_center()
@@ -1793,63 +1800,128 @@ impl Page {
         if shown.group != Group::Epic
             && let Some(e) = &epic
         {
-            facts = facts.child(look::epic_lozenge(e));
+            facts = facts.child(div().flex_1()).child(look::epic_lozenge(e));
         }
         let who = self.who_control(r, me, anchor.clone(), who_open, cx);
-        let chip = self.state_control(r, anchor, true, cx);
-        let chip = if always || picked || state_open || refused {
-            chip.into_any_element()
-        } else {
-            // Beside the face, over the title's end: its room is not kept, so the faces line up at the row's end.
-            // A hover that changes `display` lays out and paints apart, which GPUI refuses; visibility is safe.
+        let chip = self.state_control(r, anchor.clone(), true, cx);
+        let (more_key, menu_key) = (key.clone(), key.clone());
+        let more = div()
+            .id(SharedString::from(format!("row-more-{}", r.key)))
+            .relative()
+            .flex_none()
+            .size(px(20.))
+            .flex()
+            .items_center()
+            .justify_center()
+            .rounded(px(4.))
+            .text_color(theme::muted())
+            .hover(|s| s.bg(theme::hover()))
+            .child("⋯")
+            .tip(if movable {
+                "More  ·  Move to  M"
+            } else {
+                "More"
+            })
+            .on_click(cx.listener(move |this, e: &ClickEvent, _, cx| {
+                cx.stop_propagation();
+                this.row_menu(&more_key, e.position(), cx)
+            }))
+            .children(self.pop_here(&anchor, PopKind::MoveTo, cx));
+        let check_key = key.clone();
+        let check = movable.then(|| {
             div()
-                .absolute()
-                .right(px(28.))
-                .invisible()
-                .group_hover("tasks-row", |s| s.visible())
-                .child(chip)
-                .into_any_element()
-        };
+                .id(SharedString::from(format!("row-check-{}", r.key)))
+                .flex_none()
+                .size(px(14.))
+                .rounded(px(3.))
+                .border_1()
+                .border_color(if checked {
+                    theme::accent()
+                } else {
+                    theme::faint()
+                })
+                .flex()
+                .items_center()
+                .justify_center()
+                .when(checked, |d| {
+                    d.bg(theme::accent()).child(
+                        icons::icon("check")
+                            .size(px(10.))
+                            .text_color(theme::on_accent()),
+                    )
+                })
+                // A hover that changes `display` lays out and paints apart, which GPUI refuses; visibility is safe.
+                .when(!selecting, |d| {
+                    d.invisible().group_hover("tasks-row", |s| s.visible())
+                })
+                .cursor_pointer()
+                .tip("Select, to move several together")
+                .on_click(cx.listener(move |this, _: &ClickEvent, _, cx| {
+                    cx.stop_propagation();
+                    this.toggle_selected(&check_key, cx)
+                }))
+        });
+        let glyph = refused.map(|why| {
+            div()
+                .id(SharedString::from(format!("row-refused-{}", r.key)))
+                .flex_none()
+                .child(
+                    icons::icon("alert")
+                        .size(px(13.))
+                        .text_color(theme::warning()),
+                )
+                .tip(why)
+        });
+        let tinted = glyph.is_some();
         let indent = shown.group == Group::Story && r.parent.is_some();
         div()
             .id(SharedString::from(format!("row-{}", r.key)))
             .group("tasks-row")
             .flex_none()
             .flex()
-            .flex_col()
-            .justify_center()
-            // Design's 60 px: 10 above and below, lines of 20 and 18 with 2 between; the text 34 in, as its rows
-            // keep 16 and an 8 px dot's room and 10 before it.
-            .gap(px(2.))
-            .h(px(60.))
-            .pl(px(if indent { 48. } else { 34. }))
-            .pr(px(16.))
+            .items_center()
+            .gap(px(8.))
+            .h(px(62.))
+            .pl(px(if indent { 36. } else { 12. }))
+            .pr(px(12.))
             .border_b_1()
             .border_color(theme::border())
-            .when(picked, |d| d.bg(theme::selected()))
-            .when(!picked, |d| d.hover(|s| s.bg(theme::hover())))
+            .when(tinted, |d| d.bg(theme::warning_bg()))
+            .when(picked && !tinted, |d| d.bg(theme::selected()))
+            .when(checked && !picked && !tinted, |d| d.bg(theme::hover()))
+            .when(!picked && !tinted, |d| d.hover(|s| s.bg(theme::hover())))
             .when(saving, |d| d.opacity(0.7))
+            .children(check)
+            .child(who)
             .child(
                 div()
-                    .relative()
+                    .flex_1()
+                    .min_w_0()
                     .flex()
-                    .items_center()
-                    .gap(px(8.))
-                    .h(px(20.))
+                    .flex_col()
+                    .gap(px(6.))
                     .child(
                         div()
-                            .flex_1()
-                            .min_w_0()
-                            .truncate()
-                            .text_size(px(13.))
-                            .font_weight(FontWeight::MEDIUM)
-                            .text_color(theme::text())
-                            .child(r.summary.clone()),
+                            .flex()
+                            .items_center()
+                            .gap(px(8.))
+                            .h(px(20.))
+                            .child(
+                                div()
+                                    .flex_1()
+                                    .min_w_0()
+                                    .truncate()
+                                    .text_size(px(13.))
+                                    .font_weight(FontWeight::MEDIUM)
+                                    .text_color(theme::text())
+                                    .child(r.summary.clone()),
+                            )
+                            .children(glyph)
+                            .child(chip)
+                            .child(more),
                     )
-                    .child(who)
-                    .child(chip),
+                    .child(facts.h(px(18.))),
             )
-            .child(facts.h(px(18.)))
             .tip(format!("{} {}", r.key, r.summary))
             .on_click(cx.listener(move |this, e: &ClickEvent, _, cx| {
                 this.pick_row(&key, cx);
@@ -1857,7 +1929,101 @@ impl Page {
                     this.open_issue(&key, cx);
                 }
             }))
+            .on_mouse_down(
+                gpui::MouseButton::Right,
+                cx.listener(move |this, e: &gpui::MouseDownEvent, _, cx| {
+                    this.row_menu(&menu_key, e.position, cx)
+                }),
+            )
             .into_any_element()
+    }
+
+    /// Issue `key` checked or let go on the board.
+    fn toggle_selected(&mut self, key: &str, cx: &mut Context<Self>) {
+        if let Some(at) = self.selected.iter().position(|k| k == key) {
+            self.selected.remove(at);
+        } else {
+            self.selected.push(key.to_owned());
+        }
+        cx.notify();
+    }
+
+    /// Under the list while issues are checked: `2 selected`, their keys, Move to ▾, and × to let them go.
+    fn selection_bar(&mut self, shown: &Shown, cx: &mut Context<Self>) -> Option<AnyElement> {
+        if self.selected.is_empty() || shown.slice.is_none() {
+            return None;
+        }
+        let (count, keys) = slices::selection_words(&self.selected);
+        let open = self.pop_at(&Anchor::Selection, PopKind::MoveTo);
+        let movable = self.can_move(&self.selected, cx);
+        Some(
+            div()
+                .flex_none()
+                .flex()
+                .items_center()
+                .gap(px(8.))
+                .h(px(40.))
+                .mx(px(8.))
+                .mb(px(8.))
+                .px(px(12.))
+                .rounded(px(8.))
+                .border_1()
+                .border_color(theme::island_border())
+                .bg(theme::panel())
+                .shadow_lg()
+                .text_size(px(12.))
+                .text_color(theme::muted())
+                .whitespace_nowrap()
+                .child(
+                    div()
+                        .font_weight(FontWeight::SEMIBOLD)
+                        .text_color(theme::text())
+                        .child(count),
+                )
+                .child(div().min_w_0().truncate().child(keys))
+                .child(div().flex_1())
+                .child(
+                    div()
+                        .relative()
+                        .child(
+                            look::small_button("tasks-selection-move", "")
+                                .when(open, |d| d.border_1().border_color(theme::accent()))
+                                .when(!movable, |d| d.opacity(0.5))
+                                .child("Move to")
+                                .child(
+                                    icons::icon("chevron")
+                                        .size(px(12.))
+                                        .text_color(theme::muted()),
+                                )
+                                .tip(if movable {
+                                    "Move them to a sprint or the Backlog"
+                                } else {
+                                    "A past sprint’s issues are read only"
+                                })
+                                .on_click(cx.listener(|this, _: &ClickEvent, _, cx| {
+                                    this.open_selection_move(cx)
+                                })),
+                        )
+                        .children(self.pop_here(&Anchor::Selection, PopKind::MoveTo, cx)),
+                )
+                .child(
+                    div()
+                        .id("tasks-selection-clear")
+                        .size(px(20.))
+                        .flex()
+                        .items_center()
+                        .justify_center()
+                        .rounded(px(4.))
+                        .hover(|s| s.bg(theme::hover()))
+                        .child(icons::icon("x").size(px(12.)).text_color(theme::muted()))
+                        .tip("Let them go")
+                        .on_click(cx.listener(|this, _: &ClickEvent, _, cx| {
+                            this.selected.clear();
+                            cx.notify();
+                        })),
+                )
+                .into_any_element(),
+        )
     }
 
     /// Who has issue `r`, a click giving it to someone else (its people list).
@@ -2569,7 +2735,44 @@ impl Page {
         if let Some(p) = &r.priority {
             rows = rows.child(kv("Priority", look::priority(p, true).into_any_element()));
         }
-        if let Some(sp) = &r.sprint {
+        // A board read by slice: the issue's sprint is where it moves (⌥M), but in a past sprint.
+        if shown.slice.is_some() && !shown.info.sprintless {
+            let movable = self.can_move(std::slice::from_ref(&r.key), cx);
+            let open = self.pop_at(&Anchor::Preview, PopKind::MoveTo);
+            let name = (r.sprint.as_ref()).map_or("Backlog".to_owned(), |s| s.name.clone());
+            let k = r.key.clone();
+            rows = rows.child(kv(
+                "Sprint",
+                div()
+                    .id("pv-sprint")
+                    .relative()
+                    .min_w_0()
+                    .flex()
+                    .items_center()
+                    .gap(px(4.))
+                    .px(px(4.))
+                    .ml(px(-4.))
+                    .rounded(px(4.))
+                    .child(div().min_w_0().truncate().child(name))
+                    .when(open, |d| d.border_1().border_color(theme::accent()))
+                    .when(movable, |d| {
+                        d.cursor_pointer()
+                            .hover(|s| s.bg(theme::hover()))
+                            .child(
+                                icons::icon("chevron")
+                                    .size(px(12.))
+                                    .text_color(theme::muted()),
+                            )
+                            .tip("Move to another sprint or the Backlog  ⌥M")
+                            .on_click(cx.listener(move |this, _: &ClickEvent, _, cx| {
+                                this.open_move_to(Anchor::Preview, &k, cx)
+                            }))
+                    })
+                    .when(!movable, |d| d.tip("A past sprint’s issues are read only"))
+                    .children(self.pop_here(&Anchor::Preview, PopKind::MoveTo, cx))
+                    .into_any_element(),
+            ));
+        } else if let Some(sp) = &r.sprint {
             let ends = sp.end.as_ref().map(|end| {
                 let day = model::day_words(end);
                 div()

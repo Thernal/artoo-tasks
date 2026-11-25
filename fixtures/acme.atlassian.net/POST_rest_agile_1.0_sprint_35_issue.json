@@ -1,0 +1,11 @@
+{
+ "answers": [
+  {
+   "when": "\"PAY-418\"",
+   "status": 400,
+   "errorMessages": [
+    "PAY-418 can't join a sprint that has not started while it is ranked in another"
+   ]
+  }
+ ]
+}

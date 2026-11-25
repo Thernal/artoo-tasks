@@ -2,10 +2,6 @@
 //! slice is read, counted and failed on its own. Here is what is held of a board's slices, which one opens, and a
 //! move's bookkeeping; the reads themselves are the store's.
 
-// TODO(#15): the page draws the slices, their filter, moves and Undo in the work's next steps; until then the store
-// alone reads them, and some of this has no caller outside the tests.
-#![allow(dead_code)]
-
 use crate::model::{Ask, BoardInfo, Page, Person, Row, Sprint, Write, day_words, stamp};
 use crate::store::Read;
 use std::collections::HashMap;
@@ -296,6 +292,65 @@ impl Progress {
             self.done, self.doing, self.todo
         )
     }
+}
+
+/// A place issues may be moved to.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Target {
+    /// A sprint, or the Backlog.
+    pub slice: SliceId,
+    /// The Backlog's top.
+    pub top: bool,
+    /// Where the issue is now: ticked, and moving there does nothing.
+    pub here: bool,
+}
+
+/// Where issues in sprints `of` (none for one in the Backlog) may be moved on a board as `info` lists it: each active
+/// and future sprint, the Backlog's top, the Backlog. None when one is in a closed sprint (it is read only) or the
+/// board has no sprints. One issue sees every place, its own ticked; several, only what can take them, a place holding
+/// them all left out.
+pub fn targets(info: &BoardInfo, of: &[Option<&Sprint>]) -> Vec<Target> {
+    if info.sprintless || of.is_empty() || of.iter().flatten().any(|s| s.state == "closed") {
+        return Vec::new();
+    }
+    let all_in = |id: Option<u64>| of.iter().all(|s| s.map(|s| s.id) == id);
+    let one = of.len() == 1;
+    let sprints = (info.sprints.iter())
+        .filter(|s| s.state == "active")
+        .chain(info.sprints.iter().filter(|s| s.state == "future"));
+    let mut out: Vec<Target> = sprints
+        .map(|s| Target {
+            slice: SliceId::Sprint(s.id),
+            top: false,
+            here: all_in(Some(s.id)),
+        })
+        .collect();
+    out.push(Target {
+        slice: SliceId::Backlog,
+        top: true,
+        here: false,
+    });
+    out.push(Target {
+        slice: SliceId::Backlog,
+        top: false,
+        here: all_in(None),
+    });
+    if !one {
+        out.retain(|t| !t.here);
+    }
+    out
+}
+
+/// The selection bar's words: `2 selected`, and their keys, `PAY-412, PAY-431`, past three `and 2 more`.
+pub fn selection_words(keys: &[String]) -> (String, String) {
+    let shown = keys.iter().take(3).cloned().collect::<Vec<_>>().join(", ");
+    let rest = keys.len().saturating_sub(3);
+    let listed = if rest > 0 {
+        format!("{shown} and {rest} more")
+    } else {
+        shown
+    };
+    (format!("{} selected", grouped(keys.len())), listed)
 }
 
 /// Where an issue moved was.
@@ -742,6 +797,76 @@ mod tests {
             ("ended 3 days ago".into(), true)
         );
         assert_eq!(days_left("someday", now), None);
+    }
+
+    #[test]
+    fn an_issue_moves_to_any_open_sprint_or_the_backlog_its_place_ticked() {
+        let mut info = info(vec![
+            sprint(34, "active", None),
+            sprint(35, "future", None),
+            sprint(36, "active", None),
+        ]);
+        fn places(info: &BoardInfo, of: &[Option<&Sprint>]) -> Vec<(String, bool, bool)> {
+            (targets(info, of).into_iter())
+                .map(|t| (t.slice.key(), t.top, t.here))
+                .collect()
+        }
+        let s34 = sprint(34, "active", None);
+        assert_eq!(
+            places(&info, &[Some(&s34)]),
+            [
+                ("sprint:34".into(), false, true),
+                ("sprint:36".into(), false, false),
+                ("sprint:35".into(), false, false),
+                ("backlog".into(), true, false),
+                ("backlog".into(), false, false),
+            ],
+            "in a sprint: the active sprints first, then the future, its own ticked"
+        );
+        assert_eq!(
+            places(&info, &[None]),
+            [
+                ("sprint:34".into(), false, false),
+                ("sprint:36".into(), false, false),
+                ("sprint:35".into(), false, false),
+                ("backlog".into(), true, false),
+                ("backlog".into(), false, true),
+            ],
+            "in the Backlog: its top is still a move"
+        );
+        let past = sprint(31, "closed", None);
+        assert_eq!(
+            places(&info, &[Some(&past)]),
+            [],
+            "a past sprint is read only"
+        );
+        assert_eq!(places(&info, &[Some(&s34), Some(&past)]), []);
+        assert_eq!(
+            places(&info, &[Some(&s34), Some(&s34)]),
+            [
+                ("sprint:36".into(), false, false),
+                ("sprint:35".into(), false, false),
+                ("backlog".into(), true, false),
+                ("backlog".into(), false, false),
+            ],
+            "several: only what can take them"
+        );
+        assert_eq!(places(&info, &[Some(&s34), None]).len(), 5);
+        info.sprintless = true;
+        assert_eq!(places(&info, &[None]), []);
+    }
+
+    #[test]
+    fn the_selection_bar_says_how_many_and_which() {
+        let keys = |n: usize| -> Vec<String> { (1..=n).map(|i| format!("PAY-{i}")).collect() };
+        assert_eq!(
+            selection_words(&keys(2)),
+            ("2 selected".into(), "PAY-1, PAY-2".into())
+        );
+        assert_eq!(
+            selection_words(&keys(5)),
+            ("5 selected".into(), "PAY-1, PAY-2, PAY-3 and 2 more".into())
+        );
     }
 
     #[test]

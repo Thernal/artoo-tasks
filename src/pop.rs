@@ -54,6 +54,8 @@ pub enum Act {
     Slice(SliceId),
     /// The sprint picker's Past sprints unfolded or folded.
     Past,
+    /// The issues moved to a sprint or the Backlog; its top when it says so.
+    MoveTo(SliceId, bool),
     Nothing,
 }
 
@@ -155,6 +157,168 @@ impl Page {
         }
         self.store.update(cx, |s, cx| s.count_sprints(&board, cx));
         self.open_pop(PopKind::Sprints, Anchor::Picker, "", cx);
+    }
+
+    /// Move to of issue `key` at `anchor`: the sprints and the Backlog, counted; nothing for an issue that cannot move.
+    pub fn open_move_to(&mut self, anchor: Anchor, key: &str, cx: &mut Context<Self>) {
+        if !self.can_move(&[key.to_owned()], cx) {
+            return;
+        }
+        if let Some(board) = self.store.read(cx).board.clone() {
+            self.store.update(cx, |s, cx| s.count_sprints(&board, cx));
+        }
+        self.pick_row(key, cx);
+        self.open_pop(PopKind::MoveTo, anchor, key, cx);
+    }
+
+    /// Whether issues `keys` can be moved on the board picked: it is read by slice, has sprints, and none of them is
+    /// in a past sprint.
+    pub fn can_move(&self, keys: &[String], cx: &Context<Self>) -> bool {
+        let s = self.store.read(cx);
+        let (Some(_), Some(info)) = (s.board_slices(), s.board_info()) else {
+            return false;
+        };
+        let of: Vec<Option<&model::Sprint>> = (keys.iter())
+            .map(|k| s.row(k).and_then(|r| r.sprint.as_ref()))
+            .collect();
+        !slices::targets(info, &of).is_empty()
+    }
+
+    /// M: Move to of the issue picked on the board, under its row.
+    pub fn key_move_sprint(&mut self, cx: &mut Context<Self>) {
+        if let Some(key) = self.pick.clone().filter(|_| self.issue_key().is_none()) {
+            self.open_move_to(Anchor::Row(key.clone()), &key, cx);
+        }
+    }
+
+    /// ⌥M: the preview's Sprint field, opened.
+    pub fn key_sprint_field(&mut self, cx: &mut Context<Self>) {
+        if let Some(key) = self.pick.clone().filter(|_| self.issue_key().is_none()) {
+            self.open_move_to(Anchor::Preview, &key, cx);
+        }
+    }
+
+    /// The selection bar's Move to: the issues checked, moved together.
+    pub fn open_selection_move(&mut self, cx: &mut Context<Self>) {
+        if self.selected.is_empty() || !self.can_move(&self.selected, cx) {
+            return;
+        }
+        if let Some(board) = self.store.read(cx).board.clone() {
+            self.store.update(cx, |s, cx| s.count_sprints(&board, cx));
+        }
+        self.open_pop(PopKind::MoveTo, Anchor::Selection, "", cx);
+    }
+
+    /// Issues `keys` moved to `to` (its top with `top`), shown at once; once the tracker took them, a toast says
+    /// where, with Undo (⌘Z while it shows). One refused stays where it was, its reason on its row.
+    pub fn move_issues(
+        &mut self,
+        keys: Vec<String>,
+        to: SliceId,
+        top: bool,
+        cx: &mut Context<Self>,
+    ) {
+        let s = self.store.read(cx);
+        let Some(board) = s.board.clone() else {
+            return;
+        };
+        let name = if top {
+            "the top of the Backlog".to_owned()
+        } else {
+            slices::name(&to, s.board_info(), &[])
+        };
+        let summary = match keys.as_slice() {
+            [one] => s.row(one).map(|r| r.summary.clone()),
+            _ => None,
+        };
+        let unit = crate::board::item_word(&board.0);
+        let (frame, page) = (self.frame.clone(), cx.entity().downgrade());
+        self.selected.clear();
+        let held = board.clone();
+        self.store.update(cx, |s, cx| {
+            s.move_to(
+                &board,
+                keys,
+                to,
+                top,
+                move |_, moved, cx| {
+                    let says = match moved.placed.as_slice() {
+                        [] => return,
+                        [one] => format!("{} moved to {name}", one.key),
+                        many => format!("{} {unit}s moved to {name}", many.len()),
+                    };
+                    let about = match (moved.placed.as_slice(), summary) {
+                        ([one], Some(summary)) => Some(format!("{} {summary}", one.key)),
+                        _ => None,
+                    };
+                    page.update(cx, |p, _| p.undo_sprint = Some((held, moved)))
+                        .ok();
+                    frame.toast(
+                        Toast {
+                            about,
+                            ..Toast::new(says).button("Undo", crate::UndoSprint)
+                        },
+                        cx,
+                    );
+                },
+                cx,
+            )
+        });
+        cx.notify();
+    }
+
+    /// The toast's Undo, or ⌘Z while it shows: the issues last moved taken back where they were, with no toast.
+    pub fn undo_sprint(&mut self, cx: &mut Context<Self>) {
+        let Some((board, moved)) = self.undo_sprint.take() else {
+            return;
+        };
+        self.frame
+            .drop_toasts(Box::new(|a| a.partial_eq(&crate::UndoSprint)), cx);
+        self.store
+            .update(cx, |s, cx| s.undo_move(&board, moved, cx));
+    }
+
+    /// A row's ⋯, or a right click on it: Open, Assign…, Move to…, Copy key, Open in the tracker.
+    pub fn row_menu(&mut self, key: &str, at: gpui::Point<gpui::Pixels>, cx: &mut Context<Self>) {
+        self.pick_row(key, cx);
+        let page = cx.entity().downgrade();
+        let item = |words: &str, act: fn(&mut Page, &str, &mut Context<Page>)| {
+            let (page, key) = (page.clone(), key.to_owned());
+            gpui_menu_item(words, move |cx| {
+                page.update(cx, |p, cx| act(p, &key, cx)).ok();
+            })
+        };
+        let mut first = vec![
+            item("Open", |p, key, cx| p.open_issue(key, cx)).key("↵"),
+            item("Assign…", |p, key, cx| {
+                p.open_pop(PopKind::Assign, Anchor::Row(key.to_owned()), key, cx)
+            })
+            .key("A"),
+        ];
+        if self.can_move(&[key.to_owned()], cx) {
+            first.push(
+                item("Move to…", |p, key, cx| {
+                    p.open_move_to(Anchor::Row(key.to_owned()), key, cx)
+                })
+                .key("M"),
+            );
+        }
+        let s = self.store.read(cx);
+        let url = (s.issue(key).map(|i| i.url.clone())).or_else(|| {
+            (s.site_for(key))
+                .filter(|site| site.kind == crate::trackers::JIRA)
+                .map(|site| format!("{}/browse/{key}", site.url))
+        });
+        let copied = key.to_owned();
+        let mut second = vec![gpui_menu_item("Copy key", move |cx| {
+            cx.write_to_clipboard(gpui::ClipboardItem::new_string(copied.clone()))
+        })];
+        if let Some(url) = url {
+            second.push(
+                gpui_menu_item("Open in the tracker", move |cx| cx.open_url(&url)).key("⌥⌘J"),
+            );
+        }
+        self.frame.menu(at, vec![first, second], cx);
     }
 
     /// Whether popover `kind` is open at `anchor`.
@@ -376,6 +540,14 @@ impl Page {
                 }
             }
             PopKind::Sprints => sprint_rows(s, pop),
+            PopKind::MoveTo => {
+                let keys = if pop.key.is_empty() {
+                    self.selected.clone()
+                } else {
+                    vec![pop.key.clone()]
+                };
+                move_rows(s, &keys)
+            }
             PopKind::People => {
                 let play = s
                     .board_rows()
@@ -1126,6 +1298,15 @@ impl Page {
                     }
                 });
             }
+            Act::MoveTo(to, top) => {
+                let keys = if key.is_empty() {
+                    self.selected.clone()
+                } else {
+                    vec![key]
+                };
+                self.close_pop(cx);
+                self.move_issues(keys, to, top, cx);
+            }
             Act::Past => {
                 let open = self.pop.as_mut().map(|p| {
                     p.past = !p.past;
@@ -1426,6 +1607,59 @@ impl Page {
     }
 }
 
+/// Move to's rows for issues `keys`: each active and future sprint (its issues, when it ends or starts), the Backlog's
+/// top, the Backlog; where one issue is now ticked, and nothing for one in a past sprint.
+fn move_rows(s: &Store, keys: &[String]) -> Body {
+    let info = s.board_info().cloned().unwrap_or_default();
+    let host = s.board.as_ref().map(|b| b.0.clone()).unwrap_or_default();
+    let unit = crate::board::item_word(&host);
+    let rows: Vec<Option<Row>> = keys.iter().map(|k| s.row(k).cloned()).collect();
+    let of: Vec<Option<&model::Sprint>> = (rows.iter())
+        .map(|r| r.as_ref().and_then(|r| r.sprint.as_ref()))
+        .collect();
+    let counts = s.board_slices();
+    let now = crate::store::now();
+    let mut out = Vec::new();
+    for t in slices::targets(&info, &of) {
+        let act = if t.here {
+            Act::Nothing
+        } else {
+            Act::MoveTo(t.slice.clone(), t.top)
+        };
+        let mut r = match &t.slice {
+            SliceId::Sprint(id) => {
+                let Some(sprint) = info.sprints.iter().find(|s| s.id == *id) else {
+                    continue;
+                };
+                let count = (counts.and_then(|c| c.reads.get(&t.slice))).and_then(|r| r.count);
+                let mut r = PopRow::new(Lead::None, sprint.name.clone(), act);
+                r.under = Some(slices::sprint_words(sprint, count, unit, now));
+                r
+            }
+            _ if t.top => {
+                let mut r = PopRow::new(Lead::Icon("corner-left-up"), "Top of the Backlog", act);
+                r.rule = true;
+                r.tip = Some("The Backlog, first in its rank".into());
+                r
+            }
+            _ => PopRow::new(Lead::Icon("list"), "Backlog", act),
+        };
+        r.checked = t.here;
+        out.push(r);
+    }
+    let title = match keys {
+        [one] => format!("Move {one} to"),
+        many => format!("Move {} {unit}s to", many.len()),
+    };
+    Body {
+        title,
+        filter: None,
+        rows: out,
+        foot: None,
+        reading: false,
+    }
+}
+
 /// The sprint picker's rows: All active sprints, the active and the future sprints (each with its issues, when it ends
 /// or starts, and yours), the Backlog, and Past sprints folded, which open read only. While words are typed, the
 /// sprints whose names hold them.
@@ -1525,6 +1759,14 @@ fn sprint_rows(s: &Store, pop: &Pop) -> Body {
         foot: None,
         reading: false,
     }
+}
+
+/// A menu item running `run`.
+fn gpui_menu_item(
+    words: &str,
+    run: impl Fn(&mut gpui::App) + 'static,
+) -> artoo_plugin_sdk::shell::MenuItem {
+    artoo_plugin_sdk::shell::MenuItem::new(words, move |_, cx| run(cx))
 }
 
 /// A field's values as rows: one of a list (priority, a component), each ticked when the issue has it; a field of
