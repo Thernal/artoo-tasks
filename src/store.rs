@@ -1240,6 +1240,16 @@ impl Store {
         self.site_of(&host).or_else(|| self.sites.first().cloned())
     }
 
+    /// Issue `key`'s page in the browser: its own address once read; a Jira key's is known before.
+    pub fn browse_url(&self, key: &str) -> Option<String> {
+        if let Some(issue) = self.issue(key).filter(|i| !i.url.is_empty()) {
+            return Some(issue.url.clone());
+        }
+        (self.site_for(key))
+            .filter(|site| site.kind == crate::trackers::JIRA)
+            .map(|site| format!("{}/browse/{key}", site.url))
+    }
+
     /// A change to issue `key`'s `field`: shown at once (`apply` on what is read of it), sent, and taken back when the
     /// tracker refuses, its reason kept on the field; then the issue and the board read again, quietly. `done` hears
     /// how it went.

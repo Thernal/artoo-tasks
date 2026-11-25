@@ -306,11 +306,7 @@ impl Page {
             );
         }
         let s = self.store.read(cx);
-        let url = (s.issue(key).map(|i| i.url.clone())).or_else(|| {
-            (s.site_for(key))
-                .filter(|site| site.kind == crate::trackers::JIRA)
-                .map(|site| format!("{}/browse/{key}", site.url))
-        });
+        let url = s.browse_url(key);
         let copied = key.to_owned();
         let mut second = vec![gpui_menu_item("Copy key", move |cx| {
             cx.write_to_clipboard(gpui::ClipboardItem::new_string(copied.clone()))
@@ -954,7 +950,7 @@ impl Page {
                     .items_center()
                     .gap(px(6.))
                     .min_w_0()
-                    .child(look::key(&e.key))
+                    .child(self.issue_link("pop", &e.key, look::key(&e.key), cx))
                     .child(look::epic_lozenge(&self.store.read(cx).epic(e)))
                     .into_any_element(),
                 _ if r.under.is_some() || r.strong.is_some() => div()

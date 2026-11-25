@@ -1285,7 +1285,12 @@ impl Page {
                         .gap(px(4.))
                         .text_color(theme::text())
                         .child(div().min_w_0().truncate().child(e.name.clone()))
-                        .child(div().flex_none().child(format!("· {}", e.key)));
+                        .child(self.issue_link(
+                            "sheet-epic",
+                            &e.key,
+                            div().flex_none().child(format!("· {}", e.key)),
+                            cx,
+                        ));
                     let tip = Some(format!("Epic {} {}", e.key, e.name));
                     self.select_box("epic", lead, body.into_any_element(), true, tip, cx)
                 }
@@ -1350,7 +1355,7 @@ impl Page {
                     .gap(px(6.))
                     .h(px(28.))
                     .text_size(px(13.))
-                    .child(look::key(pk))
+                    .child(self.issue_link("sheet-parent", pk, look::key(pk), cx))
                     .child(
                         div()
                             .text_color(theme::muted())

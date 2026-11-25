@@ -1029,6 +1029,29 @@ impl Page {
         cx.defer(move |cx| frame.redraw(cx));
     }
 
+    /// `drawn`, issue `key` as it is written at `place`: ⌘-click (Ctrl elsewhere) opens it in the browser; a plain
+    /// click is whatever the key stands on takes it for.
+    pub(crate) fn issue_link(
+        &self,
+        place: &str,
+        key: &str,
+        drawn: gpui::Div,
+        cx: &mut Context<Self>,
+    ) -> gpui::Stateful<gpui::Div> {
+        let id = gpui::SharedString::from(format!("key-{place}-{key}"));
+        let key = key.to_owned();
+        drawn
+            .id(id)
+            .on_click(cx.listener(move |this, e: &gpui::ClickEvent, _, cx| {
+                if e.modifiers().secondary()
+                    && let Some(url) = this.store.read(cx).browse_url(&key)
+                {
+                    cx.stop_propagation();
+                    cx.open_url(&url);
+                }
+            }))
+    }
+
     /// `content` folding open or shut under `key`, moving while `key`'s mark is fresh.
     pub(crate) fn folding(
         &self,

@@ -805,13 +805,7 @@ impl Page {
     fn open_in_tracker(&mut self, cx: &mut Context<Self>) {
         let s = self.store.read(cx);
         let url = match self.acted_on() {
-            Some(key) => match s.issue(&key) {
-                Some(i) => Some(i.url.clone()),
-                // Jira's address of an issue not read yet; another tracker's is its issue's own.
-                None => (s.site_for(&key))
-                    .filter(|site| site.kind == trackers::JIRA)
-                    .map(|site| format!("{}/browse/{key}", site.url)),
-            },
+            Some(key) => s.browse_url(&key),
             None => s
                 .picked()
                 .and_then(|b| Some(model::board_url(&s.site_of(&b.site)?, &b.id))),

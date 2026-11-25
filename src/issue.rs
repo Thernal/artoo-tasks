@@ -1328,7 +1328,7 @@ impl Page {
                     .cursor_pointer()
                     .hover(|s| s.bg(theme::hover()))
                     .child(look::kind_mark(&s.kind, true))
-                    .child(look::key(&s.key))
+                    .child(self.issue_link("sub", &s.key, look::key(&s.key), cx))
                     .child(
                         div()
                             .flex_1()
@@ -1618,7 +1618,7 @@ impl Page {
                         .hover(|s| s.bg(theme::hover()))
                         .when(blocks, |d| d.child(look::blocked_mark()))
                         .child(look::kind_mark(&l.other.kind, false))
-                        .child(look::key(&l.other.key))
+                        .child(self.issue_link("link", &l.other.key, look::key(&l.other.key), cx))
                         .child(
                             div()
                                 .flex_1()
@@ -1785,7 +1785,7 @@ impl Page {
                             .when(ix == link.at, |d| d.bg(theme::selected()))
                             .hover(|s| s.bg(theme::hover()))
                             .child(look::kind_mark(&r.kind, r.subtask))
-                            .child(look::key(&r.key))
+                            .child(self.issue_link("pick", &r.key, look::key(&r.key), cx))
                             .child(
                                 div()
                                     .flex_1()
@@ -3229,7 +3229,7 @@ impl Page {
                     .justify_center()
                     .text_size(px(11.))
                     .text_color(theme::accent())
-                    .child(key.to_owned()),
+                    .child(self.issue_link("workflow", key, div().child(key.to_owned()), cx)),
             );
         }
         div()

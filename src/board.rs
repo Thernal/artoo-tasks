@@ -1806,7 +1806,7 @@ impl Page {
                 return head
                     .when(picked, |d| d.bg(theme::selected()))
                     .child(look::kind_mark(&row.kind, row.subtask))
-                    .child(look::key(&row.key))
+                    .child(self.issue_link("head", &row.key, look::key(&row.key), cx))
                     .child(
                         div()
                             .flex_1()
@@ -1869,7 +1869,7 @@ impl Page {
                     None => format!("{}: {all} {here}; its whole count is being read", e.name),
                 };
                 head.child(look::kind_mark("Epic", false))
-                    .child(look::key(&e.key))
+                    .child(self.issue_link("head", &e.key, look::key(&e.key), cx))
                     .child(look::epic_lozenge(&e))
                     .child(div().flex_1())
                     .child(
@@ -1939,7 +1939,7 @@ impl Page {
             .text_color(theme::muted())
             .whitespace_nowrap()
             .child(look::kind_mark(&r.kind, r.subtask))
-            .child(look::key(&r.key));
+            .child(self.issue_link("row", &r.key, look::key(&r.key), cx));
         if let Some(p) = &r.priority {
             facts = facts.child(look::priority_fact(&r.key, p));
         }
@@ -2567,7 +2567,7 @@ impl Page {
                             })),
                     )
                     .child(look::kind_mark(&row.kind, row.subtask))
-                    .child(look::key(&row.key))
+                    .child(self.issue_link("lane", &row.key, look::key(&row.key), cx))
                     .child(title(row.summary.clone()))
                     .child(faint(format!("{done} of {all}")))
                     .child(div().flex_1())
@@ -2591,7 +2591,7 @@ impl Page {
                 let (name, key) = (e.name.clone(), e.key.clone());
                 head.child(chevron)
                     .child(look::kind_mark("Epic", false))
-                    .child(look::key(&e.key))
+                    .child(self.issue_link("lane", &e.key, look::key(&e.key), cx))
                     .child(look::epic_lozenge(&e))
                     .child(faint(format!("{done} of {all}")))
                     .child(div().flex_1())
@@ -2656,7 +2656,7 @@ impl Page {
             .whitespace_nowrap()
             .overflow_hidden()
             .child(look::kind_mark(&r.kind, r.subtask))
-            .child(look::key(&r.key));
+            .child(self.issue_link("card", &r.key, look::key(&r.key), cx));
         if let Some(p) = &r.priority {
             meta = meta.child(look::priority_fact(&r.key, p));
         }
@@ -2882,7 +2882,7 @@ impl Page {
                     .gap(px(6.))
                     .min_w_0()
                     .child(look::kind_mark(&p.kind, false))
-                    .child(look::key(&p.key))
+                    .child(self.issue_link("pv-parent", &p.key, look::key(&p.key), cx))
                     .child(div().truncate().child(p.summary.clone()))
                     .into_any_element(),
             ));
@@ -2897,7 +2897,7 @@ impl Page {
                     .gap(px(6.))
                     .child(look::kind_mark("Epic", false))
                     .child(look::epic_lozenge(e))
-                    .child(look::key(&e.key))
+                    .child(self.issue_link("pv-epic", &e.key, look::key(&e.key), cx))
                     .into_any_element(),
             ));
         }
@@ -3081,11 +3081,16 @@ impl Page {
                     .gap(px(6.))
                     .child(look::blocked_mark())
                     .child(
-                        div()
-                            .flex_none()
-                            .font_family(theme::code_font())
-                            .text_color(theme::removed())
-                            .child(b.key.clone()),
+                        self.issue_link(
+                            "pv-blocked",
+                            &b.key,
+                            div()
+                                .flex_none()
+                                .font_family(theme::code_font())
+                                .text_color(theme::removed())
+                                .child(b.key.clone()),
+                            cx,
+                        ),
                     )
                     .child(div().flex_1().min_w_0().truncate().child(b.summary.clone()))
                     .child(look::state_mark(&b.state, 14.))
@@ -3160,7 +3165,12 @@ impl Page {
                             .text_size(px(12.))
                             .text_color(theme::muted())
                             .child(look::kind_mark(&r.kind, r.subtask))
-                            .child(div().text_color(theme::accent()).child(r.key.clone())),
+                            .child(self.issue_link(
+                                "pv",
+                                &r.key,
+                                div().text_color(theme::accent()).child(r.key.clone()),
+                                cx,
+                            )),
                     )
                     .child(
                         div()

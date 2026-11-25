@@ -10,7 +10,8 @@ your own).
   lane across them for each story or epic, folding as the list's groups do —, `Mine · All` with
   the people's faces beside them, the filter (`⌘F`). Each row's state chip moves the issue (`⌥S`), its face assigns
   it (`A`, `I` to you; a reassignment says from whom to whom in a toast with Undo, `⌘Z`); the epic, the sprint,
-  Blocked by.
+  Blocked by. An issue's key, wherever Tasks writes it, opens the issue in the browser with `⌘` click (`Ctrl`
+  elsewhere); a plain click does what the line it is on does.
 - **A Jira board by slice**: the facts line's sprint name picks what is shown (`S`): an active or future sprint, All
   active sprints (`A`, a group each), the Backlog (`B`; in Jira's rank, its filter, Mine and epic asked of Jira, 50
   issues at a time) or a past sprint, read only; a board without sprints is shown whole, led by its name. A sprint's
