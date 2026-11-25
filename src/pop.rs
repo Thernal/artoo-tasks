@@ -242,10 +242,12 @@ impl Page {
                 to,
                 top,
                 move |_, moved, cx| {
-                    let says = match moved.placed.as_slice() {
-                        [] => return,
-                        [one] => format!("{} moved to {name}", one.key),
-                        many => format!("{} {unit}s moved to {name}", many.len()),
+                    // One issue: its key and summary say which under `Moved to …`, said once.
+                    let says = match (moved.placed.as_slice(), &summary) {
+                        ([], _) => return,
+                        ([_], Some(_)) => format!("Moved to {name}"),
+                        ([one], None) => format!("{} moved to {name}", one.key),
+                        (many, _) => format!("{} {unit}s moved to {name}", many.len()),
                     };
                     let about = match (moved.placed.as_slice(), summary) {
                         ([one], Some(summary)) => Some(format!("{} {summary}", one.key)),
