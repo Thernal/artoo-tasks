@@ -1858,8 +1858,10 @@ impl Store {
             .collect();
         let me = self.me.get(&board.0).cloned();
         let slices = self.slices.entry(board.clone()).or_default();
-        // The Backlog's first issue, as read, that the issues go before at its top.
+        // The Backlog's first issue, that the issues go before at its top: as read, unless a filter left some out.
+        let in_order = (slices.reads.get(&SliceId::Backlog)).is_none_or(|r| r.in_order());
         let first = (slices.reads.get(&SliceId::Backlog))
+            .filter(|r| r.in_order())
             .and_then(|r| r.rows.iter().find(|r| !r.subtask && !keys.contains(&r.key)))
             .map(|r| r.key.clone());
         let moved = slices.place(&keys, &to, top, sprint.clone(), me.as_ref(), |k| {
@@ -1889,7 +1891,19 @@ impl Store {
                         .find(|r| !r.subtask && sent.placed.iter().all(|p| p.key != r.key))
                         .map(|r| r.key)
                 });
-                Ok(sent
+                // Moved to the top out of a filtered Backlog: what followed each is read first, for Undo.
+                let mut sent = sent;
+                if sent.top && !in_order {
+                    slices::follow(&mut sent, |start| {
+                        let ask = SliceAsk {
+                            start,
+                            max: 100,
+                            ..SliceAsk::backlog()
+                        };
+                        t.slice(&id, &ask).ok()
+                    });
+                }
+                let answers = sent
                     .placed
                     .iter()
                     .map(|p| {
@@ -1900,10 +1914,15 @@ impl Store {
                         };
                         (p.key.clone(), t.write(&write))
                     })
-                    .collect::<Vec<_>>())
+                    .collect::<Vec<_>>();
+                Ok((sent, answers))
             },
             move |this, read, cx| {
-                let moved = this.settle_move(&board, moved, &read.unwrap_or_default());
+                let (moved, answers) = match read {
+                    Ok(read) => read,
+                    Err(_) => (moved, Vec::new()),
+                };
+                let moved = this.settle_move(&board, moved, &answers);
                 this.show_rows(&board, cx);
                 this.keep_slice(&board);
                 done(this, moved, cx);

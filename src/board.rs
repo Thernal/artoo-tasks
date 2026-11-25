@@ -637,6 +637,15 @@ pub fn lane_lines(shown: &Shown, folded: &dyn Fn(&str) -> bool) -> Vec<(String, 
 }
 
 impl Shown {
+    /// What its lines are of: the board, the slice shown and how it is grouped.
+    fn listed(&self) -> String {
+        let slice = self.slice.as_ref().map(|s| &s.id);
+        format!(
+            "{}/{}/{slice:?}/{:?}",
+            self.host, self.board_name, self.group
+        )
+    }
+
     /// The groups of sprint part `part`, or the list's own.
     fn shelves_of(&self, part: Option<usize>) -> Option<&[Shelf]> {
         match part {
@@ -1665,7 +1674,7 @@ impl Page {
             self.motion.recent(key)
         });
         let (ids, lines): (Vec<_>, Vec<_>) = lines.into_iter().unzip();
-        let state = self.list_lines.show(ids);
+        let state = self.list_lines.show(&shown.listed(), ids);
         let draw = cx.processor(
             move |this: &mut Self, ix: usize, _, cx| match lines.get(ix) {
                 Some(line) => div()
@@ -2293,7 +2302,8 @@ impl Page {
             let ids = std::iter::once(String::new())
                 .chain(shelf.rows.iter().map(|r| row_line(&r.key)))
                 .collect();
-            let state = self.column_lines.entry(name.clone()).or_default().show(ids);
+            let lines = self.column_lines.entry(name.clone()).or_default();
+            let state = lines.show(&shown.listed(), ids);
             let of = shown.clone();
             let draw = cx.processor(move |this: &mut Self, line: usize, _, cx| {
                 let cell = div().w_full().flex().flex_col().pb(px(6.));
@@ -2412,7 +2422,7 @@ impl Page {
         }
         let lines = lane_lines(&shown, &|id| self.folded(id));
         let (ids, lines): (Vec<_>, Vec<_>) = lines.into_iter().unzip();
-        let state = self.lane_lines.show(ids);
+        let state = self.lane_lines.show(&shown.listed(), ids);
         let draw = cx.processor(
             move |this: &mut Self, ix: usize, _, cx| match lines.get(ix) {
                 Some(line) => this.lane_line(&shown, &states, *line, cx),

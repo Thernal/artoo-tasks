@@ -106,8 +106,10 @@ pub struct SliceRead {
     pub total: Option<usize>,
     /// When it was read last, Unix seconds.
     pub at: Option<i64>,
-    /// The filter it was read with (the Backlog's).
+    /// The filter it was last asked with (the Backlog's).
     pub filter: Filter,
+    /// The filter its rows were read with: the one before, while a new one's read is on its way or failed.
+    rows_filter: Filter,
     /// How many issues the read on its way wants.
     want: usize,
     /// A read again's pages, gathered apart and shown once whole: what was read before stays on screen meanwhile.
@@ -118,6 +120,11 @@ impl SliceRead {
     /// How many issues are read, sub-tasks left out, as `count` counts them: `Reading 31 of 78`.
     pub fn read(&self) -> usize {
         self.rows.iter().filter(|r| !r.subtask).count()
+    }
+
+    /// Whether its rows are the tracker's own order, none left out: read with no filter.
+    pub fn in_order(&self) -> bool {
+        self.rows_filter == Filter::default()
     }
 
     /// Whether it holds issues not read yet: the Backlog's Load more.
@@ -388,6 +395,40 @@ impl Moved {
     }
 }
 
+/// How many pages of the Backlog are read, at most, to find what followed an issue.
+const FOLLOW_PAGES: usize = 50;
+
+/// Each issue of `moved` that left the Backlog with what followed it unknown given the issue after it, one not moved,
+/// in the tracker's whole Backlog, read page by page by `page` from the issue asked.
+pub fn follow(moved: &mut Moved, mut page: impl FnMut(usize) -> Option<Page>) {
+    let keys = moved.keys();
+    let mut order: Vec<String> = Vec::new();
+    let mut start = 0;
+    for _ in 0..FOLLOW_PAGES {
+        let Some(read) = page(start) else {
+            return;
+        };
+        start += read.rows.len();
+        order.extend(
+            (read.rows.iter())
+                .filter(|r| !r.subtask)
+                .map(|r| r.key.clone()),
+        );
+        let mut unknown = false;
+        for p in
+            (moved.placed.iter_mut()).filter(|p| p.from == SliceId::Backlog && p.before.is_none())
+        {
+            p.before = (order.iter().skip_while(|k| **k != p.key).skip(1))
+                .find(|k| !keys.contains(k))
+                .cloned();
+            unknown |= p.before.is_none();
+        }
+        if !unknown || read.rows.is_empty() || start >= read.total {
+            return;
+        }
+    }
+}
+
 /// The writes that undo `moved`: each issue back into the slice it came from, ranked before the issue that followed it.
 pub fn undo_writes(moved: &Moved) -> Vec<Write> {
     (moved.placed.iter())
@@ -476,13 +517,17 @@ impl Slices {
         let got = !step.page.rows.is_empty();
         match &mut r.fresh {
             Some(fresh) => fresh.extend(step.page.rows),
-            None => r.rows.extend(step.page.rows),
+            None => {
+                r.rows.extend(step.page.rows);
+                r.rows_filter = r.filter.clone();
+            }
         }
         if got && next < r.want && next < step.page.total {
             return r.ask(slice, next);
         }
         if let Some(fresh) = r.fresh.take() {
             r.rows = fresh;
+            r.rows_filter = r.filter.clone();
         }
         r.state = Some(Read::Done(()));
         r.at = Some(now);
@@ -629,8 +674,11 @@ impl Slices {
                 Some((from, _)) if from == *to && !top => continue,
                 Some((from, at)) => {
                     let r = self.reads.get_mut(&from).expect("found");
+                    // A filtered Backlog's next row is not the issue that follows it there.
+                    let known = from != SliceId::Backlog || r.in_order();
                     let before = (r.rows[at + 1..].iter())
                         .find(|row| !row.subtask && !keys.contains(&row.key))
+                        .filter(|_| known)
                         .map(|row| row.key.clone());
                     let (rows, stay): (Vec<Row>, Vec<Row>) = (r.rows.drain(..))
                         .partition(|row| row.key == *key || row.parent.as_deref() == Some(key));
@@ -1224,6 +1272,40 @@ mod tests {
 
     fn keys_of(r: &SliceRead) -> Vec<&str> {
         keys(&r.rows)
+    }
+
+    #[test]
+    fn a_filtered_backlog_names_no_follower_and_the_whole_one_is_read_for_it() {
+        let mut s = two_slices();
+        let key = vec!["PAY-9".to_owned()];
+        s.reads.get_mut(&SliceId::Backlog).unwrap().rows_filter.mine = true;
+        let mut moved = s.place(&key, &SliceId::Backlog, true, None, Some(&me()), |_| None);
+        assert_eq!(moved.placed[0].before, None);
+        let row = |k: &str| Row {
+            key: k.into(),
+            ..Default::default()
+        };
+        let mut asked = Vec::new();
+        follow(&mut moved, |start| {
+            asked.push(start);
+            let all = ["PAY-7", "PAY-9", "PAY-10"];
+            Some(Page {
+                rows: all.iter().skip(start).take(2).map(|k| row(k)).collect(),
+                total: all.len(),
+            })
+        });
+        assert_eq!(asked, [0, 2]);
+        assert_eq!(moved.placed[0].before.as_deref(), Some("PAY-10"));
+    }
+
+    #[test]
+    fn rows_a_filter_read_stay_out_of_order_when_the_read_without_it_fails() {
+        let mut s = two_slices();
+        let backlog = SliceId::Backlog;
+        s.reads.get_mut(&backlog).unwrap().rows_filter.mine = true;
+        s.begin(&backlog, How::Again);
+        s.fail(&backlog, "504".into());
+        assert!(!s.reads[&backlog].in_order());
     }
 
     #[test]

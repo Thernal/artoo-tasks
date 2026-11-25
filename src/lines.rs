@@ -11,6 +11,8 @@ const OVERDRAW: f32 = 300.;
 pub struct Lines {
     pub state: ListState,
     ids: Vec<String>,
+    /// What the lines are of: a board's slice, grouped so.
+    of: String,
 }
 
 impl Default for Lines {
@@ -18,6 +20,7 @@ impl Default for Lines {
         Self {
             state: ListState::new(0, ListAlignment::Top, px(OVERDRAW)),
             ids: Vec::new(),
+            of: String::new(),
         }
     }
 }
@@ -36,10 +39,15 @@ fn changed(old: &[String], new: &[String]) -> Option<(Range<usize>, usize)> {
 }
 
 impl Lines {
-    /// The list now holds the lines `ids`. Scrolled down, the line at its top stays there while it is still among
-    /// them, so a read again does not move what is being looked at.
-    pub fn show(&mut self, ids: Vec<String>) -> ListState {
-        if let Some((old, count)) = changed(&self.ids, &ids) {
+    /// The list now holds the lines `ids` of `of`. Lines of something else start at the top; scrolled down in the
+    /// same, the line at its top stays there while it is still among them, so a read again does not move what is
+    /// being looked at.
+    pub fn show(&mut self, of: &str, ids: Vec<String>) -> ListState {
+        if self.of != of {
+            self.of = of.to_owned();
+            self.state.reset(ids.len());
+            self.ids = ids;
+        } else if let Some((old, count)) = changed(&self.ids, &ids) {
             let top = self.state.logical_scroll_top();
             let scrolled = top.item_ix > 0 || top.offset_in_item > px(0.);
             let name = self.ids.get(top.item_ix).filter(|_| scrolled);
@@ -55,8 +63,17 @@ impl Lines {
 
     /// The line `id` scrolled into sight.
     pub fn reveal(&self, id: &str) {
-        if let Some(ix) = self.ids.iter().position(|x| x == id) {
+        let Some(ix) = self.ids.iter().position(|x| x == id) else {
+            return;
+        };
+        // A line never drawn has no height to be revealed by: the list goes to it.
+        if self.state.bounds_for_item(ix).is_some() {
             self.state.scroll_to_reveal_item(ix);
+        } else {
+            self.state.scroll_to(ListOffset {
+                item_ix: ix,
+                offset_in_item: px(0.),
+            });
         }
     }
 }
