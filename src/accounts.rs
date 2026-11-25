@@ -10,13 +10,15 @@ use crate::jira::{self, Site};
 use crate::model;
 use crate::store::{Read, Store};
 use crate::trackers::{self, SiteExt};
+use artoo_plugin_sdk::core::labels;
 use artoo_plugin_sdk::core::textedit::TextEdit;
 use artoo_plugin_sdk::gpui::{
-    self, AnyElement, App, ClickEvent, Context, Entity, FontWeight, KeyDownEvent, SharedString,
-    Window, div, prelude::*,
+    self, AnyElement, App, ClickEvent, Context, Entity, FontWeight, KeyDownEvent, Render,
+    SharedString, Window, div, prelude::*,
 };
-use artoo_plugin_sdk::kit::hover::Hover;
+use artoo_plugin_sdk::kit::hover::{Hover, card_frame};
 use artoo_plugin_sdk::kit::{controls, icons, input, motion, px, room, theme};
+use artoo_plugin_sdk::shell::marks::{self, Mark};
 use artoo_plugin_sdk::shell::{Frame, Typed};
 use artoo_tasks_api::TrackerKind;
 use std::collections::HashMap;
@@ -994,14 +996,24 @@ impl Accounts {
                 .flex()
                 .items_center()
                 .gap(px(4.))
-                .children(readers.iter().take(3).map(|name| project_chip(name)))
+                .children(
+                    readers
+                        .iter()
+                        .take(3)
+                        .map(|path| project_mark(&marks::of(path))),
+                )
                 .children((extra > 0).then(|| {
                     div()
                         .text_size(px(11.))
                         .text_color(theme::faint())
                         .child(format!("+{extra}"))
                 }))
-                .tip(format!("Read in\n{}", readers.join("\n")))
+                .card(move |_, cx| {
+                    let rows = (readers.iter())
+                        .map(|p| (marks::of(p), labels::project_name(p)))
+                        .collect();
+                    cx.new(|_| ReadIn(rows)).into()
+                })
         });
         div()
             .flex()
@@ -1213,24 +1225,38 @@ pub fn mark(kind: &TrackerKind) -> impl IntoElement {
         .child(letter)
 }
 
-/// A project in an account's row: its first letters in a tile, until Artoo lends a plugin the project's own mark.
-fn project_chip(name: &str) -> impl IntoElement {
-    let letters: String = name.chars().take(2).collect::<String>().to_uppercase();
-    div()
-        .flex_none()
-        .size(px(20.))
-        .rounded(px(5.))
-        .flex()
-        .items_center()
-        .justify_center()
-        .bg(crate::look::tint(
-            theme::code((name.len() % 6 + 1) as u32),
-            0.25,
-        ))
-        .text_color(theme::muted())
-        .text_size(px(9.))
-        .font_weight(FontWeight::BOLD)
-        .child(letters)
+/// A project in an account's row: the mark the rail draws for it.
+fn project_mark(mark: &Mark) -> gpui::Div {
+    mark.draw(20.).rounded(px(5.)).text_size(px(9.))
+}
+
+/// The card over an account's marks: every project that reads it, its mark and its name.
+struct ReadIn(Vec<(Mark, String)>);
+
+impl Render for ReadIn {
+    fn render(&mut self, _: &mut Window, _: &mut Context<Self>) -> impl IntoElement {
+        card_frame()
+            .w_auto()
+            .min_w(px(200.))
+            .max_w(px(300.))
+            .px(px(10.))
+            .py(px(8.))
+            .gap(px(6.))
+            .child(
+                div()
+                    .text_size(px(11.))
+                    .text_color(theme::faint())
+                    .child("Read in"),
+            )
+            .children(self.0.iter().map(|(mark, name)| {
+                div()
+                    .flex()
+                    .items_center()
+                    .gap(px(8.))
+                    .child(project_mark(mark))
+                    .child(div().min_w_0().truncate().child(name.clone()))
+            }))
+    }
 }
 
 /// Test as a glyph with its sentence for a tooltip; a host not reached keeps its word, Retry.

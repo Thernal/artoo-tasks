@@ -23,6 +23,7 @@ use artoo_plugin_sdk::gpui::{
 };
 use artoo_plugin_sdk::serde_json::Value;
 use std::collections::{HashMap, HashSet};
+use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -571,19 +572,15 @@ impl Store {
         })
     }
 
-    /// The projects whose space reads account `host`, named by their folders' names (Artoo gives a plugin no project
-    /// marks in 2.0.0), in order.
-    pub fn readers(&self, host: &str) -> Vec<String> {
-        let mut names: Vec<String> = (self.links.iter())
+    /// The folders of the projects whose space reads account `host`, by folder name; a trailing `/` is the same folder.
+    pub fn readers(&self, host: &str) -> Vec<PathBuf> {
+        let mut paths: Vec<PathBuf> = (self.links.iter())
             .filter(|(_, hosts)| hosts.iter().any(|h| h == host))
-            .map(|(project, _)| {
-                let folder = project.trim_end_matches('/');
-                folder.rsplit('/').next().unwrap_or(folder).to_owned()
-            })
+            .map(|(project, _)| PathBuf::from(project.trim_end_matches('/')))
             .collect();
-        names.sort();
-        names.dedup();
-        names
+        paths.sort_by_key(|p| (p.file_name().map(|n| n.to_owned()), p.clone()));
+        paths.dedup();
+        paths
     }
 
     /// When the boards of `host` shown were last read, for a host not reached now: the oldest of the boards kept.
@@ -2336,6 +2333,23 @@ mod tests {
                 // The issue after it was moved too: nothing to go back before.
                 before: None
             }]
+        );
+    }
+
+    #[test]
+    fn an_accounts_readers_are_each_folder_once_by_its_name() {
+        let mut store = test_store();
+        for p in ["/a/web", "/z/pay", "/z/pay/", "/b/other"] {
+            let host = if p == "/b/other" {
+                "trello.com"
+            } else {
+                "acme.atlassian.net"
+            };
+            store.links.insert(p.into(), vec![host.into()]);
+        }
+        assert_eq!(
+            store.readers("acme.atlassian.net"),
+            [PathBuf::from("/z/pay"), PathBuf::from("/a/web")]
         );
     }
 }
