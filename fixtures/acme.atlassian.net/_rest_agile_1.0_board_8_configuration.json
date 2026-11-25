@@ -1,12 +1,30 @@
 {
  "id": 8,
+ "name": "Ledger",
+ "type": "kanban",
  "columnConfig": {
   "columns": [
    {
-    "name": "To do",
+    "name": "Backlog",
+    "statuses": [
+     {
+      "id": "10004"
+     }
+    ]
+   },
+   {
+    "name": "Selected for development",
     "statuses": [
      {
       "id": "10000"
+     }
+    ]
+   },
+   {
+    "name": "In progress",
+    "statuses": [
+     {
+      "id": "3"
      }
     ]
    },
@@ -19,5 +37,9 @@
     ]
    }
   ]
+ },
+ "location": {
+  "type": "project",
+  "key": "LED"
  }
 }

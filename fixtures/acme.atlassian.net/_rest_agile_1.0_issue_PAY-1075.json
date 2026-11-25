@@ -1,0 +1,115 @@
+{
+ "id": "31075",
+ "key": "PAY-1075",
+ "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31075",
+ "fields": {
+  "summary": "Write the tests for it",
+  "issuetype": {
+   "id": "10003",
+   "name": "Sub-task",
+   "subtask": true,
+   "hierarchyLevel": -1
+  },
+  "status": {
+   "id": "3",
+   "name": "In Progress",
+   "statusCategory": {
+    "id": 4,
+    "key": "indeterminate",
+    "name": "In Progress"
+   }
+  },
+  "priority": {
+   "id": "1",
+   "name": "Highest"
+  },
+  "assignee": {
+   "accountId": "u-ember",
+   "displayName": "Ember Lind",
+   "active": true,
+   "avatarUrls": {
+    "48x48": ""
+   },
+   "emailAddress": ""
+  },
+  "reporter": {
+   "accountId": "u-ember",
+   "displayName": "Ember Lind",
+   "active": true,
+   "avatarUrls": {
+    "48x48": ""
+   },
+   "emailAddress": ""
+  },
+  "labels": [],
+  "updated": "2026-11-07T09:00:00.000+0000",
+  "created": "2026-11-03T09:00:00.000+0000",
+  "project": {
+   "id": "10010",
+   "key": "PAY",
+   "name": "Payments"
+  },
+  "comment": {
+   "comments": [],
+   "total": 0,
+   "maxResults": 50,
+   "startAt": 0
+  },
+  "subtasks": [],
+  "issuelinks": [],
+  "epic": null,
+  "sprint": {
+   "id": 34,
+   "name": "Sprint 34",
+   "state": "active",
+   "startDate": "2026-11-03T09:00:00.000Z",
+   "endDate": "2026-11-14T17:00:00.000Z",
+   "originBoardId": 7,
+   "goal": "Refunds that add up"
+  },
+  "customfield_10020": [
+   {
+    "id": 34,
+    "name": "Sprint 34",
+    "state": "active",
+    "startDate": "2026-11-03T09:00:00.000Z",
+    "endDate": "2026-11-14T17:00:00.000Z",
+    "originBoardId": 7,
+    "goal": "Refunds that add up"
+   }
+  ],
+  "customfield_10016": null,
+  "duedate": null,
+  "components": [],
+  "fixVersions": [],
+  "parent": {
+   "id": "31074",
+   "key": "PAY-1074",
+   "self": "https://acme.atlassian.net/rest/api/2/issue/31074",
+   "fields": {
+    "summary": "Show webhook deliveries",
+    "status": {
+     "id": "3",
+     "name": "In Progress",
+     "statusCategory": {
+      "id": 4,
+      "key": "indeterminate",
+      "name": "In Progress"
+     }
+    },
+    "priority": {
+     "id": "1",
+     "name": "Highest"
+    },
+    "issuetype": {
+     "id": "10001",
+     "name": "Story",
+     "subtask": false,
+     "hierarchyLevel": 0
+    }
+   }
+  },
+  "description": "",
+  "attachment": []
+ }
+}

@@ -1,0 +1,14 @@
+{
+ "isLast": true,
+ "values": [
+  {
+   "id": 40,
+   "name": "Checkout sprint 1",
+   "state": "future",
+   "originBoardId": 11,
+   "startDate": "2026-12-01T09:00:00.000Z",
+   "endDate": "2026-12-12T17:00:00.000Z",
+   "goal": ""
+  }
+ ]
+}

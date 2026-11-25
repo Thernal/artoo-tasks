@@ -1,0 +1,37 @@
+{
+ "id": 10,
+ "name": "Wallet",
+ "type": "simple",
+ "columnConfig": {
+  "columns": [
+   {
+    "name": "To do",
+    "statuses": [
+     {
+      "id": "10000"
+     }
+    ]
+   },
+   {
+    "name": "In progress",
+    "statuses": [
+     {
+      "id": "3"
+     }
+    ]
+   },
+   {
+    "name": "Done",
+    "statuses": [
+     {
+      "id": "10002"
+     }
+    ]
+   }
+  ]
+ },
+ "location": {
+  "type": "project",
+  "key": "WAL"
+ }
+}

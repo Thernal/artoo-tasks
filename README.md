@@ -108,11 +108,15 @@ ARTOO_PLUGIN_DEV="$PWD/target/debug/libartoo_tasks.dylib" path/to/artoo/target/d
 ```
 
 `ARTOO_TASKS_FIXTURE=<folder>` reads the API's answers from files there instead of the tracker, for pictures that show
-no one's real work: `python3 scripts/fixture.py` writes `fixtures/` (Jira's Payments board, Trello's Website
-relaunch). Its own `trackers.txt` names
+no one's real work: `python3 scripts/fixture.py` writes `fixtures/` (Jira's Payments board with two active sprints,
+a future one, five closed and a Backlog of 300; the kanban boards Ledger and Platform; Wallet, without sprints; Checkout,
+with no sprint running; Trello's Website relaunch). Its own `trackers.txt` names
 its sites, a folder named for a site's host holds that site's answers (`_rest_api_2_issue_PAY-412.json`), and a write
-is recorded in its `writes.log` and answered from `POST_rest_api_2_issue.json` when there is one. `ARTOO_TASKS_FIXTURE_SLOW=<ms>` answers
-each read that late, to see what draws while reading.
+is recorded in its `writes.log` and answered from `POST_rest_api_2_issue.json` when there is one. A list is paged by
+the read's `startAt` and `maxResults` as Jira pages it; a read of closed sprints, or with JQL for yours, for words or
+for an epic, is answered from `<file>@closed.json`, `@mine`, `@words` or `@epic` when there is one; a file
+`{"status": 400, "errorMessages": […]}` refuses. `ARTOO_TASKS_FIXTURE_SLOW=<ms>` answers each read that late, to see
+what draws while reading, and `ARTOO_TASKS_FIXTURE_FAIL=<part>` fails every read whose address holds it.
 
 ## Tests
 

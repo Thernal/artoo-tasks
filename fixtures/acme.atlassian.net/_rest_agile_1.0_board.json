@@ -27,6 +27,24 @@
     "projectKey": "PLAT",
     "projectName": "Platform"
    }
+  },
+  {
+   "id": 10,
+   "name": "Wallet",
+   "type": "simple",
+   "location": {
+    "projectKey": "WAL",
+    "projectName": "Wallet"
+   }
+  },
+  {
+   "id": 11,
+   "name": "Checkout",
+   "type": "scrum",
+   "location": {
+    "projectKey": "CHK",
+    "projectName": "Checkout"
+   }
   }
  ]
 }

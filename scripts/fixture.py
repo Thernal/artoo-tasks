@@ -27,6 +27,7 @@ STATES = {
     'prog': {'id': '3', 'name': 'In Progress', 'statusCategory': {'id': 4, 'key': 'indeterminate', 'name': 'In Progress'}},
     'rev': {'id': '10001', 'name': 'In Review', 'statusCategory': {'id': 4, 'key': 'indeterminate', 'name': 'In Progress'}},
     'done': {'id': '10002', 'name': 'Done', 'statusCategory': {'id': 3, 'key': 'done', 'name': 'Done'}},
+    'backlog': {'id': '10004', 'name': 'Backlog', 'statusCategory': {'id': 2, 'key': 'new', 'name': 'To Do'}},
 }
 TYPES = {
     'bug': {'id': '10004', 'name': 'Bug', 'subtask': False, 'hierarchyLevel': 0},
@@ -117,7 +118,7 @@ def epic_of(key):
     return {'id': e['id'], 'key': e['key'], 'name': e['name'], 'summary': e['name'], 'color': {'key': e['color']}, 'done': e['done']}
 
 def subtasks_of(key):
-    return [brief(k) for k, *_ in ISSUES if BY[k][8] == key]
+    return [brief(k) for k, i in BY.items() if i[8] == key]
 
 def brief(key):
     k, summary, kind, pri, who, state, *_ = BY[key]
@@ -170,12 +171,12 @@ def fields_of(key, whole):
     f = {'summary': summary, 'issuetype': TYPES[kind], 'status': STATES[state], 'priority': priority(pri),
          'assignee': person(who), 'reporter': person('juniper' if k == 'PAY-412' else (who or 'kestrel')),
          'labels': labels, 'updated': stamp(k), 'created': '2026-11-03T09:00:00.000+0000',
-         'project': {'id': '10010', 'key': 'PAY', 'name': 'Payments'},
+         'project': project_of(k),
          'comment': {'comments': comments_of(k, ncomments) if whole else [], 'total': len(comments_of(k, ncomments)),
                      'maxResults': 50, 'startAt': 0},
          'subtasks': subtasks_of(k), 'issuelinks': links_of(k),
-         'epic': epic_of(k), 'sprint': SPRINT,
-         'customfield_10020': None if state == 'done' else [SPRINT],
+         'epic': epic_of(k), 'sprint': SPRINT_OF[k][0] if k in SPRINT_OF else SPRINT,
+         'customfield_10020': SPRINT_OF[k][1] if k in SPRINT_OF else (None if state == 'done' else [SPRINT]),
          'customfield_10016': {'PAY-412': 3, 'PAY-409': 5, 'PAY-421': 2}.get(k),
          'duedate': '2026-11-14' if k == 'PAY-412' else None,
          'components': [{'id': '10100', 'name': 'Refunds API'}] if k in ('PAY-412', 'PAY-409', 'PAY-421') else [],
@@ -190,6 +191,121 @@ def fields_of(key, whole):
         f['description'] = PAY_412 if k == 'PAY-412' else (desc or '')
         f['attachment'] = attachments_of(k)
     return f
+
+PROJECTS = {'PAY': ('10010', 'Payments', 30000), 'LED': ('10011', 'Ledger', 40000), 'PLAT': ('10012', 'Platform', 50000),
+            'WAL': ('10013', 'Wallet', 70000), 'CHK': ('10014', 'Checkout', 80000)}
+
+def project_of(key):
+    p = key.split('-')[0]
+    return {'id': PROJECTS[p][0], 'key': p, 'name': PROJECTS[p][1]}
+
+# A board's slices. Payments (7, scrum) has two active sprints (Sprint 34 holds the issues above), a future sprint with
+# nothing planned, five closed sprints and a Backlog; Ledger (8) and Platform (9) are kanban, Ledger with a Backlog
+# column; Wallet (10) is team-managed with sprints off; Checkout (11) is scrum with no sprint running.
+SECOND_SPRINT = {'id': 36, 'name': 'Reconciliation squad Q4 sprint 3', 'state': 'active',
+                 'startDate': '2026-11-10T09:00:00.000Z', 'endDate': '2026-11-21T17:00:00.000Z', 'originBoardId': 7,
+                 'goal': 'Move every nightly reconciliation job onto the replica, retire the old ledger exporter and get '
+                         'the merchant statement totals to match the bank to the cent before the quarter closes'}
+CLOSED_SPRINTS = [{'id': n, 'name': 'Sprint %d' % n, 'state': 'closed', 'originBoardId': 7, 'goal': '',
+                   'startDate': '2026-%02d-%02dT09:00:00.000Z' % start, 'endDate': '2026-%02d-%02dT17:00:00.000Z' % end,
+                   'completeDate': '2026-%02d-%02dT16:30:00.000Z' % end}
+                  for n, start, end in ((29, (8, 25), (9, 5)), (30, (9, 8), (9, 19)), (31, (9, 22), (10, 3)),
+                                        (32, (10, 6), (10, 17)), (33, (10, 20), (10, 31)))]
+CHECKOUT_SPRINT = {'id': 40, 'name': 'Checkout sprint 1', 'state': 'future', 'originBoardId': 11,
+                   'startDate': '2026-12-01T09:00:00.000Z', 'endDate': '2026-12-12T17:00:00.000Z', 'goal': ''}
+# An issue's sprint field and its Sprint field's list, for those not in Sprint 34.
+SPRINT_OF = {}
+VERBS = ['Retry', 'Log', 'Show', 'Cache', 'Explain', 'Rename', 'Split', 'Validate', 'Export', 'Batch', 'Throttle',
+         'Audit', 'Archive', 'Backfill', 'Index', 'Document']
+OBJECTS = ['refunds after a gateway timeout', 'the settlement report', 'merchant payouts', 'chargeback notices',
+           'the currency table', 'webhook deliveries', 'failed captures', 'the nightly ledger close', 'statement totals',
+           'card tokens', 'dispute evidence', 'payout holds', 'fee schedules', 'the reconciliation diff',
+           'partial refunds', 'merchant onboarding checks', 'the risk score', 'invoice numbers', 'tax lines on receipts',
+           'the payout calendar']
+PEOPLE_CYCLE = ['kestrel', 'juniper', '', 'ember', 'juniper', 'kestrel', 'ember', '', 'kestrel']
+NEXT = {}
+
+def generated(prefix, n, states, sprint=None, sprints=None, epics=()):
+    """`n` invented issues of project `prefix`, each eighth with two sub-tasks after it: their keys, in rank order."""
+    keys = []
+    def add(kind, summary, who, state, parent, i):
+        num = NEXT.setdefault(prefix, 1001)
+        NEXT[prefix] = num + 1
+        k = '%s-%d' % (prefix, num)
+        BY[k] = (k, summary, kind, ['medium', 'high', 'low', 'medium', 'highest'][i % 5], who, state, [], '', parent, i % 3)
+        IDS[k] = PROJECTS[prefix][2] + num
+        SPRINT_OF[k] = (sprint, sprints)
+        if epics and not parent and epics[i % len(epics)]:
+            EPIC_OF[k] = epics[i % len(epics)]
+        keys.append(k)
+        return k
+    for i in range(n):
+        g = NEXT.get(prefix, 1001)
+        who = 'you' if g % 9 == 4 else PEOPLE_CYCLE[g % len(PEOPLE_CYCLE)]
+        summary = '%s %s' % (VERBS[g % len(VERBS)], OBJECTS[(g * 7 + g // len(VERBS)) % len(OBJECTS)])
+        parent = add(['task', 'story', 'bug', 'task', 'story'][g % 5], summary, who, states[g % len(states)], None, g)
+        if i % 8 == 3:
+            for j, what in enumerate(('Write the tests for it', 'Roll it out behind a flag')):
+                add('sub', what, who, states[(g + j) % len(states)], parent, g + j)
+    return keys
+
+def listed(keys):
+    return {'startAt': 0, 'maxResults': len(keys), 'total': len(keys), 'issues': [issue(k, False) for k in keys]}
+
+def slice_files(folder, path, keys, asks=('mine',)):
+    """A slice's issues at `path`, and the answers to its JQL reads: yours, the words `refund`, epic PAY-400's."""
+    write(folder, path, listed(keys))
+    picks = {'mine': lambda k: BY[k][4] == 'you', 'words': lambda k: 'refund' in BY[k][1].lower(),
+             'epic': lambda k: EPIC_OF.get(k) == 'PAY-400'}
+    for ask in asks:
+        write(folder, path + '@' + ask, listed([k for k in keys if picks[ask](k)]))
+
+def columns(*names):
+    ids = {'Backlog': '10004', 'To do': '10000', 'Selected for development': '10000', 'In progress': '3', 'Done': '10002'}
+    return {'columns': [{'name': n, 'statuses': [{'id': ids[n]}]} for n in names]}
+
+def slices(folder):
+    work = ['todo', 'todo', 'prog', 'todo', 'rev', 'done', 'prog', 'done']
+    epics = ('PAY-400', 'PAY-380', 'PAY-360', None)
+    first = [k for k, *_ in ISSUES] + generated('PAY', 64, work, SPRINT, [SPRINT], epics)
+    second = generated('PAY', 136, work, SECOND_SPRINT, [SECOND_SPRINT], epics)
+    closed = {s['id']: generated('PAY', 10, ['done'], None, [s], epics) for s in CLOSED_SPRINTS}
+    backlog = generated('PAY', 300, ['todo'], None, None, epics)
+    write(folder, '/rest/agile/1.0/board/7/sprint', {'isLast': True, 'values': [SPRINT, NEXT_SPRINT, SECOND_SPRINT]})
+    write(folder, '/rest/agile/1.0/board/7/sprint@closed', {'isLast': True, 'values': CLOSED_SPRINTS})
+    slice_files(folder, '/rest/agile/1.0/sprint/34/issue', first)
+    slice_files(folder, '/rest/agile/1.0/sprint/36/issue', second)
+    slice_files(folder, '/rest/agile/1.0/sprint/35/issue', [])
+    for sid, keys in closed.items():
+        write(folder, '/rest/agile/1.0/sprint/%d/issue' % sid, listed(keys))
+    slice_files(folder, '/rest/agile/1.0/board/7/backlog', backlog, ('mine', 'words', 'epic'))
+
+    ledger = generated('LED', 40, ['backlog', 'backlog', 'todo', 'prog', 'backlog', 'done', 'todo', 'backlog'])
+    write(folder, '/rest/agile/1.0/board/8/configuration', {'id': 8, 'name': 'Ledger', 'type': 'kanban',
+          'columnConfig': columns('Backlog', 'Selected for development', 'In progress', 'Done'),
+          'location': {'type': 'project', 'key': 'LED'}})
+    write(folder, '/rest/agile/1.0/board/8/issue', listed(ledger))
+    write(folder, '/rest/agile/1.0/board/8/backlog', listed([k for k in ledger if BY[k][5] == 'backlog']))
+    platform = generated('PLAT', 30, ['todo', 'prog', 'done', 'done', 'todo'])
+    write(folder, '/rest/agile/1.0/board/9/configuration', {'id': 9, 'name': 'Platform', 'type': 'kanban',
+          'columnConfig': columns('To do', 'In progress', 'Done'), 'location': {'type': 'project', 'key': 'PLAT'}})
+    write(folder, '/rest/agile/1.0/board/9/issue', listed(platform))
+    wallet = generated('WAL', 20, ['todo', 'prog', 'todo', 'done'])
+    write(folder, '/rest/agile/1.0/board/10/configuration', {'id': 10, 'name': 'Wallet', 'type': 'simple',
+          'columnConfig': columns('To do', 'In progress', 'Done'), 'location': {'type': 'project', 'key': 'WAL'}})
+    write(folder, '/rest/agile/1.0/board/10/issue', listed(wallet))
+    write(folder, '/rest/agile/1.0/board/10/sprint', {'status': 400, 'errorMessages': ['The board does not support sprints']})
+    planned = generated('CHK', 8, ['todo'], CHECKOUT_SPRINT, [CHECKOUT_SPRINT])
+    waiting = generated('CHK', 25, ['todo'])
+    write(folder, '/rest/agile/1.0/board/11/configuration', {'id': 11, 'name': 'Checkout', 'type': 'scrum',
+          'columnConfig': columns('To do', 'In progress', 'Done'), 'location': {'type': 'project', 'key': 'CHK'}})
+    write(folder, '/rest/agile/1.0/board/11/issue', listed(planned + waiting))
+    write(folder, '/rest/agile/1.0/board/11/sprint', {'isLast': True, 'values': [CHECKOUT_SPRINT]})
+    slice_files(folder, '/rest/agile/1.0/sprint/40/issue', planned)
+    slice_files(folder, '/rest/agile/1.0/board/11/backlog', waiting, ('mine', 'words'))
+    for keys in [first[len(ISSUES):], second, backlog, ledger, platform, wallet, planned, waiting, *closed.values()]:
+        for k in keys:
+            write(folder, '/rest/agile/1.0/issue/' + k, issue(k, True))
 
 def issue(key, whole):
     return {'id': str(IDS[key]), 'key': key, 'self': SITE + '/rest/agile/1.0/issue/' + str(IDS[key]),
@@ -208,8 +324,10 @@ def jira(folder):
         {'id': 7, 'name': 'Payments', 'type': 'scrum', 'location': {'projectKey': 'PAY', 'projectName': 'Payments'}},
         {'id': 8, 'name': 'Ledger', 'type': 'kanban', 'location': {'projectKey': 'LED', 'projectName': 'Ledger'}},
         {'id': 9, 'name': 'Platform', 'type': 'kanban', 'location': {'projectKey': 'PLAT', 'projectName': 'Platform'}},
+        {'id': 10, 'name': 'Wallet', 'type': 'simple', 'location': {'projectKey': 'WAL', 'projectName': 'Wallet'}},
+        {'id': 11, 'name': 'Checkout', 'type': 'scrum', 'location': {'projectKey': 'CHK', 'projectName': 'Checkout'}},
     ]})
-    write(folder, '/rest/agile/1.0/board/7/configuration', {'id': 7, 'name': 'Payments', 'columnConfig': {'columns': [
+    write(folder, '/rest/agile/1.0/board/7/configuration', {'id': 7, 'name': 'Payments', 'type': 'scrum', 'columnConfig': {'columns': [
         {'name': 'To do', 'statuses': [{'id': '10000'}]},
         {'name': 'In progress', 'statuses': [{'id': '3'}]},
         {'name': 'In review', 'statuses': [{'id': '10001'}]},
@@ -218,11 +336,7 @@ def jira(folder):
     write(folder, '/rest/agile/1.0/board/7/issue', {'startAt': 0, 'maxResults': 100, 'total': len(ISSUES),
                                                    'issues': [issue(k, False) for k, *_ in ISSUES]})
     write(folder, '/rest/agile/1.0/board/7/epic', {'isLast': True, 'values': EPICS})
-    write(folder, '/rest/agile/1.0/board/7/sprint', {'isLast': True, 'values': [SPRINT, NEXT_SPRINT]})
-    for b in (8, 9):
-        write(folder, '/rest/agile/1.0/board/%d/configuration' % b, {'id': b, 'columnConfig': {'columns': [
-            {'name': 'To do', 'statuses': [{'id': '10000'}]}, {'name': 'Done', 'statuses': [{'id': '10002'}]}]}})
-        write(folder, '/rest/agile/1.0/board/%d/issue' % b, {'issues': []})
+    slices(folder)
     for k, *_ in ISSUES:
         write(folder, '/rest/agile/1.0/issue/' + k, issue(k, True))
     write(folder, '/rest/agile/1.0/issue/PAY-426', issue('PAY-426', True))
@@ -265,7 +379,8 @@ def jira(folder):
         {'id': tid, 'name': n, 'inward': i, 'outward': o} for n, (i, o, tid) in LINK_TYPES.items()]})
     write(folder, '/rest/api/2/project', [
         {'id': '10010', 'key': 'PAY', 'name': 'Payments'}, {'id': '10011', 'key': 'LED', 'name': 'Ledger'},
-        {'id': '10012', 'key': 'PLAT', 'name': 'Platform'}])
+        {'id': '10012', 'key': 'PLAT', 'name': 'Platform'}, {'id': '10013', 'key': 'WAL', 'name': 'Wallet'},
+        {'id': '10014', 'key': 'CHK', 'name': 'Checkout'}])
     write(folder, '/rest/api/2/issue/createmeta/PAY/issuetypes', {'values': [
         dict(TYPES[t], id=TYPES[t]['id']) for t in ('task', 'bug', 'story', 'sub')]})
     create = [

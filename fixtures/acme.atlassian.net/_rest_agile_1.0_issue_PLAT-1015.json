@@ -1,0 +1,97 @@
+{
+ "id": "51015",
+ "key": "PLAT-1015",
+ "self": "https://acme.atlassian.net/rest/agile/1.0/issue/51015",
+ "fields": {
+  "summary": "Write the tests for it",
+  "issuetype": {
+   "id": "10003",
+   "name": "Sub-task",
+   "subtask": true,
+   "hierarchyLevel": -1
+  },
+  "status": {
+   "id": "10000",
+   "name": "To Do",
+   "statusCategory": {
+    "id": 2,
+    "key": "new",
+    "name": "To Do"
+   }
+  },
+  "priority": {
+   "id": "1",
+   "name": "Highest"
+  },
+  "assignee": {
+   "accountId": "u-ember",
+   "displayName": "Ember Lind",
+   "active": true,
+   "avatarUrls": {
+    "48x48": ""
+   },
+   "emailAddress": ""
+  },
+  "reporter": {
+   "accountId": "u-ember",
+   "displayName": "Ember Lind",
+   "active": true,
+   "avatarUrls": {
+    "48x48": ""
+   },
+   "emailAddress": ""
+  },
+  "labels": [],
+  "updated": "2026-11-10T09:00:00.000+0000",
+  "created": "2026-11-03T09:00:00.000+0000",
+  "project": {
+   "id": "10012",
+   "key": "PLAT",
+   "name": "Platform"
+  },
+  "comment": {
+   "comments": [],
+   "total": 0,
+   "maxResults": 50,
+   "startAt": 0
+  },
+  "subtasks": [],
+  "issuelinks": [],
+  "epic": null,
+  "sprint": null,
+  "customfield_10020": null,
+  "customfield_10016": null,
+  "duedate": null,
+  "components": [],
+  "fixVersions": [],
+  "parent": {
+   "id": "51014",
+   "key": "PLAT-1014",
+   "self": "https://acme.atlassian.net/rest/api/2/issue/51014",
+   "fields": {
+    "summary": "Split the settlement report",
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "1",
+     "name": "Highest"
+    },
+    "issuetype": {
+     "id": "10001",
+     "name": "Story",
+     "subtask": false,
+     "hierarchyLevel": 0
+    }
+   }
+  },
+  "description": "",
+  "attachment": []
+ }
+}

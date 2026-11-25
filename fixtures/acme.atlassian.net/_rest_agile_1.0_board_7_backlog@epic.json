@@ -1,0 +1,8341 @@
+{
+ "startAt": 0,
+ "maxResults": 75,
+ "total": 75,
+ "issues": [
+  {
+   "id": "31312",
+   "key": "PAY-1312",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31312",
+   "fields": {
+    "summary": "Retry failed captures",
+    "issuetype": {
+     "id": "10004",
+     "name": "Bug",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "4",
+     "name": "Low"
+    },
+    "assignee": null,
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-10T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31320",
+   "key": "PAY-1320",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31320",
+   "fields": {
+    "summary": "Export merchant payouts",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-ember",
+     "displayName": "Ember Lind",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-ember",
+     "displayName": "Ember Lind",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-09T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 0,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31324",
+   "key": "PAY-1324",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31324",
+   "fields": {
+    "summary": "Archive dispute evidence",
+    "issuetype": {
+     "id": "10001",
+     "name": "Story",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "1",
+     "name": "Highest"
+    },
+    "assignee": {
+     "accountId": "u-juniper",
+     "displayName": "Juniper Hale",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-juniper",
+     "displayName": "Juniper Hale",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-04T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [
+     {
+      "id": "31325",
+      "key": "PAY-1325",
+      "self": "https://acme.atlassian.net/rest/api/2/issue/31325",
+      "fields": {
+       "summary": "Write the tests for it",
+       "status": {
+        "id": "10000",
+        "name": "To Do",
+        "statusCategory": {
+         "id": 2,
+         "key": "new",
+         "name": "To Do"
+        }
+       },
+       "priority": {
+        "id": "1",
+        "name": "Highest"
+       },
+       "issuetype": {
+        "id": "10003",
+        "name": "Sub-task",
+        "subtask": true,
+        "hierarchyLevel": -1
+       }
+      }
+     },
+     {
+      "id": "31326",
+      "key": "PAY-1326",
+      "self": "https://acme.atlassian.net/rest/api/2/issue/31326",
+      "fields": {
+       "summary": "Roll it out behind a flag",
+       "status": {
+        "id": "10000",
+        "name": "To Do",
+        "statusCategory": {
+         "id": 2,
+         "key": "new",
+         "name": "To Do"
+        }
+       },
+       "priority": {
+        "id": "3",
+        "name": "Medium"
+       },
+       "issuetype": {
+        "id": "10003",
+        "name": "Sub-task",
+        "subtask": true,
+        "hierarchyLevel": -1
+       }
+      }
+     }
+    ],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31328",
+   "key": "PAY-1328",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31328",
+   "fields": {
+    "summary": "Retry the payout calendar",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-08T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 2,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31332",
+   "key": "PAY-1332",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31332",
+   "fields": {
+    "summary": "Explain the nightly ledger close",
+    "issuetype": {
+     "id": "10004",
+     "name": "Bug",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "4",
+     "name": "Low"
+    },
+    "assignee": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-03T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 0,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31340",
+   "key": "PAY-1340",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31340",
+   "fields": {
+    "summary": "Archive chargeback notices",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-11T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 2,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31344",
+   "key": "PAY-1344",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31344",
+   "fields": {
+    "summary": "Retry fee schedules",
+    "issuetype": {
+     "id": "10001",
+     "name": "Story",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "1",
+     "name": "Highest"
+    },
+    "assignee": {
+     "accountId": "u-ember",
+     "displayName": "Ember Lind",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-ember",
+     "displayName": "Ember Lind",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-06T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 0,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [
+     {
+      "id": "31345",
+      "key": "PAY-1345",
+      "self": "https://acme.atlassian.net/rest/api/2/issue/31345",
+      "fields": {
+       "summary": "Write the tests for it",
+       "status": {
+        "id": "10000",
+        "name": "To Do",
+        "statusCategory": {
+         "id": 2,
+         "key": "new",
+         "name": "To Do"
+        }
+       },
+       "priority": {
+        "id": "1",
+        "name": "Highest"
+       },
+       "issuetype": {
+        "id": "10003",
+        "name": "Sub-task",
+        "subtask": true,
+        "hierarchyLevel": -1
+       }
+      }
+     },
+     {
+      "id": "31346",
+      "key": "PAY-1346",
+      "self": "https://acme.atlassian.net/rest/api/2/issue/31346",
+      "fields": {
+       "summary": "Roll it out behind a flag",
+       "status": {
+        "id": "10000",
+        "name": "To Do",
+        "statusCategory": {
+         "id": 2,
+         "key": "new",
+         "name": "To Do"
+        }
+       },
+       "priority": {
+        "id": "3",
+        "name": "Medium"
+       },
+       "issuetype": {
+        "id": "10003",
+        "name": "Sub-task",
+        "subtask": true,
+        "hierarchyLevel": -1
+       }
+      }
+     }
+    ],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31348",
+   "key": "PAY-1348",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31348",
+   "fields": {
+    "summary": "Explain refunds after a gateway timeout",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": null,
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-10T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31352",
+   "key": "PAY-1352",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31352",
+   "fields": {
+    "summary": "Export statement totals",
+    "issuetype": {
+     "id": "10004",
+     "name": "Bug",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "4",
+     "name": "Low"
+    },
+    "assignee": null,
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-05T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 2,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31360",
+   "key": "PAY-1360",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31360",
+   "fields": {
+    "summary": "Retry webhook deliveries",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-juniper",
+     "displayName": "Juniper Hale",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-juniper",
+     "displayName": "Juniper Hale",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-04T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31364",
+   "key": "PAY-1364",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31364",
+   "fields": {
+    "summary": "Explain the reconciliation diff",
+    "issuetype": {
+     "id": "10001",
+     "name": "Story",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "1",
+     "name": "Highest"
+    },
+    "assignee": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-08T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 2,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [
+     {
+      "id": "31365",
+      "key": "PAY-1365",
+      "self": "https://acme.atlassian.net/rest/api/2/issue/31365",
+      "fields": {
+       "summary": "Write the tests for it",
+       "status": {
+        "id": "10000",
+        "name": "To Do",
+        "statusCategory": {
+         "id": 2,
+         "key": "new",
+         "name": "To Do"
+        }
+       },
+       "priority": {
+        "id": "1",
+        "name": "Highest"
+       },
+       "issuetype": {
+        "id": "10003",
+        "name": "Sub-task",
+        "subtask": true,
+        "hierarchyLevel": -1
+       }
+      }
+     },
+     {
+      "id": "31366",
+      "key": "PAY-1366",
+      "self": "https://acme.atlassian.net/rest/api/2/issue/31366",
+      "fields": {
+       "summary": "Roll it out behind a flag",
+       "status": {
+        "id": "10000",
+        "name": "To Do",
+        "statusCategory": {
+         "id": 2,
+         "key": "new",
+         "name": "To Do"
+        }
+       },
+       "priority": {
+        "id": "3",
+        "name": "Medium"
+       },
+       "issuetype": {
+        "id": "10003",
+        "name": "Sub-task",
+        "subtask": true,
+        "hierarchyLevel": -1
+       }
+      }
+     }
+    ],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31368",
+   "key": "PAY-1368",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31368",
+   "fields": {
+    "summary": "Export the settlement report",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-03T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 0,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31372",
+   "key": "PAY-1372",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31372",
+   "fields": {
+    "summary": "Archive card tokens",
+    "issuetype": {
+     "id": "10004",
+     "name": "Bug",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "4",
+     "name": "Low"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-07T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31380",
+   "key": "PAY-1380",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31380",
+   "fields": {
+    "summary": "Explain failed captures",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-ember",
+     "displayName": "Ember Lind",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-ember",
+     "displayName": "Ember Lind",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-06T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 0,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31384",
+   "key": "PAY-1384",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31384",
+   "fields": {
+    "summary": "Export partial refunds",
+    "issuetype": {
+     "id": "10001",
+     "name": "Story",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "1",
+     "name": "Highest"
+    },
+    "assignee": null,
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-10T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [
+     {
+      "id": "31385",
+      "key": "PAY-1385",
+      "self": "https://acme.atlassian.net/rest/api/2/issue/31385",
+      "fields": {
+       "summary": "Write the tests for it",
+       "status": {
+        "id": "10000",
+        "name": "To Do",
+        "statusCategory": {
+         "id": 2,
+         "key": "new",
+         "name": "To Do"
+        }
+       },
+       "priority": {
+        "id": "1",
+        "name": "Highest"
+       },
+       "issuetype": {
+        "id": "10003",
+        "name": "Sub-task",
+        "subtask": true,
+        "hierarchyLevel": -1
+       }
+      }
+     },
+     {
+      "id": "31386",
+      "key": "PAY-1386",
+      "self": "https://acme.atlassian.net/rest/api/2/issue/31386",
+      "fields": {
+       "summary": "Roll it out behind a flag",
+       "status": {
+        "id": "10000",
+        "name": "To Do",
+        "statusCategory": {
+         "id": 2,
+         "key": "new",
+         "name": "To Do"
+        }
+       },
+       "priority": {
+        "id": "3",
+        "name": "Medium"
+       },
+       "issuetype": {
+        "id": "10003",
+        "name": "Sub-task",
+        "subtask": true,
+        "hierarchyLevel": -1
+       }
+      }
+     }
+    ],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31388",
+   "key": "PAY-1388",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31388",
+   "fields": {
+    "summary": "Archive merchant payouts",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": null,
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-05T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 2,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31392",
+   "key": "PAY-1392",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31392",
+   "fields": {
+    "summary": "Retry payout holds",
+    "issuetype": {
+     "id": "10004",
+     "name": "Bug",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "4",
+     "name": "Low"
+    },
+    "assignee": {
+     "accountId": "u-ember",
+     "displayName": "Ember Lind",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-ember",
+     "displayName": "Ember Lind",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-09T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 0,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31400",
+   "key": "PAY-1400",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31400",
+   "fields": {
+    "summary": "Export the nightly ledger close",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-08T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 2,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31404",
+   "key": "PAY-1404",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31404",
+   "fields": {
+    "summary": "Archive merchant onboarding checks",
+    "issuetype": {
+     "id": "10001",
+     "name": "Story",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "1",
+     "name": "Highest"
+    },
+    "assignee": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-03T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 0,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [
+     {
+      "id": "31405",
+      "key": "PAY-1405",
+      "self": "https://acme.atlassian.net/rest/api/2/issue/31405",
+      "fields": {
+       "summary": "Write the tests for it",
+       "status": {
+        "id": "10000",
+        "name": "To Do",
+        "statusCategory": {
+         "id": 2,
+         "key": "new",
+         "name": "To Do"
+        }
+       },
+       "priority": {
+        "id": "1",
+        "name": "Highest"
+       },
+       "issuetype": {
+        "id": "10003",
+        "name": "Sub-task",
+        "subtask": true,
+        "hierarchyLevel": -1
+       }
+      }
+     },
+     {
+      "id": "31406",
+      "key": "PAY-1406",
+      "self": "https://acme.atlassian.net/rest/api/2/issue/31406",
+      "fields": {
+       "summary": "Roll it out behind a flag",
+       "status": {
+        "id": "10000",
+        "name": "To Do",
+        "statusCategory": {
+         "id": 2,
+         "key": "new",
+         "name": "To Do"
+        }
+       },
+       "priority": {
+        "id": "3",
+        "name": "Medium"
+       },
+       "issuetype": {
+        "id": "10003",
+        "name": "Sub-task",
+        "subtask": true,
+        "hierarchyLevel": -1
+       }
+      }
+     }
+    ],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31408",
+   "key": "PAY-1408",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31408",
+   "fields": {
+    "summary": "Retry the currency table",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-07T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31412",
+   "key": "PAY-1412",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31412",
+   "fields": {
+    "summary": "Explain fee schedules",
+    "issuetype": {
+     "id": "10004",
+     "name": "Bug",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "4",
+     "name": "Low"
+    },
+    "assignee": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-11T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 2,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31420",
+   "key": "PAY-1420",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31420",
+   "fields": {
+    "summary": "Archive statement totals",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": null,
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-10T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31424",
+   "key": "PAY-1424",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31424",
+   "fields": {
+    "summary": "Retry invoice numbers",
+    "issuetype": {
+     "id": "10001",
+     "name": "Story",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "1",
+     "name": "Highest"
+    },
+    "assignee": null,
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-05T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 2,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [
+     {
+      "id": "31425",
+      "key": "PAY-1425",
+      "self": "https://acme.atlassian.net/rest/api/2/issue/31425",
+      "fields": {
+       "summary": "Write the tests for it",
+       "status": {
+        "id": "10000",
+        "name": "To Do",
+        "statusCategory": {
+         "id": 2,
+         "key": "new",
+         "name": "To Do"
+        }
+       },
+       "priority": {
+        "id": "1",
+        "name": "Highest"
+       },
+       "issuetype": {
+        "id": "10003",
+        "name": "Sub-task",
+        "subtask": true,
+        "hierarchyLevel": -1
+       }
+      }
+     },
+     {
+      "id": "31426",
+      "key": "PAY-1426",
+      "self": "https://acme.atlassian.net/rest/api/2/issue/31426",
+      "fields": {
+       "summary": "Roll it out behind a flag",
+       "status": {
+        "id": "10000",
+        "name": "To Do",
+        "statusCategory": {
+         "id": 2,
+         "key": "new",
+         "name": "To Do"
+        }
+       },
+       "priority": {
+        "id": "3",
+        "name": "Medium"
+       },
+       "issuetype": {
+        "id": "10003",
+        "name": "Sub-task",
+        "subtask": true,
+        "hierarchyLevel": -1
+       }
+      }
+     }
+    ],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31428",
+   "key": "PAY-1428",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31428",
+   "fields": {
+    "summary": "Explain webhook deliveries",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-ember",
+     "displayName": "Ember Lind",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-ember",
+     "displayName": "Ember Lind",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-09T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 0,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31432",
+   "key": "PAY-1432",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31432",
+   "fields": {
+    "summary": "Export the reconciliation diff",
+    "issuetype": {
+     "id": "10004",
+     "name": "Bug",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "4",
+     "name": "Low"
+    },
+    "assignee": {
+     "accountId": "u-juniper",
+     "displayName": "Juniper Hale",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-juniper",
+     "displayName": "Juniper Hale",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-04T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31440",
+   "key": "PAY-1440",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31440",
+   "fields": {
+    "summary": "Retry dispute evidence",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-03T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 0,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31444",
+   "key": "PAY-1444",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31444",
+   "fields": {
+    "summary": "Explain tax lines on receipts",
+    "issuetype": {
+     "id": "10001",
+     "name": "Story",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "1",
+     "name": "Highest"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-07T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [
+     {
+      "id": "31445",
+      "key": "PAY-1445",
+      "self": "https://acme.atlassian.net/rest/api/2/issue/31445",
+      "fields": {
+       "summary": "Write the tests for it",
+       "status": {
+        "id": "10000",
+        "name": "To Do",
+        "statusCategory": {
+         "id": 2,
+         "key": "new",
+         "name": "To Do"
+        }
+       },
+       "priority": {
+        "id": "1",
+        "name": "Highest"
+       },
+       "issuetype": {
+        "id": "10003",
+        "name": "Sub-task",
+        "subtask": true,
+        "hierarchyLevel": -1
+       }
+      }
+     },
+     {
+      "id": "31446",
+      "key": "PAY-1446",
+      "self": "https://acme.atlassian.net/rest/api/2/issue/31446",
+      "fields": {
+       "summary": "Roll it out behind a flag",
+       "status": {
+        "id": "10000",
+        "name": "To Do",
+        "statusCategory": {
+         "id": 2,
+         "key": "new",
+         "name": "To Do"
+        }
+       },
+       "priority": {
+        "id": "3",
+        "name": "Medium"
+       },
+       "issuetype": {
+        "id": "10003",
+        "name": "Sub-task",
+        "subtask": true,
+        "hierarchyLevel": -1
+       }
+      }
+     }
+    ],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31448",
+   "key": "PAY-1448",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31448",
+   "fields": {
+    "summary": "Export failed captures",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-11T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 2,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31452",
+   "key": "PAY-1452",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31452",
+   "fields": {
+    "summary": "Archive partial refunds",
+    "issuetype": {
+     "id": "10004",
+     "name": "Bug",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "4",
+     "name": "Low"
+    },
+    "assignee": {
+     "accountId": "u-ember",
+     "displayName": "Ember Lind",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-ember",
+     "displayName": "Ember Lind",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-06T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 0,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31460",
+   "key": "PAY-1460",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31460",
+   "fields": {
+    "summary": "Explain payout holds",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": null,
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-05T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 2,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31464",
+   "key": "PAY-1464",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31464",
+   "fields": {
+    "summary": "Export the payout calendar",
+    "issuetype": {
+     "id": "10001",
+     "name": "Story",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "1",
+     "name": "Highest"
+    },
+    "assignee": {
+     "accountId": "u-ember",
+     "displayName": "Ember Lind",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-ember",
+     "displayName": "Ember Lind",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-09T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 0,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [
+     {
+      "id": "31465",
+      "key": "PAY-1465",
+      "self": "https://acme.atlassian.net/rest/api/2/issue/31465",
+      "fields": {
+       "summary": "Write the tests for it",
+       "status": {
+        "id": "10000",
+        "name": "To Do",
+        "statusCategory": {
+         "id": 2,
+         "key": "new",
+         "name": "To Do"
+        }
+       },
+       "priority": {
+        "id": "1",
+        "name": "Highest"
+       },
+       "issuetype": {
+        "id": "10003",
+        "name": "Sub-task",
+        "subtask": true,
+        "hierarchyLevel": -1
+       }
+      }
+     },
+     {
+      "id": "31466",
+      "key": "PAY-1466",
+      "self": "https://acme.atlassian.net/rest/api/2/issue/31466",
+      "fields": {
+       "summary": "Roll it out behind a flag",
+       "status": {
+        "id": "10000",
+        "name": "To Do",
+        "statusCategory": {
+         "id": 2,
+         "key": "new",
+         "name": "To Do"
+        }
+       },
+       "priority": {
+        "id": "3",
+        "name": "Medium"
+       },
+       "issuetype": {
+        "id": "10003",
+        "name": "Sub-task",
+        "subtask": true,
+        "hierarchyLevel": -1
+       }
+      }
+     }
+    ],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31468",
+   "key": "PAY-1468",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31468",
+   "fields": {
+    "summary": "Archive the nightly ledger close",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-juniper",
+     "displayName": "Juniper Hale",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-juniper",
+     "displayName": "Juniper Hale",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-04T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31472",
+   "key": "PAY-1472",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31472",
+   "fields": {
+    "summary": "Retry the risk score",
+    "issuetype": {
+     "id": "10004",
+     "name": "Bug",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "4",
+     "name": "Low"
+    },
+    "assignee": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-08T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 2,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31480",
+   "key": "PAY-1480",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31480",
+   "fields": {
+    "summary": "Export fee schedules",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-07T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31484",
+   "key": "PAY-1484",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31484",
+   "fields": {
+    "summary": "Archive refunds after a gateway timeout",
+    "issuetype": {
+     "id": "10001",
+     "name": "Story",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "1",
+     "name": "Highest"
+    },
+    "assignee": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-11T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 2,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [
+     {
+      "id": "31485",
+      "key": "PAY-1485",
+      "self": "https://acme.atlassian.net/rest/api/2/issue/31485",
+      "fields": {
+       "summary": "Write the tests for it",
+       "status": {
+        "id": "10000",
+        "name": "To Do",
+        "statusCategory": {
+         "id": 2,
+         "key": "new",
+         "name": "To Do"
+        }
+       },
+       "priority": {
+        "id": "1",
+        "name": "Highest"
+       },
+       "issuetype": {
+        "id": "10003",
+        "name": "Sub-task",
+        "subtask": true,
+        "hierarchyLevel": -1
+       }
+      }
+     },
+     {
+      "id": "31486",
+      "key": "PAY-1486",
+      "self": "https://acme.atlassian.net/rest/api/2/issue/31486",
+      "fields": {
+       "summary": "Roll it out behind a flag",
+       "status": {
+        "id": "10000",
+        "name": "To Do",
+        "statusCategory": {
+         "id": 2,
+         "key": "new",
+         "name": "To Do"
+        }
+       },
+       "priority": {
+        "id": "3",
+        "name": "Medium"
+       },
+       "issuetype": {
+        "id": "10003",
+        "name": "Sub-task",
+        "subtask": true,
+        "hierarchyLevel": -1
+       }
+      }
+     }
+    ],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31488",
+   "key": "PAY-1488",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31488",
+   "fields": {
+    "summary": "Retry card tokens",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-ember",
+     "displayName": "Ember Lind",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-ember",
+     "displayName": "Ember Lind",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-06T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 0,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31492",
+   "key": "PAY-1492",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31492",
+   "fields": {
+    "summary": "Explain invoice numbers",
+    "issuetype": {
+     "id": "10004",
+     "name": "Bug",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "4",
+     "name": "Low"
+    },
+    "assignee": null,
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-10T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31500",
+   "key": "PAY-1500",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31500",
+   "fields": {
+    "summary": "Archive the reconciliation diff",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-ember",
+     "displayName": "Ember Lind",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-ember",
+     "displayName": "Ember Lind",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-09T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 0,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31504",
+   "key": "PAY-1504",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31504",
+   "fields": {
+    "summary": "Retry merchant payouts",
+    "issuetype": {
+     "id": "10001",
+     "name": "Story",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "1",
+     "name": "Highest"
+    },
+    "assignee": {
+     "accountId": "u-juniper",
+     "displayName": "Juniper Hale",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-juniper",
+     "displayName": "Juniper Hale",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-04T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [
+     {
+      "id": "31505",
+      "key": "PAY-1505",
+      "self": "https://acme.atlassian.net/rest/api/2/issue/31505",
+      "fields": {
+       "summary": "Write the tests for it",
+       "status": {
+        "id": "10000",
+        "name": "To Do",
+        "statusCategory": {
+         "id": 2,
+         "key": "new",
+         "name": "To Do"
+        }
+       },
+       "priority": {
+        "id": "1",
+        "name": "Highest"
+       },
+       "issuetype": {
+        "id": "10003",
+        "name": "Sub-task",
+        "subtask": true,
+        "hierarchyLevel": -1
+       }
+      }
+     },
+     {
+      "id": "31506",
+      "key": "PAY-1506",
+      "self": "https://acme.atlassian.net/rest/api/2/issue/31506",
+      "fields": {
+       "summary": "Roll it out behind a flag",
+       "status": {
+        "id": "10000",
+        "name": "To Do",
+        "statusCategory": {
+         "id": 2,
+         "key": "new",
+         "name": "To Do"
+        }
+       },
+       "priority": {
+        "id": "3",
+        "name": "Medium"
+       },
+       "issuetype": {
+        "id": "10003",
+        "name": "Sub-task",
+        "subtask": true,
+        "hierarchyLevel": -1
+       }
+      }
+     }
+    ],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31508",
+   "key": "PAY-1508",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31508",
+   "fields": {
+    "summary": "Explain dispute evidence",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-08T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 2,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31512",
+   "key": "PAY-1512",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31512",
+   "fields": {
+    "summary": "Export tax lines on receipts",
+    "issuetype": {
+     "id": "10004",
+     "name": "Bug",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "4",
+     "name": "Low"
+    },
+    "assignee": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-03T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 0,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31520",
+   "key": "PAY-1520",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31520",
+   "fields": {
+    "summary": "Retry merchant onboarding checks",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-11T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 2,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31524",
+   "key": "PAY-1524",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31524",
+   "fields": {
+    "summary": "Explain chargeback notices",
+    "issuetype": {
+     "id": "10001",
+     "name": "Story",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "1",
+     "name": "Highest"
+    },
+    "assignee": {
+     "accountId": "u-ember",
+     "displayName": "Ember Lind",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-ember",
+     "displayName": "Ember Lind",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-06T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 0,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [
+     {
+      "id": "31525",
+      "key": "PAY-1525",
+      "self": "https://acme.atlassian.net/rest/api/2/issue/31525",
+      "fields": {
+       "summary": "Write the tests for it",
+       "status": {
+        "id": "10000",
+        "name": "To Do",
+        "statusCategory": {
+         "id": 2,
+         "key": "new",
+         "name": "To Do"
+        }
+       },
+       "priority": {
+        "id": "1",
+        "name": "Highest"
+       },
+       "issuetype": {
+        "id": "10003",
+        "name": "Sub-task",
+        "subtask": true,
+        "hierarchyLevel": -1
+       }
+      }
+     },
+     {
+      "id": "31526",
+      "key": "PAY-1526",
+      "self": "https://acme.atlassian.net/rest/api/2/issue/31526",
+      "fields": {
+       "summary": "Roll it out behind a flag",
+       "status": {
+        "id": "10000",
+        "name": "To Do",
+        "statusCategory": {
+         "id": 2,
+         "key": "new",
+         "name": "To Do"
+        }
+       },
+       "priority": {
+        "id": "3",
+        "name": "Medium"
+       },
+       "issuetype": {
+        "id": "10003",
+        "name": "Sub-task",
+        "subtask": true,
+        "hierarchyLevel": -1
+       }
+      }
+     }
+    ],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31528",
+   "key": "PAY-1528",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31528",
+   "fields": {
+    "summary": "Export payout holds",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": null,
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-10T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31532",
+   "key": "PAY-1532",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31532",
+   "fields": {
+    "summary": "Archive the payout calendar",
+    "issuetype": {
+     "id": "10004",
+     "name": "Bug",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "4",
+     "name": "Low"
+    },
+    "assignee": null,
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-05T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 2,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31540",
+   "key": "PAY-1540",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31540",
+   "fields": {
+    "summary": "Explain the risk score",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-juniper",
+     "displayName": "Juniper Hale",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-juniper",
+     "displayName": "Juniper Hale",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-04T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31544",
+   "key": "PAY-1544",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31544",
+   "fields": {
+    "summary": "Export the currency table",
+    "issuetype": {
+     "id": "10001",
+     "name": "Story",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "1",
+     "name": "Highest"
+    },
+    "assignee": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-08T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 2,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [
+     {
+      "id": "31545",
+      "key": "PAY-1545",
+      "self": "https://acme.atlassian.net/rest/api/2/issue/31545",
+      "fields": {
+       "summary": "Write the tests for it",
+       "status": {
+        "id": "10000",
+        "name": "To Do",
+        "statusCategory": {
+         "id": 2,
+         "key": "new",
+         "name": "To Do"
+        }
+       },
+       "priority": {
+        "id": "1",
+        "name": "Highest"
+       },
+       "issuetype": {
+        "id": "10003",
+        "name": "Sub-task",
+        "subtask": true,
+        "hierarchyLevel": -1
+       }
+      }
+     },
+     {
+      "id": "31546",
+      "key": "PAY-1546",
+      "self": "https://acme.atlassian.net/rest/api/2/issue/31546",
+      "fields": {
+       "summary": "Roll it out behind a flag",
+       "status": {
+        "id": "10000",
+        "name": "To Do",
+        "statusCategory": {
+         "id": 2,
+         "key": "new",
+         "name": "To Do"
+        }
+       },
+       "priority": {
+        "id": "3",
+        "name": "Medium"
+       },
+       "issuetype": {
+        "id": "10003",
+        "name": "Sub-task",
+        "subtask": true,
+        "hierarchyLevel": -1
+       }
+      }
+     }
+    ],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31548",
+   "key": "PAY-1548",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31548",
+   "fields": {
+    "summary": "Archive fee schedules",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-03T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 0,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31552",
+   "key": "PAY-1552",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31552",
+   "fields": {
+    "summary": "Retry the settlement report",
+    "issuetype": {
+     "id": "10004",
+     "name": "Bug",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "4",
+     "name": "Low"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-07T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31560",
+   "key": "PAY-1560",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31560",
+   "fields": {
+    "summary": "Export invoice numbers",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-ember",
+     "displayName": "Ember Lind",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-ember",
+     "displayName": "Ember Lind",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-06T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 0,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31564",
+   "key": "PAY-1564",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31564",
+   "fields": {
+    "summary": "Archive webhook deliveries",
+    "issuetype": {
+     "id": "10001",
+     "name": "Story",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "1",
+     "name": "Highest"
+    },
+    "assignee": null,
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-10T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [
+     {
+      "id": "31565",
+      "key": "PAY-1565",
+      "self": "https://acme.atlassian.net/rest/api/2/issue/31565",
+      "fields": {
+       "summary": "Write the tests for it",
+       "status": {
+        "id": "10000",
+        "name": "To Do",
+        "statusCategory": {
+         "id": 2,
+         "key": "new",
+         "name": "To Do"
+        }
+       },
+       "priority": {
+        "id": "1",
+        "name": "Highest"
+       },
+       "issuetype": {
+        "id": "10003",
+        "name": "Sub-task",
+        "subtask": true,
+        "hierarchyLevel": -1
+       }
+      }
+     },
+     {
+      "id": "31566",
+      "key": "PAY-1566",
+      "self": "https://acme.atlassian.net/rest/api/2/issue/31566",
+      "fields": {
+       "summary": "Roll it out behind a flag",
+       "status": {
+        "id": "10000",
+        "name": "To Do",
+        "statusCategory": {
+         "id": 2,
+         "key": "new",
+         "name": "To Do"
+        }
+       },
+       "priority": {
+        "id": "3",
+        "name": "Medium"
+       },
+       "issuetype": {
+        "id": "10003",
+        "name": "Sub-task",
+        "subtask": true,
+        "hierarchyLevel": -1
+       }
+      }
+     }
+    ],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31568",
+   "key": "PAY-1568",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31568",
+   "fields": {
+    "summary": "Retry partial refunds",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": null,
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-05T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 2,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31572",
+   "key": "PAY-1572",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31572",
+   "fields": {
+    "summary": "Explain merchant payouts",
+    "issuetype": {
+     "id": "10004",
+     "name": "Bug",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "4",
+     "name": "Low"
+    },
+    "assignee": {
+     "accountId": "u-ember",
+     "displayName": "Ember Lind",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-ember",
+     "displayName": "Ember Lind",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-09T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 0,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31580",
+   "key": "PAY-1580",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31580",
+   "fields": {
+    "summary": "Archive tax lines on receipts",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-08T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 2,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31584",
+   "key": "PAY-1584",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31584",
+   "fields": {
+    "summary": "Retry the nightly ledger close",
+    "issuetype": {
+     "id": "10001",
+     "name": "Story",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "1",
+     "name": "Highest"
+    },
+    "assignee": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-03T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 0,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [
+     {
+      "id": "31585",
+      "key": "PAY-1585",
+      "self": "https://acme.atlassian.net/rest/api/2/issue/31585",
+      "fields": {
+       "summary": "Write the tests for it",
+       "status": {
+        "id": "10000",
+        "name": "To Do",
+        "statusCategory": {
+         "id": 2,
+         "key": "new",
+         "name": "To Do"
+        }
+       },
+       "priority": {
+        "id": "1",
+        "name": "Highest"
+       },
+       "issuetype": {
+        "id": "10003",
+        "name": "Sub-task",
+        "subtask": true,
+        "hierarchyLevel": -1
+       }
+      }
+     },
+     {
+      "id": "31586",
+      "key": "PAY-1586",
+      "self": "https://acme.atlassian.net/rest/api/2/issue/31586",
+      "fields": {
+       "summary": "Roll it out behind a flag",
+       "status": {
+        "id": "10000",
+        "name": "To Do",
+        "statusCategory": {
+         "id": 2,
+         "key": "new",
+         "name": "To Do"
+        }
+       },
+       "priority": {
+        "id": "3",
+        "name": "Medium"
+       },
+       "issuetype": {
+        "id": "10003",
+        "name": "Sub-task",
+        "subtask": true,
+        "hierarchyLevel": -1
+       }
+      }
+     }
+    ],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31588",
+   "key": "PAY-1588",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31588",
+   "fields": {
+    "summary": "Explain merchant onboarding checks",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-07T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31592",
+   "key": "PAY-1592",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31592",
+   "fields": {
+    "summary": "Export chargeback notices",
+    "issuetype": {
+     "id": "10004",
+     "name": "Bug",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "4",
+     "name": "Low"
+    },
+    "assignee": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-11T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 2,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31600",
+   "key": "PAY-1600",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31600",
+   "fields": {
+    "summary": "Retry refunds after a gateway timeout",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": null,
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-10T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31604",
+   "key": "PAY-1604",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31604",
+   "fields": {
+    "summary": "Explain statement totals",
+    "issuetype": {
+     "id": "10001",
+     "name": "Story",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "1",
+     "name": "Highest"
+    },
+    "assignee": null,
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-05T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 2,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [
+     {
+      "id": "31605",
+      "key": "PAY-1605",
+      "self": "https://acme.atlassian.net/rest/api/2/issue/31605",
+      "fields": {
+       "summary": "Write the tests for it",
+       "status": {
+        "id": "10000",
+        "name": "To Do",
+        "statusCategory": {
+         "id": 2,
+         "key": "new",
+         "name": "To Do"
+        }
+       },
+       "priority": {
+        "id": "1",
+        "name": "Highest"
+       },
+       "issuetype": {
+        "id": "10003",
+        "name": "Sub-task",
+        "subtask": true,
+        "hierarchyLevel": -1
+       }
+      }
+     },
+     {
+      "id": "31606",
+      "key": "PAY-1606",
+      "self": "https://acme.atlassian.net/rest/api/2/issue/31606",
+      "fields": {
+       "summary": "Roll it out behind a flag",
+       "status": {
+        "id": "10000",
+        "name": "To Do",
+        "statusCategory": {
+         "id": 2,
+         "key": "new",
+         "name": "To Do"
+        }
+       },
+       "priority": {
+        "id": "3",
+        "name": "Medium"
+       },
+       "issuetype": {
+        "id": "10003",
+        "name": "Sub-task",
+        "subtask": true,
+        "hierarchyLevel": -1
+       }
+      }
+     }
+    ],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31608",
+   "key": "PAY-1608",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31608",
+   "fields": {
+    "summary": "Export the risk score",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-ember",
+     "displayName": "Ember Lind",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-ember",
+     "displayName": "Ember Lind",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-09T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 0,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31612",
+   "key": "PAY-1612",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31612",
+   "fields": {
+    "summary": "Archive the currency table",
+    "issuetype": {
+     "id": "10004",
+     "name": "Bug",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "4",
+     "name": "Low"
+    },
+    "assignee": {
+     "accountId": "u-juniper",
+     "displayName": "Juniper Hale",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-juniper",
+     "displayName": "Juniper Hale",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-04T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31620",
+   "key": "PAY-1620",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31620",
+   "fields": {
+    "summary": "Explain the settlement report",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-03T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 0,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31624",
+   "key": "PAY-1624",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31624",
+   "fields": {
+    "summary": "Export card tokens",
+    "issuetype": {
+     "id": "10001",
+     "name": "Story",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "1",
+     "name": "Highest"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-07T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [
+     {
+      "id": "31625",
+      "key": "PAY-1625",
+      "self": "https://acme.atlassian.net/rest/api/2/issue/31625",
+      "fields": {
+       "summary": "Write the tests for it",
+       "status": {
+        "id": "10000",
+        "name": "To Do",
+        "statusCategory": {
+         "id": 2,
+         "key": "new",
+         "name": "To Do"
+        }
+       },
+       "priority": {
+        "id": "1",
+        "name": "Highest"
+       },
+       "issuetype": {
+        "id": "10003",
+        "name": "Sub-task",
+        "subtask": true,
+        "hierarchyLevel": -1
+       }
+      }
+     },
+     {
+      "id": "31626",
+      "key": "PAY-1626",
+      "self": "https://acme.atlassian.net/rest/api/2/issue/31626",
+      "fields": {
+       "summary": "Roll it out behind a flag",
+       "status": {
+        "id": "10000",
+        "name": "To Do",
+        "statusCategory": {
+         "id": 2,
+         "key": "new",
+         "name": "To Do"
+        }
+       },
+       "priority": {
+        "id": "3",
+        "name": "Medium"
+       },
+       "issuetype": {
+        "id": "10003",
+        "name": "Sub-task",
+        "subtask": true,
+        "hierarchyLevel": -1
+       }
+      }
+     }
+    ],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31628",
+   "key": "PAY-1628",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31628",
+   "fields": {
+    "summary": "Archive invoice numbers",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-11T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 2,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31632",
+   "key": "PAY-1632",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31632",
+   "fields": {
+    "summary": "Retry failed captures",
+    "issuetype": {
+     "id": "10004",
+     "name": "Bug",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "4",
+     "name": "Low"
+    },
+    "assignee": {
+     "accountId": "u-ember",
+     "displayName": "Ember Lind",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-ember",
+     "displayName": "Ember Lind",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-06T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 0,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31640",
+   "key": "PAY-1640",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31640",
+   "fields": {
+    "summary": "Export merchant payouts",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": null,
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-05T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 2,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31644",
+   "key": "PAY-1644",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31644",
+   "fields": {
+    "summary": "Archive dispute evidence",
+    "issuetype": {
+     "id": "10001",
+     "name": "Story",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "1",
+     "name": "Highest"
+    },
+    "assignee": {
+     "accountId": "u-ember",
+     "displayName": "Ember Lind",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-ember",
+     "displayName": "Ember Lind",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-09T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 0,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [
+     {
+      "id": "31645",
+      "key": "PAY-1645",
+      "self": "https://acme.atlassian.net/rest/api/2/issue/31645",
+      "fields": {
+       "summary": "Write the tests for it",
+       "status": {
+        "id": "10000",
+        "name": "To Do",
+        "statusCategory": {
+         "id": 2,
+         "key": "new",
+         "name": "To Do"
+        }
+       },
+       "priority": {
+        "id": "1",
+        "name": "Highest"
+       },
+       "issuetype": {
+        "id": "10003",
+        "name": "Sub-task",
+        "subtask": true,
+        "hierarchyLevel": -1
+       }
+      }
+     },
+     {
+      "id": "31646",
+      "key": "PAY-1646",
+      "self": "https://acme.atlassian.net/rest/api/2/issue/31646",
+      "fields": {
+       "summary": "Roll it out behind a flag",
+       "status": {
+        "id": "10000",
+        "name": "To Do",
+        "statusCategory": {
+         "id": 2,
+         "key": "new",
+         "name": "To Do"
+        }
+       },
+       "priority": {
+        "id": "3",
+        "name": "Medium"
+       },
+       "issuetype": {
+        "id": "10003",
+        "name": "Sub-task",
+        "subtask": true,
+        "hierarchyLevel": -1
+       }
+      }
+     }
+    ],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31648",
+   "key": "PAY-1648",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31648",
+   "fields": {
+    "summary": "Retry the payout calendar",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-juniper",
+     "displayName": "Juniper Hale",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-juniper",
+     "displayName": "Juniper Hale",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-04T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31652",
+   "key": "PAY-1652",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31652",
+   "fields": {
+    "summary": "Explain the nightly ledger close",
+    "issuetype": {
+     "id": "10004",
+     "name": "Bug",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "4",
+     "name": "Low"
+    },
+    "assignee": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-08T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 2,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31660",
+   "key": "PAY-1660",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31660",
+   "fields": {
+    "summary": "Archive chargeback notices",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-07T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31664",
+   "key": "PAY-1664",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31664",
+   "fields": {
+    "summary": "Retry fee schedules",
+    "issuetype": {
+     "id": "10001",
+     "name": "Story",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "1",
+     "name": "Highest"
+    },
+    "assignee": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-11T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 2,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [
+     {
+      "id": "31665",
+      "key": "PAY-1665",
+      "self": "https://acme.atlassian.net/rest/api/2/issue/31665",
+      "fields": {
+       "summary": "Write the tests for it",
+       "status": {
+        "id": "10000",
+        "name": "To Do",
+        "statusCategory": {
+         "id": 2,
+         "key": "new",
+         "name": "To Do"
+        }
+       },
+       "priority": {
+        "id": "1",
+        "name": "Highest"
+       },
+       "issuetype": {
+        "id": "10003",
+        "name": "Sub-task",
+        "subtask": true,
+        "hierarchyLevel": -1
+       }
+      }
+     },
+     {
+      "id": "31666",
+      "key": "PAY-1666",
+      "self": "https://acme.atlassian.net/rest/api/2/issue/31666",
+      "fields": {
+       "summary": "Roll it out behind a flag",
+       "status": {
+        "id": "10000",
+        "name": "To Do",
+        "statusCategory": {
+         "id": 2,
+         "key": "new",
+         "name": "To Do"
+        }
+       },
+       "priority": {
+        "id": "3",
+        "name": "Medium"
+       },
+       "issuetype": {
+        "id": "10003",
+        "name": "Sub-task",
+        "subtask": true,
+        "hierarchyLevel": -1
+       }
+      }
+     }
+    ],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31668",
+   "key": "PAY-1668",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31668",
+   "fields": {
+    "summary": "Explain refunds after a gateway timeout",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-ember",
+     "displayName": "Ember Lind",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-ember",
+     "displayName": "Ember Lind",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-06T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 0,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31672",
+   "key": "PAY-1672",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31672",
+   "fields": {
+    "summary": "Export statement totals",
+    "issuetype": {
+     "id": "10004",
+     "name": "Bug",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "4",
+     "name": "Low"
+    },
+    "assignee": null,
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-10T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31680",
+   "key": "PAY-1680",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31680",
+   "fields": {
+    "summary": "Retry webhook deliveries",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-ember",
+     "displayName": "Ember Lind",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-ember",
+     "displayName": "Ember Lind",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-09T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 0,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31684",
+   "key": "PAY-1684",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31684",
+   "fields": {
+    "summary": "Explain the reconciliation diff",
+    "issuetype": {
+     "id": "10001",
+     "name": "Story",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "1",
+     "name": "Highest"
+    },
+    "assignee": {
+     "accountId": "u-juniper",
+     "displayName": "Juniper Hale",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-juniper",
+     "displayName": "Juniper Hale",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-04T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [
+     {
+      "id": "31685",
+      "key": "PAY-1685",
+      "self": "https://acme.atlassian.net/rest/api/2/issue/31685",
+      "fields": {
+       "summary": "Write the tests for it",
+       "status": {
+        "id": "10000",
+        "name": "To Do",
+        "statusCategory": {
+         "id": 2,
+         "key": "new",
+         "name": "To Do"
+        }
+       },
+       "priority": {
+        "id": "1",
+        "name": "Highest"
+       },
+       "issuetype": {
+        "id": "10003",
+        "name": "Sub-task",
+        "subtask": true,
+        "hierarchyLevel": -1
+       }
+      }
+     },
+     {
+      "id": "31686",
+      "key": "PAY-1686",
+      "self": "https://acme.atlassian.net/rest/api/2/issue/31686",
+      "fields": {
+       "summary": "Roll it out behind a flag",
+       "status": {
+        "id": "10000",
+        "name": "To Do",
+        "statusCategory": {
+         "id": 2,
+         "key": "new",
+         "name": "To Do"
+        }
+       },
+       "priority": {
+        "id": "3",
+        "name": "Medium"
+       },
+       "issuetype": {
+        "id": "10003",
+        "name": "Sub-task",
+        "subtask": true,
+        "hierarchyLevel": -1
+       }
+      }
+     }
+    ],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  }
+ ]
+}

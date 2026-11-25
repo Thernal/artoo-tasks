@@ -263,9 +263,19 @@ pub fn get(site: &Site, path: &str) -> Result<Value, String> {
 }
 
 /// `get`, for `purpose` (`news`): a fixture answers it from `<path>@<purpose>.json` when it has one, so two reads of
-/// one address with other queries (JQL) can answer apart.
+/// one address with other queries (JQL) can answer apart. Without one, the query names it (`fixture_purpose`).
+///
+/// A fixture answers as Jira does: a file `{"status": 400, "errorMessages": […]}` refuses, a list (`issues`,
+/// `values`) is paged by the query's `startAt` and `maxResults`, and `ARTOO_TASKS_FIXTURE_FAIL=<part>` fails every
+/// read whose address holds it, as a slice that could not be read.
 pub fn get_for(site: &Site, path: &str, purpose: &str) -> Result<Value, String> {
     if let Some(dir) = fixture() {
+        if let Ok(part) = std::env::var("ARTOO_TASKS_FIXTURE_FAIL")
+            && !part.is_empty()
+            && path.contains(&part)
+        {
+            return Err(refusal(site, 504, &Value::Null));
+        }
         // `ARTOO_TASKS_FIXTURE_SLOW=<ms>`: each read answers that late, for pictures of what draws while reading.
         if let Some(ms) = std::env::var("ARTOO_TASKS_FIXTURE_SLOW")
             .ok()
@@ -273,6 +283,10 @@ pub fn get_for(site: &Site, path: &str, purpose: &str) -> Result<Value, String> 
         {
             std::thread::sleep(std::time::Duration::from_millis(ms));
         }
+        let purpose = match purpose {
+            "" => fixture_purpose(path),
+            given => given,
+        };
         let own = (!purpose.is_empty())
             .then(|| fixture_file(&dir, site, &format!("{}@{purpose}", bare(path))));
         let file = own
@@ -280,9 +294,100 @@ pub fn get_for(site: &Site, path: &str, purpose: &str) -> Result<Value, String> 
             .unwrap_or_else(|| fixture_file(&dir, site, path));
         let text = std::fs::read_to_string(&file)
             .map_err(|_| format!("{} has no {}", site.host(), bare(path)))?;
-        return serde_json::from_str(&text).map_err(|e| e.to_string());
+        let v = serde_json::from_str(&text).map_err(|e| e.to_string())?;
+        return fixture_answer(site, path, v);
     }
     call(site, "GET", path, None)
+}
+
+/// What a read of the fixture asks beyond its address, as the fixture names its files (`<path>@<purpose>.json`):
+/// `closed` sprints, or its JQL's `mine`, `words` or `epic`. Empty for anything else.
+fn fixture_purpose(path: &str) -> &'static str {
+    if param(path, "state").as_deref() == Some("closed") {
+        return "closed";
+    }
+    let jql = param(path, "jql").unwrap_or_default();
+    if jql.contains("currentUser()") {
+        "mine"
+    } else if jql.contains("text ~") || jql.contains("key =") {
+        "words"
+    } else if jql.contains("parent =") || jql.contains("\"Epic Link\" =") {
+        "epic"
+    } else {
+        ""
+    }
+}
+
+/// Jira Cloud gives at most this many issues in one answer, and this many sprints or boards, whatever is asked.
+const MOST_ISSUES: usize = 100;
+const MOST_VALUES: usize = 50;
+
+/// The fixture's `v` as Jira answers `GET path`: a refusal written as one refuses; a list is paged by the query, its
+/// sub-tasks left out when the JQL leaves them out, with `startAt`, `maxResults` and `total` (`isLast` for values) as
+/// Jira sets them. A read with no `startAt` or `maxResults` is answered as written.
+fn fixture_answer(site: &Site, path: &str, mut v: Value) -> Result<Value, String> {
+    if let Some(code) = v["status"].as_u64().filter(|c| *c >= 400) {
+        return Err(refusal(site, code, &v));
+    }
+    let (list, most) = match (v["issues"].is_array(), v["values"].is_array()) {
+        (true, _) => ("issues", MOST_ISSUES),
+        (_, true) => ("values", MOST_VALUES),
+        _ => return Ok(v),
+    };
+    let start: Option<usize> = param(path, "startAt").and_then(|s| s.parse().ok());
+    let asked: Option<usize> = param(path, "maxResults").and_then(|m| m.parse().ok());
+    if start.is_none() && asked.is_none() {
+        return Ok(v);
+    }
+    let mut all = v[list].take().as_array().cloned().unwrap_or_default();
+    if param(path, "jql").is_some_and(|q| q.contains("not in subTaskIssueTypes()")) {
+        all.retain(|i| i["fields"]["issuetype"]["subtask"].as_bool() != Some(true));
+    }
+    let (start, max, total) = (
+        start.unwrap_or(0),
+        asked.unwrap_or(most).min(most),
+        all.len(),
+    );
+    let page: Vec<Value> = all.into_iter().skip(start).take(max).collect();
+    let last = start + page.len() >= total;
+    v[list] = Value::Array(page);
+    v["startAt"] = start.into();
+    v["maxResults"] = max.into();
+    match list {
+        "issues" => v["total"] = total.into(),
+        _ => v["isLast"] = last.into(),
+    }
+    Ok(v)
+}
+
+/// Query parameter `name` of `path`, decoded.
+fn param(path: &str, name: &str) -> Option<String> {
+    let (_, query) = path.split_once('?')?;
+    query.split('&').find_map(|p| {
+        let (k, v) = p.split_once('=')?;
+        (k == name).then(|| decode(v))
+    })
+}
+
+/// `encode`'s text back, `+` read as a space.
+fn decode(text: &str) -> String {
+    let mut out = Vec::new();
+    let mut bytes = text.bytes().enumerate();
+    while let Some((i, b)) = bytes.next() {
+        let hex = (b == b'%')
+            .then(|| text.get(i + 1..i + 3))
+            .flatten()
+            .and_then(|h| u8::from_str_radix(h, 16).ok());
+        match (hex, b) {
+            (Some(n), _) => {
+                out.push(n);
+                bytes.nth(1);
+            }
+            (None, b'+') => out.push(b' '),
+            (None, b) => out.push(b),
+        }
+    }
+    String::from_utf8_lossy(&out).into_owned()
 }
 
 /// `method` (`POST`, `PUT`, `DELETE`) of `path` with `body` as JSON; the answer, `null` when there is none (204).
@@ -746,6 +851,94 @@ mod tests {
             "https://other.example.net\n"
         );
         let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    fn issues(n: usize, every_sub: usize) -> Value {
+        let issues: Vec<Value> = (0..n)
+            .map(|i| {
+                let sub = every_sub > 0 && i % every_sub == 0;
+                serde_json::json!({ "key": format!("PAY-{i}"), "fields": { "issuetype": { "subtask": sub } } })
+            })
+            .collect();
+        serde_json::json!({ "startAt": 0, "maxResults": n, "total": n, "issues": issues })
+    }
+
+    #[test]
+    fn a_fixture_list_is_paged_and_counted_as_jira_does() {
+        let site = Site {
+            url: "https://acme.atlassian.net".into(),
+            ..Default::default()
+        };
+        let keys = |v: &Value| -> Vec<String> {
+            (v["issues"].as_array().into_iter().flatten())
+                .map(|i| i["key"].as_str().unwrap_or_default().to_owned())
+                .collect()
+        };
+        let read = |path: &str, v: Value| fixture_answer(&site, path, v).unwrap();
+        let page = read("/s/34/issue?startAt=50&maxResults=20", issues(78, 0));
+        assert_eq!(keys(&page).first().map(String::as_str), Some("PAY-50"));
+        assert_eq!(
+            (page["startAt"].as_u64(), page["maxResults"].as_u64()),
+            (Some(50), Some(20))
+        );
+        assert_eq!((page["total"].as_u64(), keys(&page).len()), (Some(78), 20));
+        // Asked for more than Jira gives: the answer says how many it gave.
+        let capped = read("/s/36/issue?maxResults=500", issues(136, 0));
+        assert_eq!(
+            (capped["maxResults"].as_u64(), keys(&capped).len()),
+            (Some(100), 100)
+        );
+        let end = read("/s/36/issue?startAt=100&maxResults=50", issues(136, 0));
+        assert_eq!(keys(&end).len(), 36);
+        // The count leaves the sub-tasks out, as Jira's sprint counts do.
+        let jql = encode("issuetype not in subTaskIssueTypes()");
+        let count = read(
+            &format!("/s/34/issue?maxResults=0&jql={jql}"),
+            issues(100, 5),
+        );
+        assert_eq!((count["total"].as_u64(), keys(&count).len()), (Some(80), 0));
+        // A read with no paging is answered as written.
+        assert_eq!(read("/board/7/issue", issues(3, 0)), issues(3, 0));
+        let sprints = serde_json::json!({ "isLast": true, "values": [{ "id": 34 }, { "id": 35 }, { "id": 36 }] });
+        let first = read("/board/7/sprint?startAt=0&maxResults=2", sprints.clone());
+        assert_eq!(
+            (
+                first["values"].as_array().map(Vec::len),
+                first["isLast"].as_bool()
+            ),
+            (Some(2), Some(false))
+        );
+        let rest = read("/board/7/sprint?startAt=2&maxResults=2", sprints);
+        assert_eq!(rest["isLast"].as_bool(), Some(true));
+    }
+
+    #[test]
+    fn a_fixture_refuses_as_written_and_names_a_read_by_its_query() {
+        let site = Site {
+            url: "https://acme.atlassian.net".into(),
+            ..Default::default()
+        };
+        let refusal = serde_json::json!({ "status": 400, "errorMessages": ["The board does not support sprints"] });
+        assert_eq!(
+            fixture_answer(&site, "/board/10/sprint?state=active,future", refusal),
+            Err("The board does not support sprints".into())
+        );
+        let ask =
+            |jql: &str| fixture_purpose(&format!("/b/7/backlog?maxResults=50&jql={}", encode(jql)));
+        assert_eq!(
+            ask("assignee = currentUser() AND issuetype not in subTaskIssueTypes()"),
+            "mine"
+        );
+        assert_eq!(ask("text ~ \"refund\""), "words");
+        assert_eq!(ask("key = PAY-412"), "words");
+        assert_eq!(ask("parent = PAY-400"), "epic");
+        assert_eq!(ask("\"Epic Link\" = PAY-400"), "epic");
+        assert_eq!(ask("ORDER BY updated DESC"), "");
+        assert_eq!(
+            fixture_purpose("/board/7/sprint?state=closed&startAt=0"),
+            "closed"
+        );
+        assert_eq!(decode("a%20b+c%22"), "a b c\"");
     }
 
     #[test]

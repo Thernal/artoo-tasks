@@ -1,0 +1,112 @@
+{
+ "id": "31296",
+ "key": "PAY-1296",
+ "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31296",
+ "fields": {
+  "summary": "Retry the reconciliation diff",
+  "issuetype": {
+   "id": "10001",
+   "name": "Story",
+   "subtask": false,
+   "hierarchyLevel": 0
+  },
+  "status": {
+   "id": "10002",
+   "name": "Done",
+   "statusCategory": {
+    "id": 3,
+    "key": "done",
+    "name": "Done"
+   }
+  },
+  "priority": {
+   "id": "2",
+   "name": "High"
+  },
+  "assignee": {
+   "accountId": "u-kestrel",
+   "displayName": "Kestrel Okafor",
+   "active": true,
+   "avatarUrls": {
+    "48x48": ""
+   },
+   "emailAddress": ""
+  },
+  "reporter": {
+   "accountId": "u-kestrel",
+   "displayName": "Kestrel Okafor",
+   "active": true,
+   "avatarUrls": {
+    "48x48": ""
+   },
+   "emailAddress": ""
+  },
+  "labels": [],
+  "updated": "2026-11-03T09:00:00.000+0000",
+  "created": "2026-11-03T09:00:00.000+0000",
+  "project": {
+   "id": "10010",
+   "key": "PAY",
+   "name": "Payments"
+  },
+  "comment": {
+   "comments": [],
+   "total": 0,
+   "maxResults": 50,
+   "startAt": 0
+  },
+  "subtasks": [],
+  "issuelinks": [],
+  "epic": {
+   "id": 20400,
+   "key": "PAY-400",
+   "name": "Refunds that add up",
+   "summary": "Refunds that add up",
+   "color": {
+    "key": "color_4"
+   },
+   "done": false
+  },
+  "sprint": null,
+  "customfield_10020": [
+   {
+    "id": 32,
+    "name": "Sprint 32",
+    "state": "closed",
+    "originBoardId": 7,
+    "goal": "",
+    "startDate": "2026-10-06T09:00:00.000Z",
+    "endDate": "2026-10-17T17:00:00.000Z",
+    "completeDate": "2026-10-17T16:30:00.000Z"
+   }
+  ],
+  "customfield_10016": null,
+  "duedate": null,
+  "components": [],
+  "fixVersions": [],
+  "parent": {
+   "id": "20400",
+   "key": "PAY-400",
+   "fields": {
+    "summary": "Refunds that add up",
+    "status": {
+     "id": "3",
+     "name": "In Progress",
+     "statusCategory": {
+      "id": 4,
+      "key": "indeterminate",
+      "name": "In Progress"
+     }
+    },
+    "issuetype": {
+     "id": "10000",
+     "name": "Epic",
+     "subtask": false,
+     "hierarchyLevel": 1
+    }
+   }
+  },
+  "description": "",
+  "attachment": []
+ }
+}

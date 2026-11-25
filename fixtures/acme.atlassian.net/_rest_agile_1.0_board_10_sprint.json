@@ -1,0 +1,6 @@
+{
+ "status": 400,
+ "errorMessages": [
+  "The board does not support sprints"
+ ]
+}

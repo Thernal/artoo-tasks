@@ -13,5 +13,15 @@
   "id": "10012",
   "key": "PLAT",
   "name": "Platform"
+ },
+ {
+  "id": "10013",
+  "key": "WAL",
+  "name": "Wallet"
+ },
+ {
+  "id": "10014",
+  "key": "CHK",
+  "name": "Checkout"
  }
 ]

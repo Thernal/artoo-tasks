@@ -1,0 +1,122 @@
+{
+ "id": "81016",
+ "key": "CHK-1016",
+ "self": "https://acme.atlassian.net/rest/agile/1.0/issue/81016",
+ "fields": {
+  "summary": "Roll it out behind a flag",
+  "issuetype": {
+   "id": "10003",
+   "name": "Sub-task",
+   "subtask": true,
+   "hierarchyLevel": -1
+  },
+  "status": {
+   "id": "10000",
+   "name": "To Do",
+   "statusCategory": {
+    "id": 2,
+    "key": "new",
+    "name": "To Do"
+   }
+  },
+  "priority": {
+   "id": "3",
+   "name": "Medium"
+  },
+  "assignee": {
+   "accountId": "u-ember",
+   "displayName": "Ember Lind",
+   "active": true,
+   "avatarUrls": {
+    "48x48": ""
+   },
+   "emailAddress": ""
+  },
+  "reporter": {
+   "accountId": "u-ember",
+   "displayName": "Ember Lind",
+   "active": true,
+   "avatarUrls": {
+    "48x48": ""
+   },
+   "emailAddress": ""
+  },
+  "labels": [],
+  "updated": "2026-11-11T09:00:00.000+0000",
+  "created": "2026-11-03T09:00:00.000+0000",
+  "project": {
+   "id": "10014",
+   "key": "CHK",
+   "name": "Checkout"
+  },
+  "comment": {
+   "comments": [
+    {
+     "id": "810160",
+     "author": {
+      "accountId": "u-juniper",
+      "displayName": "Juniper Hale",
+      "active": true,
+      "avatarUrls": {
+       "48x48": ""
+      },
+      "emailAddress": ""
+     },
+     "updateAuthor": {
+      "accountId": "u-juniper",
+      "displayName": "Juniper Hale",
+      "active": true,
+      "avatarUrls": {
+       "48x48": ""
+      },
+      "emailAddress": ""
+     },
+     "body": "A note on CHK-1016, the first.",
+     "created": "2026-11-10T09:00:00.000+0000",
+     "updated": "2026-11-10T09:00:00.000+0000"
+    }
+   ],
+   "total": 1,
+   "maxResults": 50,
+   "startAt": 0
+  },
+  "subtasks": [],
+  "issuelinks": [],
+  "epic": null,
+  "sprint": null,
+  "customfield_10020": null,
+  "customfield_10016": null,
+  "duedate": null,
+  "components": [],
+  "fixVersions": [],
+  "parent": {
+   "id": "81014",
+   "key": "CHK-1014",
+   "self": "https://acme.atlassian.net/rest/api/2/issue/81014",
+   "fields": {
+    "summary": "Split the settlement report",
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "1",
+     "name": "Highest"
+    },
+    "issuetype": {
+     "id": "10001",
+     "name": "Story",
+     "subtask": false,
+     "hierarchyLevel": 0
+    }
+   }
+  },
+  "description": "",
+  "attachment": []
+ }
+}

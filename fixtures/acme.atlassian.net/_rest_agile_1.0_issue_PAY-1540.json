@@ -1,0 +1,126 @@
+{
+ "id": "31540",
+ "key": "PAY-1540",
+ "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31540",
+ "fields": {
+  "summary": "Explain the risk score",
+  "issuetype": {
+   "id": "10002",
+   "name": "Task",
+   "subtask": false,
+   "hierarchyLevel": 0
+  },
+  "status": {
+   "id": "10000",
+   "name": "To Do",
+   "statusCategory": {
+    "id": 2,
+    "key": "new",
+    "name": "To Do"
+   }
+  },
+  "priority": {
+   "id": "3",
+   "name": "Medium"
+  },
+  "assignee": {
+   "accountId": "u-juniper",
+   "displayName": "Juniper Hale",
+   "active": true,
+   "avatarUrls": {
+    "48x48": ""
+   },
+   "emailAddress": ""
+  },
+  "reporter": {
+   "accountId": "u-juniper",
+   "displayName": "Juniper Hale",
+   "active": true,
+   "avatarUrls": {
+    "48x48": ""
+   },
+   "emailAddress": ""
+  },
+  "labels": [],
+  "updated": "2026-11-04T09:00:00.000+0000",
+  "created": "2026-11-03T09:00:00.000+0000",
+  "project": {
+   "id": "10010",
+   "key": "PAY",
+   "name": "Payments"
+  },
+  "comment": {
+   "comments": [
+    {
+     "id": "315400",
+     "author": {
+      "accountId": "u-juniper",
+      "displayName": "Juniper Hale",
+      "active": true,
+      "avatarUrls": {
+       "48x48": ""
+      },
+      "emailAddress": ""
+     },
+     "updateAuthor": {
+      "accountId": "u-juniper",
+      "displayName": "Juniper Hale",
+      "active": true,
+      "avatarUrls": {
+       "48x48": ""
+      },
+      "emailAddress": ""
+     },
+     "body": "A note on PAY-1540, the first.",
+     "created": "2026-11-10T09:00:00.000+0000",
+     "updated": "2026-11-10T09:00:00.000+0000"
+    }
+   ],
+   "total": 1,
+   "maxResults": 50,
+   "startAt": 0
+  },
+  "subtasks": [],
+  "issuelinks": [],
+  "epic": {
+   "id": 20400,
+   "key": "PAY-400",
+   "name": "Refunds that add up",
+   "summary": "Refunds that add up",
+   "color": {
+    "key": "color_4"
+   },
+   "done": false
+  },
+  "sprint": null,
+  "customfield_10020": null,
+  "customfield_10016": null,
+  "duedate": null,
+  "components": [],
+  "fixVersions": [],
+  "parent": {
+   "id": "20400",
+   "key": "PAY-400",
+   "fields": {
+    "summary": "Refunds that add up",
+    "status": {
+     "id": "3",
+     "name": "In Progress",
+     "statusCategory": {
+      "id": 4,
+      "key": "indeterminate",
+      "name": "In Progress"
+     }
+    },
+    "issuetype": {
+     "id": "10000",
+     "name": "Epic",
+     "subtask": false,
+     "hierarchyLevel": 1
+    }
+   }
+  },
+  "description": "",
+  "attachment": []
+ }
+}

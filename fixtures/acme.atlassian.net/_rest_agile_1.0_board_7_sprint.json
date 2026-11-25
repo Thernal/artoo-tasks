@@ -15,6 +15,15 @@
    "name": "Sprint 35",
    "state": "future",
    "originBoardId": 7
+  },
+  {
+   "id": 36,
+   "name": "Reconciliation squad Q4 sprint 3",
+   "state": "active",
+   "startDate": "2026-11-10T09:00:00.000Z",
+   "endDate": "2026-11-21T17:00:00.000Z",
+   "originBoardId": 7,
+   "goal": "Move every nightly reconciliation job onto the replica, retire the old ledger exporter and get the merchant statement totals to match the bank to the cent before the quarter closes"
   }
  ]
 }

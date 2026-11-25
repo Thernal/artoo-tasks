@@ -1,0 +1,4006 @@
+{
+ "startAt": 0,
+ "maxResults": 41,
+ "total": 41,
+ "issues": [
+  {
+   "id": "31318",
+   "key": "PAY-1318",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31318",
+   "fields": {
+    "summary": "Split statement totals",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-07T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20360,
+     "key": "PAY-360",
+     "name": "Reconcile merchant reports with the ledger every night",
+     "summary": "Reconcile merchant reports with the ledger every night",
+     "color": {
+      "key": "color_3"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20360",
+     "key": "PAY-360",
+     "fields": {
+      "summary": "Reconcile merchant reports with the ledger every night",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31327",
+   "key": "PAY-1327",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31327",
+   "fields": {
+    "summary": "Document payout holds",
+    "issuetype": {
+     "id": "10004",
+     "name": "Bug",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "4",
+     "name": "Low"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-07T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": null,
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": []
+   }
+  },
+  {
+   "id": "31354",
+   "key": "PAY-1354",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31354",
+   "fields": {
+    "summary": "Throttle merchant payouts",
+    "issuetype": {
+     "id": "10001",
+     "name": "Story",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "1",
+     "name": "Highest"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-07T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [
+     {
+      "id": "31355",
+      "key": "PAY-1355",
+      "self": "https://acme.atlassian.net/rest/api/2/issue/31355",
+      "fields": {
+       "summary": "Write the tests for it",
+       "status": {
+        "id": "10000",
+        "name": "To Do",
+        "statusCategory": {
+         "id": 2,
+         "key": "new",
+         "name": "To Do"
+        }
+       },
+       "priority": {
+        "id": "1",
+        "name": "Highest"
+       },
+       "issuetype": {
+        "id": "10003",
+        "name": "Sub-task",
+        "subtask": true,
+        "hierarchyLevel": -1
+       }
+      }
+     },
+     {
+      "id": "31356",
+      "key": "PAY-1356",
+      "self": "https://acme.atlassian.net/rest/api/2/issue/31356",
+      "fields": {
+       "summary": "Roll it out behind a flag",
+       "status": {
+        "id": "10000",
+        "name": "To Do",
+        "statusCategory": {
+         "id": 2,
+         "key": "new",
+         "name": "To Do"
+        }
+       },
+       "priority": {
+        "id": "3",
+        "name": "Medium"
+       },
+       "issuetype": {
+        "id": "10003",
+        "name": "Sub-task",
+        "subtask": true,
+        "hierarchyLevel": -1
+       }
+      }
+     }
+    ],
+    "issuelinks": [],
+    "epic": {
+     "id": 20360,
+     "key": "PAY-360",
+     "name": "Reconcile merchant reports with the ledger every night",
+     "summary": "Reconcile merchant reports with the ledger every night",
+     "color": {
+      "key": "color_3"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20360",
+     "key": "PAY-360",
+     "fields": {
+      "summary": "Reconcile merchant reports with the ledger every night",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31355",
+   "key": "PAY-1355",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31355",
+   "fields": {
+    "summary": "Write the tests for it",
+    "issuetype": {
+     "id": "10003",
+     "name": "Sub-task",
+     "subtask": true,
+     "hierarchyLevel": -1
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "1",
+     "name": "Highest"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-08T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": null,
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "31354",
+     "key": "PAY-1354",
+     "self": "https://acme.atlassian.net/rest/api/2/issue/31354",
+     "fields": {
+      "summary": "Throttle merchant payouts",
+      "status": {
+       "id": "10000",
+       "name": "To Do",
+       "statusCategory": {
+        "id": 2,
+        "key": "new",
+        "name": "To Do"
+       }
+      },
+      "priority": {
+       "id": "1",
+       "name": "Highest"
+      },
+      "issuetype": {
+       "id": "10001",
+       "name": "Story",
+       "subtask": false,
+       "hierarchyLevel": 0
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31356",
+   "key": "PAY-1356",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31356",
+   "fields": {
+    "summary": "Roll it out behind a flag",
+    "issuetype": {
+     "id": "10003",
+     "name": "Sub-task",
+     "subtask": true,
+     "hierarchyLevel": -1
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-09T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 2,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": null,
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "31354",
+     "key": "PAY-1354",
+     "self": "https://acme.atlassian.net/rest/api/2/issue/31354",
+     "fields": {
+      "summary": "Throttle merchant payouts",
+      "status": {
+       "id": "10000",
+       "name": "To Do",
+       "statusCategory": {
+        "id": 2,
+        "key": "new",
+        "name": "To Do"
+       }
+      },
+      "priority": {
+       "id": "1",
+       "name": "Highest"
+      },
+      "issuetype": {
+       "id": "10001",
+       "name": "Story",
+       "subtask": false,
+       "hierarchyLevel": 0
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31363",
+   "key": "PAY-1363",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31363",
+   "fields": {
+    "summary": "Cache failed captures",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-07T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": null,
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": []
+   }
+  },
+  {
+   "id": "31372",
+   "key": "PAY-1372",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31372",
+   "fields": {
+    "summary": "Archive card tokens",
+    "issuetype": {
+     "id": "10004",
+     "name": "Bug",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "4",
+     "name": "Low"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-07T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31381",
+   "key": "PAY-1381",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31381",
+   "fields": {
+    "summary": "Rename the reconciliation diff",
+    "issuetype": {
+     "id": "10001",
+     "name": "Story",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "2",
+     "name": "High"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-07T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20380,
+     "key": "PAY-380",
+     "name": "Idempotent refunds API",
+     "summary": "Idempotent refunds API",
+     "color": {
+      "key": "color_8"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20380",
+     "key": "PAY-380",
+     "fields": {
+      "summary": "Idempotent refunds API",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31390",
+   "key": "PAY-1390",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31390",
+   "fields": {
+    "summary": "Index the risk score",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-07T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20360,
+     "key": "PAY-360",
+     "name": "Reconcile merchant reports with the ledger every night",
+     "summary": "Reconcile merchant reports with the ledger every night",
+     "color": {
+      "key": "color_3"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20360",
+     "key": "PAY-360",
+     "fields": {
+      "summary": "Reconcile merchant reports with the ledger every night",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31399",
+   "key": "PAY-1399",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31399",
+   "fields": {
+    "summary": "Validate refunds after a gateway timeout",
+    "issuetype": {
+     "id": "10001",
+     "name": "Story",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "1",
+     "name": "Highest"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-07T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": null,
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": []
+   }
+  },
+  {
+   "id": "31408",
+   "key": "PAY-1408",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31408",
+   "fields": {
+    "summary": "Retry the currency table",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-07T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31417",
+   "key": "PAY-1417",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31417",
+   "fields": {
+    "summary": "Batch the nightly ledger close",
+    "issuetype": {
+     "id": "10004",
+     "name": "Bug",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "4",
+     "name": "Low"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-07T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20380,
+     "key": "PAY-380",
+     "name": "Idempotent refunds API",
+     "summary": "Idempotent refunds API",
+     "color": {
+      "key": "color_8"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20380",
+     "key": "PAY-380",
+     "fields": {
+      "summary": "Idempotent refunds API",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31444",
+   "key": "PAY-1444",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31444",
+   "fields": {
+    "summary": "Explain tax lines on receipts",
+    "issuetype": {
+     "id": "10001",
+     "name": "Story",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "1",
+     "name": "Highest"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-07T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [
+     {
+      "id": "31445",
+      "key": "PAY-1445",
+      "self": "https://acme.atlassian.net/rest/api/2/issue/31445",
+      "fields": {
+       "summary": "Write the tests for it",
+       "status": {
+        "id": "10000",
+        "name": "To Do",
+        "statusCategory": {
+         "id": 2,
+         "key": "new",
+         "name": "To Do"
+        }
+       },
+       "priority": {
+        "id": "1",
+        "name": "Highest"
+       },
+       "issuetype": {
+        "id": "10003",
+        "name": "Sub-task",
+        "subtask": true,
+        "hierarchyLevel": -1
+       }
+      }
+     },
+     {
+      "id": "31446",
+      "key": "PAY-1446",
+      "self": "https://acme.atlassian.net/rest/api/2/issue/31446",
+      "fields": {
+       "summary": "Roll it out behind a flag",
+       "status": {
+        "id": "10000",
+        "name": "To Do",
+        "statusCategory": {
+         "id": 2,
+         "key": "new",
+         "name": "To Do"
+        }
+       },
+       "priority": {
+        "id": "3",
+        "name": "Medium"
+       },
+       "issuetype": {
+        "id": "10003",
+        "name": "Sub-task",
+        "subtask": true,
+        "hierarchyLevel": -1
+       }
+      }
+     }
+    ],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31445",
+   "key": "PAY-1445",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31445",
+   "fields": {
+    "summary": "Write the tests for it",
+    "issuetype": {
+     "id": "10003",
+     "name": "Sub-task",
+     "subtask": true,
+     "hierarchyLevel": -1
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "1",
+     "name": "Highest"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-08T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": null,
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "31444",
+     "key": "PAY-1444",
+     "self": "https://acme.atlassian.net/rest/api/2/issue/31444",
+     "fields": {
+      "summary": "Explain tax lines on receipts",
+      "status": {
+       "id": "10000",
+       "name": "To Do",
+       "statusCategory": {
+        "id": 2,
+        "key": "new",
+        "name": "To Do"
+       }
+      },
+      "priority": {
+       "id": "1",
+       "name": "Highest"
+      },
+      "issuetype": {
+       "id": "10001",
+       "name": "Story",
+       "subtask": false,
+       "hierarchyLevel": 0
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31446",
+   "key": "PAY-1446",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31446",
+   "fields": {
+    "summary": "Roll it out behind a flag",
+    "issuetype": {
+     "id": "10003",
+     "name": "Sub-task",
+     "subtask": true,
+     "hierarchyLevel": -1
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-09T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 2,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": null,
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "31444",
+     "key": "PAY-1444",
+     "self": "https://acme.atlassian.net/rest/api/2/issue/31444",
+     "fields": {
+      "summary": "Explain tax lines on receipts",
+      "status": {
+       "id": "10000",
+       "name": "To Do",
+       "statusCategory": {
+        "id": 2,
+        "key": "new",
+        "name": "To Do"
+       }
+      },
+      "priority": {
+       "id": "1",
+       "name": "Highest"
+      },
+      "issuetype": {
+       "id": "10001",
+       "name": "Story",
+       "subtask": false,
+       "hierarchyLevel": 0
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31453",
+   "key": "PAY-1453",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31453",
+   "fields": {
+    "summary": "Backfill the settlement report",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-07T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20380,
+     "key": "PAY-380",
+     "name": "Idempotent refunds API",
+     "summary": "Idempotent refunds API",
+     "color": {
+      "key": "color_8"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20380",
+     "key": "PAY-380",
+     "fields": {
+      "summary": "Idempotent refunds API",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31462",
+   "key": "PAY-1462",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31462",
+   "fields": {
+    "summary": "Split webhook deliveries",
+    "issuetype": {
+     "id": "10004",
+     "name": "Bug",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "4",
+     "name": "Low"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-07T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20360,
+     "key": "PAY-360",
+     "name": "Reconcile merchant reports with the ledger every night",
+     "summary": "Reconcile merchant reports with the ledger every night",
+     "color": {
+      "key": "color_3"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20360",
+     "key": "PAY-360",
+     "fields": {
+      "summary": "Reconcile merchant reports with the ledger every night",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31471",
+   "key": "PAY-1471",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31471",
+   "fields": {
+    "summary": "Document statement totals",
+    "issuetype": {
+     "id": "10001",
+     "name": "Story",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "2",
+     "name": "High"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-07T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": null,
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": []
+   }
+  },
+  {
+   "id": "31480",
+   "key": "PAY-1480",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31480",
+   "fields": {
+    "summary": "Export fee schedules",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-07T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31489",
+   "key": "PAY-1489",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31489",
+   "fields": {
+    "summary": "Log the risk score",
+    "issuetype": {
+     "id": "10001",
+     "name": "Story",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "1",
+     "name": "Highest"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-07T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20380,
+     "key": "PAY-380",
+     "name": "Idempotent refunds API",
+     "summary": "Idempotent refunds API",
+     "color": {
+      "key": "color_8"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20380",
+     "key": "PAY-380",
+     "fields": {
+      "summary": "Idempotent refunds API",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31498",
+   "key": "PAY-1498",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31498",
+   "fields": {
+    "summary": "Throttle the payout calendar",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-07T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20360,
+     "key": "PAY-360",
+     "name": "Reconcile merchant reports with the ledger every night",
+     "summary": "Reconcile merchant reports with the ledger every night",
+     "color": {
+      "key": "color_3"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20360",
+     "key": "PAY-360",
+     "fields": {
+      "summary": "Reconcile merchant reports with the ledger every night",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31507",
+   "key": "PAY-1507",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31507",
+   "fields": {
+    "summary": "Cache chargeback notices",
+    "issuetype": {
+     "id": "10004",
+     "name": "Bug",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "4",
+     "name": "Low"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-07T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": null,
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": []
+   }
+  },
+  {
+   "id": "31534",
+   "key": "PAY-1534",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31534",
+   "fields": {
+    "summary": "Index the reconciliation diff",
+    "issuetype": {
+     "id": "10001",
+     "name": "Story",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "1",
+     "name": "Highest"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-07T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [
+     {
+      "id": "31535",
+      "key": "PAY-1535",
+      "self": "https://acme.atlassian.net/rest/api/2/issue/31535",
+      "fields": {
+       "summary": "Write the tests for it",
+       "status": {
+        "id": "10000",
+        "name": "To Do",
+        "statusCategory": {
+         "id": 2,
+         "key": "new",
+         "name": "To Do"
+        }
+       },
+       "priority": {
+        "id": "1",
+        "name": "Highest"
+       },
+       "issuetype": {
+        "id": "10003",
+        "name": "Sub-task",
+        "subtask": true,
+        "hierarchyLevel": -1
+       }
+      }
+     },
+     {
+      "id": "31536",
+      "key": "PAY-1536",
+      "self": "https://acme.atlassian.net/rest/api/2/issue/31536",
+      "fields": {
+       "summary": "Roll it out behind a flag",
+       "status": {
+        "id": "10000",
+        "name": "To Do",
+        "statusCategory": {
+         "id": 2,
+         "key": "new",
+         "name": "To Do"
+        }
+       },
+       "priority": {
+        "id": "3",
+        "name": "Medium"
+       },
+       "issuetype": {
+        "id": "10003",
+        "name": "Sub-task",
+        "subtask": true,
+        "hierarchyLevel": -1
+       }
+      }
+     }
+    ],
+    "issuelinks": [],
+    "epic": {
+     "id": 20360,
+     "key": "PAY-360",
+     "name": "Reconcile merchant reports with the ledger every night",
+     "summary": "Reconcile merchant reports with the ledger every night",
+     "color": {
+      "key": "color_3"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20360",
+     "key": "PAY-360",
+     "fields": {
+      "summary": "Reconcile merchant reports with the ledger every night",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31535",
+   "key": "PAY-1535",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31535",
+   "fields": {
+    "summary": "Write the tests for it",
+    "issuetype": {
+     "id": "10003",
+     "name": "Sub-task",
+     "subtask": true,
+     "hierarchyLevel": -1
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "1",
+     "name": "Highest"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-08T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": null,
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "31534",
+     "key": "PAY-1534",
+     "self": "https://acme.atlassian.net/rest/api/2/issue/31534",
+     "fields": {
+      "summary": "Index the reconciliation diff",
+      "status": {
+       "id": "10000",
+       "name": "To Do",
+       "statusCategory": {
+        "id": 2,
+        "key": "new",
+        "name": "To Do"
+       }
+      },
+      "priority": {
+       "id": "1",
+       "name": "Highest"
+      },
+      "issuetype": {
+       "id": "10001",
+       "name": "Story",
+       "subtask": false,
+       "hierarchyLevel": 0
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31536",
+   "key": "PAY-1536",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31536",
+   "fields": {
+    "summary": "Roll it out behind a flag",
+    "issuetype": {
+     "id": "10003",
+     "name": "Sub-task",
+     "subtask": true,
+     "hierarchyLevel": -1
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-09T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 2,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": null,
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "31534",
+     "key": "PAY-1534",
+     "self": "https://acme.atlassian.net/rest/api/2/issue/31534",
+     "fields": {
+      "summary": "Index the reconciliation diff",
+      "status": {
+       "id": "10000",
+       "name": "To Do",
+       "statusCategory": {
+        "id": 2,
+        "key": "new",
+        "name": "To Do"
+       }
+      },
+      "priority": {
+       "id": "1",
+       "name": "Highest"
+      },
+      "issuetype": {
+       "id": "10001",
+       "name": "Story",
+       "subtask": false,
+       "hierarchyLevel": 0
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31543",
+   "key": "PAY-1543",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31543",
+   "fields": {
+    "summary": "Validate invoice numbers",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-07T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": null,
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": []
+   }
+  },
+  {
+   "id": "31552",
+   "key": "PAY-1552",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31552",
+   "fields": {
+    "summary": "Retry the settlement report",
+    "issuetype": {
+     "id": "10004",
+     "name": "Bug",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "4",
+     "name": "Low"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-07T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31561",
+   "key": "PAY-1561",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31561",
+   "fields": {
+    "summary": "Batch the currency table",
+    "issuetype": {
+     "id": "10001",
+     "name": "Story",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "2",
+     "name": "High"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-07T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20380,
+     "key": "PAY-380",
+     "name": "Idempotent refunds API",
+     "summary": "Idempotent refunds API",
+     "color": {
+      "key": "color_8"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20380",
+     "key": "PAY-380",
+     "fields": {
+      "summary": "Idempotent refunds API",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31570",
+   "key": "PAY-1570",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31570",
+   "fields": {
+    "summary": "Show statement totals",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-07T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20360,
+     "key": "PAY-360",
+     "name": "Reconcile merchant reports with the ledger every night",
+     "summary": "Reconcile merchant reports with the ledger every night",
+     "color": {
+      "key": "color_3"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20360",
+     "key": "PAY-360",
+     "fields": {
+      "summary": "Reconcile merchant reports with the ledger every night",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31579",
+   "key": "PAY-1579",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31579",
+   "fields": {
+    "summary": "Audit payout holds",
+    "issuetype": {
+     "id": "10001",
+     "name": "Story",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "1",
+     "name": "Highest"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-07T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": null,
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": []
+   }
+  },
+  {
+   "id": "31588",
+   "key": "PAY-1588",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31588",
+   "fields": {
+    "summary": "Explain merchant onboarding checks",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-07T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31597",
+   "key": "PAY-1597",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31597",
+   "fields": {
+    "summary": "Backfill tax lines on receipts",
+    "issuetype": {
+     "id": "10004",
+     "name": "Bug",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "4",
+     "name": "Low"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-07T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20380,
+     "key": "PAY-380",
+     "name": "Idempotent refunds API",
+     "summary": "Idempotent refunds API",
+     "color": {
+      "key": "color_8"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20380",
+     "key": "PAY-380",
+     "fields": {
+      "summary": "Idempotent refunds API",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31624",
+   "key": "PAY-1624",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31624",
+   "fields": {
+    "summary": "Export card tokens",
+    "issuetype": {
+     "id": "10001",
+     "name": "Story",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "1",
+     "name": "Highest"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-07T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [
+     {
+      "id": "31625",
+      "key": "PAY-1625",
+      "self": "https://acme.atlassian.net/rest/api/2/issue/31625",
+      "fields": {
+       "summary": "Write the tests for it",
+       "status": {
+        "id": "10000",
+        "name": "To Do",
+        "statusCategory": {
+         "id": 2,
+         "key": "new",
+         "name": "To Do"
+        }
+       },
+       "priority": {
+        "id": "1",
+        "name": "Highest"
+       },
+       "issuetype": {
+        "id": "10003",
+        "name": "Sub-task",
+        "subtask": true,
+        "hierarchyLevel": -1
+       }
+      }
+     },
+     {
+      "id": "31626",
+      "key": "PAY-1626",
+      "self": "https://acme.atlassian.net/rest/api/2/issue/31626",
+      "fields": {
+       "summary": "Roll it out behind a flag",
+       "status": {
+        "id": "10000",
+        "name": "To Do",
+        "statusCategory": {
+         "id": 2,
+         "key": "new",
+         "name": "To Do"
+        }
+       },
+       "priority": {
+        "id": "3",
+        "name": "Medium"
+       },
+       "issuetype": {
+        "id": "10003",
+        "name": "Sub-task",
+        "subtask": true,
+        "hierarchyLevel": -1
+       }
+      }
+     }
+    ],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31625",
+   "key": "PAY-1625",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31625",
+   "fields": {
+    "summary": "Write the tests for it",
+    "issuetype": {
+     "id": "10003",
+     "name": "Sub-task",
+     "subtask": true,
+     "hierarchyLevel": -1
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "1",
+     "name": "Highest"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-08T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": null,
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "31624",
+     "key": "PAY-1624",
+     "self": "https://acme.atlassian.net/rest/api/2/issue/31624",
+     "fields": {
+      "summary": "Export card tokens",
+      "status": {
+       "id": "10000",
+       "name": "To Do",
+       "statusCategory": {
+        "id": 2,
+        "key": "new",
+        "name": "To Do"
+       }
+      },
+      "priority": {
+       "id": "1",
+       "name": "Highest"
+      },
+      "issuetype": {
+       "id": "10001",
+       "name": "Story",
+       "subtask": false,
+       "hierarchyLevel": 0
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31626",
+   "key": "PAY-1626",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31626",
+   "fields": {
+    "summary": "Roll it out behind a flag",
+    "issuetype": {
+     "id": "10003",
+     "name": "Sub-task",
+     "subtask": true,
+     "hierarchyLevel": -1
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-09T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 2,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": null,
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "31624",
+     "key": "PAY-1624",
+     "self": "https://acme.atlassian.net/rest/api/2/issue/31624",
+     "fields": {
+      "summary": "Export card tokens",
+      "status": {
+       "id": "10000",
+       "name": "To Do",
+       "statusCategory": {
+        "id": 2,
+        "key": "new",
+        "name": "To Do"
+       }
+      },
+      "priority": {
+       "id": "1",
+       "name": "Highest"
+      },
+      "issuetype": {
+       "id": "10001",
+       "name": "Story",
+       "subtask": false,
+       "hierarchyLevel": 0
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31633",
+   "key": "PAY-1633",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31633",
+   "fields": {
+    "summary": "Log the reconciliation diff",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-07T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20380,
+     "key": "PAY-380",
+     "name": "Idempotent refunds API",
+     "summary": "Idempotent refunds API",
+     "color": {
+      "key": "color_8"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20380",
+     "key": "PAY-380",
+     "fields": {
+      "summary": "Idempotent refunds API",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31642",
+   "key": "PAY-1642",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31642",
+   "fields": {
+    "summary": "Throttle the risk score",
+    "issuetype": {
+     "id": "10004",
+     "name": "Bug",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "4",
+     "name": "Low"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-07T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20360,
+     "key": "PAY-360",
+     "name": "Reconcile merchant reports with the ledger every night",
+     "summary": "Reconcile merchant reports with the ledger every night",
+     "color": {
+      "key": "color_3"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20360",
+     "key": "PAY-360",
+     "fields": {
+      "summary": "Reconcile merchant reports with the ledger every night",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31651",
+   "key": "PAY-1651",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31651",
+   "fields": {
+    "summary": "Cache refunds after a gateway timeout",
+    "issuetype": {
+     "id": "10001",
+     "name": "Story",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "2",
+     "name": "High"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-07T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": null,
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": []
+   }
+  },
+  {
+   "id": "31660",
+   "key": "PAY-1660",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31660",
+   "fields": {
+    "summary": "Archive chargeback notices",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-07T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31669",
+   "key": "PAY-1669",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31669",
+   "fields": {
+    "summary": "Rename the nightly ledger close",
+    "issuetype": {
+     "id": "10001",
+     "name": "Story",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "1",
+     "name": "Highest"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-07T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20380,
+     "key": "PAY-380",
+     "name": "Idempotent refunds API",
+     "summary": "Idempotent refunds API",
+     "color": {
+      "key": "color_8"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20380",
+     "key": "PAY-380",
+     "fields": {
+      "summary": "Idempotent refunds API",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31678",
+   "key": "PAY-1678",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31678",
+   "fields": {
+    "summary": "Index dispute evidence",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-07T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20360,
+     "key": "PAY-360",
+     "name": "Reconcile merchant reports with the ledger every night",
+     "summary": "Reconcile merchant reports with the ledger every night",
+     "color": {
+      "key": "color_3"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20360",
+     "key": "PAY-360",
+     "fields": {
+      "summary": "Reconcile merchant reports with the ledger every night",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  }
+ ]
+}

@@ -1,0 +1,2317 @@
+{
+ "startAt": 0,
+ "maxResults": 20,
+ "total": 20,
+ "issues": [
+  {
+   "id": "31084",
+   "key": "PAY-1084",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31084",
+   "fields": {
+    "summary": "Archive merchant onboarding checks",
+    "issuetype": {
+     "id": "10001",
+     "name": "Story",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10001",
+     "name": "In Review",
+     "statusCategory": {
+      "id": 4,
+      "key": "indeterminate",
+      "name": "In Progress"
+     }
+    },
+    "priority": {
+     "id": "1",
+     "name": "Highest"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-07T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [
+     {
+      "id": "31085",
+      "key": "PAY-1085",
+      "self": "https://acme.atlassian.net/rest/api/2/issue/31085",
+      "fields": {
+       "summary": "Write the tests for it",
+       "status": {
+        "id": "10001",
+        "name": "In Review",
+        "statusCategory": {
+         "id": 4,
+         "key": "indeterminate",
+         "name": "In Progress"
+        }
+       },
+       "priority": {
+        "id": "1",
+        "name": "Highest"
+       },
+       "issuetype": {
+        "id": "10003",
+        "name": "Sub-task",
+        "subtask": true,
+        "hierarchyLevel": -1
+       }
+      }
+     },
+     {
+      "id": "31086",
+      "key": "PAY-1086",
+      "self": "https://acme.atlassian.net/rest/api/2/issue/31086",
+      "fields": {
+       "summary": "Roll it out behind a flag",
+       "status": {
+        "id": "10002",
+        "name": "Done",
+        "statusCategory": {
+         "id": 3,
+         "key": "done",
+         "name": "Done"
+        }
+       },
+       "priority": {
+        "id": "3",
+        "name": "Medium"
+       },
+       "issuetype": {
+        "id": "10003",
+        "name": "Sub-task",
+        "subtask": true,
+        "hierarchyLevel": -1
+       }
+      }
+     }
+    ],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": {
+     "id": 36,
+     "name": "Reconciliation squad Q4 sprint 3",
+     "state": "active",
+     "startDate": "2026-11-10T09:00:00.000Z",
+     "endDate": "2026-11-21T17:00:00.000Z",
+     "originBoardId": 7,
+     "goal": "Move every nightly reconciliation job onto the replica, retire the old ledger exporter and get the merchant statement totals to match the bank to the cent before the quarter closes"
+    },
+    "customfield_10020": [
+     {
+      "id": 36,
+      "name": "Reconciliation squad Q4 sprint 3",
+      "state": "active",
+      "startDate": "2026-11-10T09:00:00.000Z",
+      "endDate": "2026-11-21T17:00:00.000Z",
+      "originBoardId": 7,
+      "goal": "Move every nightly reconciliation job onto the replica, retire the old ledger exporter and get the merchant statement totals to match the bank to the cent before the quarter closes"
+     }
+    ],
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31085",
+   "key": "PAY-1085",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31085",
+   "fields": {
+    "summary": "Write the tests for it",
+    "issuetype": {
+     "id": "10003",
+     "name": "Sub-task",
+     "subtask": true,
+     "hierarchyLevel": -1
+    },
+    "status": {
+     "id": "10001",
+     "name": "In Review",
+     "statusCategory": {
+      "id": 4,
+      "key": "indeterminate",
+      "name": "In Progress"
+     }
+    },
+    "priority": {
+     "id": "1",
+     "name": "Highest"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-08T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": null,
+    "sprint": {
+     "id": 36,
+     "name": "Reconciliation squad Q4 sprint 3",
+     "state": "active",
+     "startDate": "2026-11-10T09:00:00.000Z",
+     "endDate": "2026-11-21T17:00:00.000Z",
+     "originBoardId": 7,
+     "goal": "Move every nightly reconciliation job onto the replica, retire the old ledger exporter and get the merchant statement totals to match the bank to the cent before the quarter closes"
+    },
+    "customfield_10020": [
+     {
+      "id": 36,
+      "name": "Reconciliation squad Q4 sprint 3",
+      "state": "active",
+      "startDate": "2026-11-10T09:00:00.000Z",
+      "endDate": "2026-11-21T17:00:00.000Z",
+      "originBoardId": 7,
+      "goal": "Move every nightly reconciliation job onto the replica, retire the old ledger exporter and get the merchant statement totals to match the bank to the cent before the quarter closes"
+     }
+    ],
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "31084",
+     "key": "PAY-1084",
+     "self": "https://acme.atlassian.net/rest/api/2/issue/31084",
+     "fields": {
+      "summary": "Archive merchant onboarding checks",
+      "status": {
+       "id": "10001",
+       "name": "In Review",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "priority": {
+       "id": "1",
+       "name": "Highest"
+      },
+      "issuetype": {
+       "id": "10001",
+       "name": "Story",
+       "subtask": false,
+       "hierarchyLevel": 0
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31086",
+   "key": "PAY-1086",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31086",
+   "fields": {
+    "summary": "Roll it out behind a flag",
+    "issuetype": {
+     "id": "10003",
+     "name": "Sub-task",
+     "subtask": true,
+     "hierarchyLevel": -1
+    },
+    "status": {
+     "id": "10002",
+     "name": "Done",
+     "statusCategory": {
+      "id": 3,
+      "key": "done",
+      "name": "Done"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-09T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 2,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": null,
+    "sprint": {
+     "id": 36,
+     "name": "Reconciliation squad Q4 sprint 3",
+     "state": "active",
+     "startDate": "2026-11-10T09:00:00.000Z",
+     "endDate": "2026-11-21T17:00:00.000Z",
+     "originBoardId": 7,
+     "goal": "Move every nightly reconciliation job onto the replica, retire the old ledger exporter and get the merchant statement totals to match the bank to the cent before the quarter closes"
+    },
+    "customfield_10020": [
+     {
+      "id": 36,
+      "name": "Reconciliation squad Q4 sprint 3",
+      "state": "active",
+      "startDate": "2026-11-10T09:00:00.000Z",
+      "endDate": "2026-11-21T17:00:00.000Z",
+      "originBoardId": 7,
+      "goal": "Move every nightly reconciliation job onto the replica, retire the old ledger exporter and get the merchant statement totals to match the bank to the cent before the quarter closes"
+     }
+    ],
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "31084",
+     "key": "PAY-1084",
+     "self": "https://acme.atlassian.net/rest/api/2/issue/31084",
+     "fields": {
+      "summary": "Archive merchant onboarding checks",
+      "status": {
+       "id": "10001",
+       "name": "In Review",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "priority": {
+       "id": "1",
+       "name": "Highest"
+      },
+      "issuetype": {
+       "id": "10001",
+       "name": "Story",
+       "subtask": false,
+       "hierarchyLevel": 0
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31093",
+   "key": "PAY-1093",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31093",
+   "fields": {
+    "summary": "Rename the payout calendar",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10002",
+     "name": "Done",
+     "statusCategory": {
+      "id": 3,
+      "key": "done",
+      "name": "Done"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-07T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20380,
+     "key": "PAY-380",
+     "name": "Idempotent refunds API",
+     "summary": "Idempotent refunds API",
+     "color": {
+      "key": "color_8"
+     },
+     "done": false
+    },
+    "sprint": {
+     "id": 36,
+     "name": "Reconciliation squad Q4 sprint 3",
+     "state": "active",
+     "startDate": "2026-11-10T09:00:00.000Z",
+     "endDate": "2026-11-21T17:00:00.000Z",
+     "originBoardId": 7,
+     "goal": "Move every nightly reconciliation job onto the replica, retire the old ledger exporter and get the merchant statement totals to match the bank to the cent before the quarter closes"
+    },
+    "customfield_10020": [
+     {
+      "id": 36,
+      "name": "Reconciliation squad Q4 sprint 3",
+      "state": "active",
+      "startDate": "2026-11-10T09:00:00.000Z",
+      "endDate": "2026-11-21T17:00:00.000Z",
+      "originBoardId": 7,
+      "goal": "Move every nightly reconciliation job onto the replica, retire the old ledger exporter and get the merchant statement totals to match the bank to the cent before the quarter closes"
+     }
+    ],
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20380",
+     "key": "PAY-380",
+     "fields": {
+      "summary": "Idempotent refunds API",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31102",
+   "key": "PAY-1102",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31102",
+   "fields": {
+    "summary": "Index merchant payouts",
+    "issuetype": {
+     "id": "10004",
+     "name": "Bug",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "3",
+     "name": "In Progress",
+     "statusCategory": {
+      "id": 4,
+      "key": "indeterminate",
+      "name": "In Progress"
+     }
+    },
+    "priority": {
+     "id": "4",
+     "name": "Low"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-07T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20360,
+     "key": "PAY-360",
+     "name": "Reconcile merchant reports with the ledger every night",
+     "summary": "Reconcile merchant reports with the ledger every night",
+     "color": {
+      "key": "color_3"
+     },
+     "done": false
+    },
+    "sprint": {
+     "id": 36,
+     "name": "Reconciliation squad Q4 sprint 3",
+     "state": "active",
+     "startDate": "2026-11-10T09:00:00.000Z",
+     "endDate": "2026-11-21T17:00:00.000Z",
+     "originBoardId": 7,
+     "goal": "Move every nightly reconciliation job onto the replica, retire the old ledger exporter and get the merchant statement totals to match the bank to the cent before the quarter closes"
+    },
+    "customfield_10020": [
+     {
+      "id": 36,
+      "name": "Reconciliation squad Q4 sprint 3",
+      "state": "active",
+      "startDate": "2026-11-10T09:00:00.000Z",
+      "endDate": "2026-11-21T17:00:00.000Z",
+      "originBoardId": 7,
+      "goal": "Move every nightly reconciliation job onto the replica, retire the old ledger exporter and get the merchant statement totals to match the bank to the cent before the quarter closes"
+     }
+    ],
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20360",
+     "key": "PAY-360",
+     "fields": {
+      "summary": "Reconcile merchant reports with the ledger every night",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31111",
+   "key": "PAY-1111",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31111",
+   "fields": {
+    "summary": "Validate failed captures",
+    "issuetype": {
+     "id": "10001",
+     "name": "Story",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10002",
+     "name": "Done",
+     "statusCategory": {
+      "id": 3,
+      "key": "done",
+      "name": "Done"
+     }
+    },
+    "priority": {
+     "id": "2",
+     "name": "High"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-07T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": null,
+    "sprint": {
+     "id": 36,
+     "name": "Reconciliation squad Q4 sprint 3",
+     "state": "active",
+     "startDate": "2026-11-10T09:00:00.000Z",
+     "endDate": "2026-11-21T17:00:00.000Z",
+     "originBoardId": 7,
+     "goal": "Move every nightly reconciliation job onto the replica, retire the old ledger exporter and get the merchant statement totals to match the bank to the cent before the quarter closes"
+    },
+    "customfield_10020": [
+     {
+      "id": 36,
+      "name": "Reconciliation squad Q4 sprint 3",
+      "state": "active",
+      "startDate": "2026-11-10T09:00:00.000Z",
+      "endDate": "2026-11-21T17:00:00.000Z",
+      "originBoardId": 7,
+      "goal": "Move every nightly reconciliation job onto the replica, retire the old ledger exporter and get the merchant statement totals to match the bank to the cent before the quarter closes"
+     }
+    ],
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": []
+   }
+  },
+  {
+   "id": "31120",
+   "key": "PAY-1120",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31120",
+   "fields": {
+    "summary": "Retry dispute evidence",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-07T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": {
+     "id": 36,
+     "name": "Reconciliation squad Q4 sprint 3",
+     "state": "active",
+     "startDate": "2026-11-10T09:00:00.000Z",
+     "endDate": "2026-11-21T17:00:00.000Z",
+     "originBoardId": 7,
+     "goal": "Move every nightly reconciliation job onto the replica, retire the old ledger exporter and get the merchant statement totals to match the bank to the cent before the quarter closes"
+    },
+    "customfield_10020": [
+     {
+      "id": 36,
+      "name": "Reconciliation squad Q4 sprint 3",
+      "state": "active",
+      "startDate": "2026-11-10T09:00:00.000Z",
+      "endDate": "2026-11-21T17:00:00.000Z",
+      "originBoardId": 7,
+      "goal": "Move every nightly reconciliation job onto the replica, retire the old ledger exporter and get the merchant statement totals to match the bank to the cent before the quarter closes"
+     }
+    ],
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31129",
+   "key": "PAY-1129",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31129",
+   "fields": {
+    "summary": "Batch the reconciliation diff",
+    "issuetype": {
+     "id": "10001",
+     "name": "Story",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "1",
+     "name": "Highest"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-07T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20380,
+     "key": "PAY-380",
+     "name": "Idempotent refunds API",
+     "summary": "Idempotent refunds API",
+     "color": {
+      "key": "color_8"
+     },
+     "done": false
+    },
+    "sprint": {
+     "id": 36,
+     "name": "Reconciliation squad Q4 sprint 3",
+     "state": "active",
+     "startDate": "2026-11-10T09:00:00.000Z",
+     "endDate": "2026-11-21T17:00:00.000Z",
+     "originBoardId": 7,
+     "goal": "Move every nightly reconciliation job onto the replica, retire the old ledger exporter and get the merchant statement totals to match the bank to the cent before the quarter closes"
+    },
+    "customfield_10020": [
+     {
+      "id": 36,
+      "name": "Reconciliation squad Q4 sprint 3",
+      "state": "active",
+      "startDate": "2026-11-10T09:00:00.000Z",
+      "endDate": "2026-11-21T17:00:00.000Z",
+      "originBoardId": 7,
+      "goal": "Move every nightly reconciliation job onto the replica, retire the old ledger exporter and get the merchant statement totals to match the bank to the cent before the quarter closes"
+     }
+    ],
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20380",
+     "key": "PAY-380",
+     "fields": {
+      "summary": "Idempotent refunds API",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31138",
+   "key": "PAY-1138",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31138",
+   "fields": {
+    "summary": "Show invoice numbers",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "3",
+     "name": "In Progress",
+     "statusCategory": {
+      "id": 4,
+      "key": "indeterminate",
+      "name": "In Progress"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-07T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20360,
+     "key": "PAY-360",
+     "name": "Reconcile merchant reports with the ledger every night",
+     "summary": "Reconcile merchant reports with the ledger every night",
+     "color": {
+      "key": "color_3"
+     },
+     "done": false
+    },
+    "sprint": {
+     "id": 36,
+     "name": "Reconciliation squad Q4 sprint 3",
+     "state": "active",
+     "startDate": "2026-11-10T09:00:00.000Z",
+     "endDate": "2026-11-21T17:00:00.000Z",
+     "originBoardId": 7,
+     "goal": "Move every nightly reconciliation job onto the replica, retire the old ledger exporter and get the merchant statement totals to match the bank to the cent before the quarter closes"
+    },
+    "customfield_10020": [
+     {
+      "id": 36,
+      "name": "Reconciliation squad Q4 sprint 3",
+      "state": "active",
+      "startDate": "2026-11-10T09:00:00.000Z",
+      "endDate": "2026-11-21T17:00:00.000Z",
+      "originBoardId": 7,
+      "goal": "Move every nightly reconciliation job onto the replica, retire the old ledger exporter and get the merchant statement totals to match the bank to the cent before the quarter closes"
+     }
+    ],
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20360",
+     "key": "PAY-360",
+     "fields": {
+      "summary": "Reconcile merchant reports with the ledger every night",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31147",
+   "key": "PAY-1147",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31147",
+   "fields": {
+    "summary": "Audit refunds after a gateway timeout",
+    "issuetype": {
+     "id": "10004",
+     "name": "Bug",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "4",
+     "name": "Low"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-07T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": null,
+    "sprint": {
+     "id": 36,
+     "name": "Reconciliation squad Q4 sprint 3",
+     "state": "active",
+     "startDate": "2026-11-10T09:00:00.000Z",
+     "endDate": "2026-11-21T17:00:00.000Z",
+     "originBoardId": 7,
+     "goal": "Move every nightly reconciliation job onto the replica, retire the old ledger exporter and get the merchant statement totals to match the bank to the cent before the quarter closes"
+    },
+    "customfield_10020": [
+     {
+      "id": 36,
+      "name": "Reconciliation squad Q4 sprint 3",
+      "state": "active",
+      "startDate": "2026-11-10T09:00:00.000Z",
+      "endDate": "2026-11-21T17:00:00.000Z",
+      "originBoardId": 7,
+      "goal": "Move every nightly reconciliation job onto the replica, retire the old ledger exporter and get the merchant statement totals to match the bank to the cent before the quarter closes"
+     }
+    ],
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": []
+   }
+  },
+  {
+   "id": "31174",
+   "key": "PAY-1174",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31174",
+   "fields": {
+    "summary": "Split payout holds",
+    "issuetype": {
+     "id": "10001",
+     "name": "Story",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "3",
+     "name": "In Progress",
+     "statusCategory": {
+      "id": 4,
+      "key": "indeterminate",
+      "name": "In Progress"
+     }
+    },
+    "priority": {
+     "id": "1",
+     "name": "Highest"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-07T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [
+     {
+      "id": "31175",
+      "key": "PAY-1175",
+      "self": "https://acme.atlassian.net/rest/api/2/issue/31175",
+      "fields": {
+       "summary": "Write the tests for it",
+       "status": {
+        "id": "3",
+        "name": "In Progress",
+        "statusCategory": {
+         "id": 4,
+         "key": "indeterminate",
+         "name": "In Progress"
+        }
+       },
+       "priority": {
+        "id": "1",
+        "name": "Highest"
+       },
+       "issuetype": {
+        "id": "10003",
+        "name": "Sub-task",
+        "subtask": true,
+        "hierarchyLevel": -1
+       }
+      }
+     },
+     {
+      "id": "31176",
+      "key": "PAY-1176",
+      "self": "https://acme.atlassian.net/rest/api/2/issue/31176",
+      "fields": {
+       "summary": "Roll it out behind a flag",
+       "status": {
+        "id": "10002",
+        "name": "Done",
+        "statusCategory": {
+         "id": 3,
+         "key": "done",
+         "name": "Done"
+        }
+       },
+       "priority": {
+        "id": "3",
+        "name": "Medium"
+       },
+       "issuetype": {
+        "id": "10003",
+        "name": "Sub-task",
+        "subtask": true,
+        "hierarchyLevel": -1
+       }
+      }
+     }
+    ],
+    "issuelinks": [],
+    "epic": {
+     "id": 20360,
+     "key": "PAY-360",
+     "name": "Reconcile merchant reports with the ledger every night",
+     "summary": "Reconcile merchant reports with the ledger every night",
+     "color": {
+      "key": "color_3"
+     },
+     "done": false
+    },
+    "sprint": {
+     "id": 36,
+     "name": "Reconciliation squad Q4 sprint 3",
+     "state": "active",
+     "startDate": "2026-11-10T09:00:00.000Z",
+     "endDate": "2026-11-21T17:00:00.000Z",
+     "originBoardId": 7,
+     "goal": "Move every nightly reconciliation job onto the replica, retire the old ledger exporter and get the merchant statement totals to match the bank to the cent before the quarter closes"
+    },
+    "customfield_10020": [
+     {
+      "id": 36,
+      "name": "Reconciliation squad Q4 sprint 3",
+      "state": "active",
+      "startDate": "2026-11-10T09:00:00.000Z",
+      "endDate": "2026-11-21T17:00:00.000Z",
+      "originBoardId": 7,
+      "goal": "Move every nightly reconciliation job onto the replica, retire the old ledger exporter and get the merchant statement totals to match the bank to the cent before the quarter closes"
+     }
+    ],
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20360",
+     "key": "PAY-360",
+     "fields": {
+      "summary": "Reconcile merchant reports with the ledger every night",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31175",
+   "key": "PAY-1175",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31175",
+   "fields": {
+    "summary": "Write the tests for it",
+    "issuetype": {
+     "id": "10003",
+     "name": "Sub-task",
+     "subtask": true,
+     "hierarchyLevel": -1
+    },
+    "status": {
+     "id": "3",
+     "name": "In Progress",
+     "statusCategory": {
+      "id": 4,
+      "key": "indeterminate",
+      "name": "In Progress"
+     }
+    },
+    "priority": {
+     "id": "1",
+     "name": "Highest"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-08T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": null,
+    "sprint": {
+     "id": 36,
+     "name": "Reconciliation squad Q4 sprint 3",
+     "state": "active",
+     "startDate": "2026-11-10T09:00:00.000Z",
+     "endDate": "2026-11-21T17:00:00.000Z",
+     "originBoardId": 7,
+     "goal": "Move every nightly reconciliation job onto the replica, retire the old ledger exporter and get the merchant statement totals to match the bank to the cent before the quarter closes"
+    },
+    "customfield_10020": [
+     {
+      "id": 36,
+      "name": "Reconciliation squad Q4 sprint 3",
+      "state": "active",
+      "startDate": "2026-11-10T09:00:00.000Z",
+      "endDate": "2026-11-21T17:00:00.000Z",
+      "originBoardId": 7,
+      "goal": "Move every nightly reconciliation job onto the replica, retire the old ledger exporter and get the merchant statement totals to match the bank to the cent before the quarter closes"
+     }
+    ],
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "31174",
+     "key": "PAY-1174",
+     "self": "https://acme.atlassian.net/rest/api/2/issue/31174",
+     "fields": {
+      "summary": "Split payout holds",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "priority": {
+       "id": "1",
+       "name": "Highest"
+      },
+      "issuetype": {
+       "id": "10001",
+       "name": "Story",
+       "subtask": false,
+       "hierarchyLevel": 0
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31176",
+   "key": "PAY-1176",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31176",
+   "fields": {
+    "summary": "Roll it out behind a flag",
+    "issuetype": {
+     "id": "10003",
+     "name": "Sub-task",
+     "subtask": true,
+     "hierarchyLevel": -1
+    },
+    "status": {
+     "id": "10002",
+     "name": "Done",
+     "statusCategory": {
+      "id": 3,
+      "key": "done",
+      "name": "Done"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-09T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 2,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": null,
+    "sprint": {
+     "id": 36,
+     "name": "Reconciliation squad Q4 sprint 3",
+     "state": "active",
+     "startDate": "2026-11-10T09:00:00.000Z",
+     "endDate": "2026-11-21T17:00:00.000Z",
+     "originBoardId": 7,
+     "goal": "Move every nightly reconciliation job onto the replica, retire the old ledger exporter and get the merchant statement totals to match the bank to the cent before the quarter closes"
+    },
+    "customfield_10020": [
+     {
+      "id": 36,
+      "name": "Reconciliation squad Q4 sprint 3",
+      "state": "active",
+      "startDate": "2026-11-10T09:00:00.000Z",
+      "endDate": "2026-11-21T17:00:00.000Z",
+      "originBoardId": 7,
+      "goal": "Move every nightly reconciliation job onto the replica, retire the old ledger exporter and get the merchant statement totals to match the bank to the cent before the quarter closes"
+     }
+    ],
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "31174",
+     "key": "PAY-1174",
+     "self": "https://acme.atlassian.net/rest/api/2/issue/31174",
+     "fields": {
+      "summary": "Split payout holds",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "priority": {
+       "id": "1",
+       "name": "Highest"
+      },
+      "issuetype": {
+       "id": "10001",
+       "name": "Story",
+       "subtask": false,
+       "hierarchyLevel": 0
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31183",
+   "key": "PAY-1183",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31183",
+   "fields": {
+    "summary": "Document partial refunds",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10002",
+     "name": "Done",
+     "statusCategory": {
+      "id": 3,
+      "key": "done",
+      "name": "Done"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-07T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": null,
+    "sprint": {
+     "id": 36,
+     "name": "Reconciliation squad Q4 sprint 3",
+     "state": "active",
+     "startDate": "2026-11-10T09:00:00.000Z",
+     "endDate": "2026-11-21T17:00:00.000Z",
+     "originBoardId": 7,
+     "goal": "Move every nightly reconciliation job onto the replica, retire the old ledger exporter and get the merchant statement totals to match the bank to the cent before the quarter closes"
+    },
+    "customfield_10020": [
+     {
+      "id": 36,
+      "name": "Reconciliation squad Q4 sprint 3",
+      "state": "active",
+      "startDate": "2026-11-10T09:00:00.000Z",
+      "endDate": "2026-11-21T17:00:00.000Z",
+      "originBoardId": 7,
+      "goal": "Move every nightly reconciliation job onto the replica, retire the old ledger exporter and get the merchant statement totals to match the bank to the cent before the quarter closes"
+     }
+    ],
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": []
+   }
+  },
+  {
+   "id": "31192",
+   "key": "PAY-1192",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31192",
+   "fields": {
+    "summary": "Export tax lines on receipts",
+    "issuetype": {
+     "id": "10004",
+     "name": "Bug",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "4",
+     "name": "Low"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-07T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": {
+     "id": 36,
+     "name": "Reconciliation squad Q4 sprint 3",
+     "state": "active",
+     "startDate": "2026-11-10T09:00:00.000Z",
+     "endDate": "2026-11-21T17:00:00.000Z",
+     "originBoardId": 7,
+     "goal": "Move every nightly reconciliation job onto the replica, retire the old ledger exporter and get the merchant statement totals to match the bank to the cent before the quarter closes"
+    },
+    "customfield_10020": [
+     {
+      "id": 36,
+      "name": "Reconciliation squad Q4 sprint 3",
+      "state": "active",
+      "startDate": "2026-11-10T09:00:00.000Z",
+      "endDate": "2026-11-21T17:00:00.000Z",
+      "originBoardId": 7,
+      "goal": "Move every nightly reconciliation job onto the replica, retire the old ledger exporter and get the merchant statement totals to match the bank to the cent before the quarter closes"
+     }
+    ],
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31201",
+   "key": "PAY-1201",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31201",
+   "fields": {
+    "summary": "Log merchant payouts",
+    "issuetype": {
+     "id": "10001",
+     "name": "Story",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "2",
+     "name": "High"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-07T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20380,
+     "key": "PAY-380",
+     "name": "Idempotent refunds API",
+     "summary": "Idempotent refunds API",
+     "color": {
+      "key": "color_8"
+     },
+     "done": false
+    },
+    "sprint": {
+     "id": 36,
+     "name": "Reconciliation squad Q4 sprint 3",
+     "state": "active",
+     "startDate": "2026-11-10T09:00:00.000Z",
+     "endDate": "2026-11-21T17:00:00.000Z",
+     "originBoardId": 7,
+     "goal": "Move every nightly reconciliation job onto the replica, retire the old ledger exporter and get the merchant statement totals to match the bank to the cent before the quarter closes"
+    },
+    "customfield_10020": [
+     {
+      "id": 36,
+      "name": "Reconciliation squad Q4 sprint 3",
+      "state": "active",
+      "startDate": "2026-11-10T09:00:00.000Z",
+      "endDate": "2026-11-21T17:00:00.000Z",
+      "originBoardId": 7,
+      "goal": "Move every nightly reconciliation job onto the replica, retire the old ledger exporter and get the merchant statement totals to match the bank to the cent before the quarter closes"
+     }
+    ],
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20380",
+     "key": "PAY-380",
+     "fields": {
+      "summary": "Idempotent refunds API",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31210",
+   "key": "PAY-1210",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31210",
+   "fields": {
+    "summary": "Throttle webhook deliveries",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "3",
+     "name": "In Progress",
+     "statusCategory": {
+      "id": 4,
+      "key": "indeterminate",
+      "name": "In Progress"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-07T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20360,
+     "key": "PAY-360",
+     "name": "Reconcile merchant reports with the ledger every night",
+     "summary": "Reconcile merchant reports with the ledger every night",
+     "color": {
+      "key": "color_3"
+     },
+     "done": false
+    },
+    "sprint": {
+     "id": 36,
+     "name": "Reconciliation squad Q4 sprint 3",
+     "state": "active",
+     "startDate": "2026-11-10T09:00:00.000Z",
+     "endDate": "2026-11-21T17:00:00.000Z",
+     "originBoardId": 7,
+     "goal": "Move every nightly reconciliation job onto the replica, retire the old ledger exporter and get the merchant statement totals to match the bank to the cent before the quarter closes"
+    },
+    "customfield_10020": [
+     {
+      "id": 36,
+      "name": "Reconciliation squad Q4 sprint 3",
+      "state": "active",
+      "startDate": "2026-11-10T09:00:00.000Z",
+      "endDate": "2026-11-21T17:00:00.000Z",
+      "originBoardId": 7,
+      "goal": "Move every nightly reconciliation job onto the replica, retire the old ledger exporter and get the merchant statement totals to match the bank to the cent before the quarter closes"
+     }
+    ],
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20360",
+     "key": "PAY-360",
+     "fields": {
+      "summary": "Reconcile merchant reports with the ledger every night",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31219",
+   "key": "PAY-1219",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31219",
+   "fields": {
+    "summary": "Cache card tokens",
+    "issuetype": {
+     "id": "10001",
+     "name": "Story",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "1",
+     "name": "Highest"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-07T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": null,
+    "sprint": {
+     "id": 36,
+     "name": "Reconciliation squad Q4 sprint 3",
+     "state": "active",
+     "startDate": "2026-11-10T09:00:00.000Z",
+     "endDate": "2026-11-21T17:00:00.000Z",
+     "originBoardId": 7,
+     "goal": "Move every nightly reconciliation job onto the replica, retire the old ledger exporter and get the merchant statement totals to match the bank to the cent before the quarter closes"
+    },
+    "customfield_10020": [
+     {
+      "id": 36,
+      "name": "Reconciliation squad Q4 sprint 3",
+      "state": "active",
+      "startDate": "2026-11-10T09:00:00.000Z",
+      "endDate": "2026-11-21T17:00:00.000Z",
+      "originBoardId": 7,
+      "goal": "Move every nightly reconciliation job onto the replica, retire the old ledger exporter and get the merchant statement totals to match the bank to the cent before the quarter closes"
+     }
+    ],
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": []
+   }
+  },
+  {
+   "id": "31228",
+   "key": "PAY-1228",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31228",
+   "fields": {
+    "summary": "Archive fee schedules",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10001",
+     "name": "In Review",
+     "statusCategory": {
+      "id": 4,
+      "key": "indeterminate",
+      "name": "In Progress"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-07T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": {
+     "id": 36,
+     "name": "Reconciliation squad Q4 sprint 3",
+     "state": "active",
+     "startDate": "2026-11-10T09:00:00.000Z",
+     "endDate": "2026-11-21T17:00:00.000Z",
+     "originBoardId": 7,
+     "goal": "Move every nightly reconciliation job onto the replica, retire the old ledger exporter and get the merchant statement totals to match the bank to the cent before the quarter closes"
+    },
+    "customfield_10020": [
+     {
+      "id": 36,
+      "name": "Reconciliation squad Q4 sprint 3",
+      "state": "active",
+      "startDate": "2026-11-10T09:00:00.000Z",
+      "endDate": "2026-11-21T17:00:00.000Z",
+      "originBoardId": 7,
+      "goal": "Move every nightly reconciliation job onto the replica, retire the old ledger exporter and get the merchant statement totals to match the bank to the cent before the quarter closes"
+     }
+    ],
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31237",
+   "key": "PAY-1237",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31237",
+   "fields": {
+    "summary": "Rename the risk score",
+    "issuetype": {
+     "id": "10004",
+     "name": "Bug",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10002",
+     "name": "Done",
+     "statusCategory": {
+      "id": 3,
+      "key": "done",
+      "name": "Done"
+     }
+    },
+    "priority": {
+     "id": "4",
+     "name": "Low"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-07T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20380,
+     "key": "PAY-380",
+     "name": "Idempotent refunds API",
+     "summary": "Idempotent refunds API",
+     "color": {
+      "key": "color_8"
+     },
+     "done": false
+    },
+    "sprint": {
+     "id": 36,
+     "name": "Reconciliation squad Q4 sprint 3",
+     "state": "active",
+     "startDate": "2026-11-10T09:00:00.000Z",
+     "endDate": "2026-11-21T17:00:00.000Z",
+     "originBoardId": 7,
+     "goal": "Move every nightly reconciliation job onto the replica, retire the old ledger exporter and get the merchant statement totals to match the bank to the cent before the quarter closes"
+    },
+    "customfield_10020": [
+     {
+      "id": 36,
+      "name": "Reconciliation squad Q4 sprint 3",
+      "state": "active",
+      "startDate": "2026-11-10T09:00:00.000Z",
+      "endDate": "2026-11-21T17:00:00.000Z",
+      "originBoardId": 7,
+      "goal": "Move every nightly reconciliation job onto the replica, retire the old ledger exporter and get the merchant statement totals to match the bank to the cent before the quarter closes"
+     }
+    ],
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20380",
+     "key": "PAY-380",
+     "fields": {
+      "summary": "Idempotent refunds API",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  }
+ ]
+}

@@ -1,0 +1,2924 @@
+{
+ "startAt": 0,
+ "maxResults": 30,
+ "total": 30,
+ "issues": [
+  {
+   "id": "31314",
+   "key": "PAY-1314",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31314",
+   "fields": {
+    "summary": "Show refunds after a gateway timeout",
+    "issuetype": {
+     "id": "10001",
+     "name": "Story",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "1",
+     "name": "Highest"
+    },
+    "assignee": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-03T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 0,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [
+     {
+      "id": "31315",
+      "key": "PAY-1315",
+      "self": "https://acme.atlassian.net/rest/api/2/issue/31315",
+      "fields": {
+       "summary": "Write the tests for it",
+       "status": {
+        "id": "10000",
+        "name": "To Do",
+        "statusCategory": {
+         "id": 2,
+         "key": "new",
+         "name": "To Do"
+        }
+       },
+       "priority": {
+        "id": "1",
+        "name": "Highest"
+       },
+       "issuetype": {
+        "id": "10003",
+        "name": "Sub-task",
+        "subtask": true,
+        "hierarchyLevel": -1
+       }
+      }
+     },
+     {
+      "id": "31316",
+      "key": "PAY-1316",
+      "self": "https://acme.atlassian.net/rest/api/2/issue/31316",
+      "fields": {
+       "summary": "Roll it out behind a flag",
+       "status": {
+        "id": "10000",
+        "name": "To Do",
+        "statusCategory": {
+         "id": 2,
+         "key": "new",
+         "name": "To Do"
+        }
+       },
+       "priority": {
+        "id": "3",
+        "name": "Medium"
+       },
+       "issuetype": {
+        "id": "10003",
+        "name": "Sub-task",
+        "subtask": true,
+        "hierarchyLevel": -1
+       }
+      }
+     }
+    ],
+    "issuelinks": [],
+    "epic": {
+     "id": 20360,
+     "key": "PAY-360",
+     "name": "Reconcile merchant reports with the ledger every night",
+     "summary": "Reconcile merchant reports with the ledger every night",
+     "color": {
+      "key": "color_3"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20360",
+     "key": "PAY-360",
+     "fields": {
+      "summary": "Reconcile merchant reports with the ledger every night",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31331",
+   "key": "PAY-1331",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31331",
+   "fields": {
+    "summary": "Cache refunds after a gateway timeout",
+    "issuetype": {
+     "id": "10001",
+     "name": "Story",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "2",
+     "name": "High"
+    },
+    "assignee": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-11T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 2,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": null,
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": []
+   }
+  },
+  {
+   "id": "31333",
+   "key": "PAY-1333",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31333",
+   "fields": {
+    "summary": "Rename partial refunds",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-juniper",
+     "displayName": "Juniper Hale",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-juniper",
+     "displayName": "Juniper Hale",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-04T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20380,
+     "key": "PAY-380",
+     "name": "Idempotent refunds API",
+     "summary": "Idempotent refunds API",
+     "color": {
+      "key": "color_8"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20380",
+     "key": "PAY-380",
+     "fields": {
+      "summary": "Idempotent refunds API",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31348",
+   "key": "PAY-1348",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31348",
+   "fields": {
+    "summary": "Explain refunds after a gateway timeout",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": null,
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-10T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31350",
+   "key": "PAY-1350",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31350",
+   "fields": {
+    "summary": "Split partial refunds",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-03T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 0,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20360,
+     "key": "PAY-360",
+     "name": "Reconcile merchant reports with the ledger every night",
+     "summary": "Reconcile merchant reports with the ledger every night",
+     "color": {
+      "key": "color_3"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20360",
+     "key": "PAY-360",
+     "fields": {
+      "summary": "Reconcile merchant reports with the ledger every night",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31367",
+   "key": "PAY-1367",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31367",
+   "fields": {
+    "summary": "Validate partial refunds",
+    "issuetype": {
+     "id": "10004",
+     "name": "Bug",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "4",
+     "name": "Low"
+    },
+    "assignee": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-11T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 2,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": null,
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": []
+   }
+  },
+  {
+   "id": "31382",
+   "key": "PAY-1382",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31382",
+   "fields": {
+    "summary": "Split refunds after a gateway timeout",
+    "issuetype": {
+     "id": "10004",
+     "name": "Bug",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "4",
+     "name": "Low"
+    },
+    "assignee": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-08T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 2,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20360,
+     "key": "PAY-360",
+     "name": "Reconcile merchant reports with the ledger every night",
+     "summary": "Reconcile merchant reports with the ledger every night",
+     "color": {
+      "key": "color_3"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20360",
+     "key": "PAY-360",
+     "fields": {
+      "summary": "Reconcile merchant reports with the ledger every night",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31384",
+   "key": "PAY-1384",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31384",
+   "fields": {
+    "summary": "Export partial refunds",
+    "issuetype": {
+     "id": "10001",
+     "name": "Story",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "1",
+     "name": "Highest"
+    },
+    "assignee": null,
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-10T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [
+     {
+      "id": "31385",
+      "key": "PAY-1385",
+      "self": "https://acme.atlassian.net/rest/api/2/issue/31385",
+      "fields": {
+       "summary": "Write the tests for it",
+       "status": {
+        "id": "10000",
+        "name": "To Do",
+        "statusCategory": {
+         "id": 2,
+         "key": "new",
+         "name": "To Do"
+        }
+       },
+       "priority": {
+        "id": "1",
+        "name": "Highest"
+       },
+       "issuetype": {
+        "id": "10003",
+        "name": "Sub-task",
+        "subtask": true,
+        "hierarchyLevel": -1
+       }
+      }
+     },
+     {
+      "id": "31386",
+      "key": "PAY-1386",
+      "self": "https://acme.atlassian.net/rest/api/2/issue/31386",
+      "fields": {
+       "summary": "Roll it out behind a flag",
+       "status": {
+        "id": "10000",
+        "name": "To Do",
+        "statusCategory": {
+         "id": 2,
+         "key": "new",
+         "name": "To Do"
+        }
+       },
+       "priority": {
+        "id": "3",
+        "name": "Medium"
+       },
+       "issuetype": {
+        "id": "10003",
+        "name": "Sub-task",
+        "subtask": true,
+        "hierarchyLevel": -1
+       }
+      }
+     }
+    ],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31399",
+   "key": "PAY-1399",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31399",
+   "fields": {
+    "summary": "Validate refunds after a gateway timeout",
+    "issuetype": {
+     "id": "10001",
+     "name": "Story",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "1",
+     "name": "Highest"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-07T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": null,
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": []
+   }
+  },
+  {
+   "id": "31401",
+   "key": "PAY-1401",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31401",
+   "fields": {
+    "summary": "Batch partial refunds",
+    "issuetype": {
+     "id": "10001",
+     "name": "Story",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "2",
+     "name": "High"
+    },
+    "assignee": {
+     "accountId": "u-ember",
+     "displayName": "Ember Lind",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-ember",
+     "displayName": "Ember Lind",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-09T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 0,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20380,
+     "key": "PAY-380",
+     "name": "Idempotent refunds API",
+     "summary": "Idempotent refunds API",
+     "color": {
+      "key": "color_8"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20380",
+     "key": "PAY-380",
+     "fields": {
+      "summary": "Idempotent refunds API",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31418",
+   "key": "PAY-1418",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31418",
+   "fields": {
+    "summary": "Throttle partial refunds",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-08T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 2,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20360,
+     "key": "PAY-360",
+     "name": "Reconcile merchant reports with the ledger every night",
+     "summary": "Reconcile merchant reports with the ledger every night",
+     "color": {
+      "key": "color_3"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20360",
+     "key": "PAY-360",
+     "fields": {
+      "summary": "Reconcile merchant reports with the ledger every night",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31433",
+   "key": "PAY-1433",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31433",
+   "fields": {
+    "summary": "Batch refunds after a gateway timeout",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": null,
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-05T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 2,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20380,
+     "key": "PAY-380",
+     "name": "Idempotent refunds API",
+     "summary": "Idempotent refunds API",
+     "color": {
+      "key": "color_8"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20380",
+     "key": "PAY-380",
+     "fields": {
+      "summary": "Idempotent refunds API",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31450",
+   "key": "PAY-1450",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31450",
+   "fields": {
+    "summary": "Throttle refunds after a gateway timeout",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-juniper",
+     "displayName": "Juniper Hale",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-juniper",
+     "displayName": "Juniper Hale",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-04T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20360,
+     "key": "PAY-360",
+     "name": "Reconcile merchant reports with the ledger every night",
+     "summary": "Reconcile merchant reports with the ledger every night",
+     "color": {
+      "key": "color_3"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20360",
+     "key": "PAY-360",
+     "fields": {
+      "summary": "Reconcile merchant reports with the ledger every night",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31452",
+   "key": "PAY-1452",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31452",
+   "fields": {
+    "summary": "Archive partial refunds",
+    "issuetype": {
+     "id": "10004",
+     "name": "Bug",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "4",
+     "name": "Low"
+    },
+    "assignee": {
+     "accountId": "u-ember",
+     "displayName": "Ember Lind",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-ember",
+     "displayName": "Ember Lind",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-06T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 0,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31467",
+   "key": "PAY-1467",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31467",
+   "fields": {
+    "summary": "Audit refunds after a gateway timeout",
+    "issuetype": {
+     "id": "10004",
+     "name": "Bug",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "4",
+     "name": "Low"
+    },
+    "assignee": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-03T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 0,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": null,
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": []
+   }
+  },
+  {
+   "id": "31469",
+   "key": "PAY-1469",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31469",
+   "fields": {
+    "summary": "Backfill partial refunds",
+    "issuetype": {
+     "id": "10001",
+     "name": "Story",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "1",
+     "name": "Highest"
+    },
+    "assignee": null,
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-05T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 2,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20380,
+     "key": "PAY-380",
+     "name": "Idempotent refunds API",
+     "summary": "Idempotent refunds API",
+     "color": {
+      "key": "color_8"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20380",
+     "key": "PAY-380",
+     "fields": {
+      "summary": "Idempotent refunds API",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31484",
+   "key": "PAY-1484",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31484",
+   "fields": {
+    "summary": "Archive refunds after a gateway timeout",
+    "issuetype": {
+     "id": "10001",
+     "name": "Story",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "1",
+     "name": "Highest"
+    },
+    "assignee": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-11T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 2,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [
+     {
+      "id": "31485",
+      "key": "PAY-1485",
+      "self": "https://acme.atlassian.net/rest/api/2/issue/31485",
+      "fields": {
+       "summary": "Write the tests for it",
+       "status": {
+        "id": "10000",
+        "name": "To Do",
+        "statusCategory": {
+         "id": 2,
+         "key": "new",
+         "name": "To Do"
+        }
+       },
+       "priority": {
+        "id": "1",
+        "name": "Highest"
+       },
+       "issuetype": {
+        "id": "10003",
+        "name": "Sub-task",
+        "subtask": true,
+        "hierarchyLevel": -1
+       }
+      }
+     },
+     {
+      "id": "31486",
+      "key": "PAY-1486",
+      "self": "https://acme.atlassian.net/rest/api/2/issue/31486",
+      "fields": {
+       "summary": "Roll it out behind a flag",
+       "status": {
+        "id": "10000",
+        "name": "To Do",
+        "statusCategory": {
+         "id": 2,
+         "key": "new",
+         "name": "To Do"
+        }
+       },
+       "priority": {
+        "id": "3",
+        "name": "Medium"
+       },
+       "issuetype": {
+        "id": "10003",
+        "name": "Sub-task",
+        "subtask": true,
+        "hierarchyLevel": -1
+       }
+      }
+     }
+    ],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31501",
+   "key": "PAY-1501",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31501",
+   "fields": {
+    "summary": "Backfill refunds after a gateway timeout",
+    "issuetype": {
+     "id": "10001",
+     "name": "Story",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "2",
+     "name": "High"
+    },
+    "assignee": null,
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-10T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20380,
+     "key": "PAY-380",
+     "name": "Idempotent refunds API",
+     "summary": "Idempotent refunds API",
+     "color": {
+      "key": "color_8"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20380",
+     "key": "PAY-380",
+     "fields": {
+      "summary": "Idempotent refunds API",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31503",
+   "key": "PAY-1503",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31503",
+   "fields": {
+    "summary": "Document partial refunds",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-03T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 0,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": null,
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": []
+   }
+  },
+  {
+   "id": "31518",
+   "key": "PAY-1518",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31518",
+   "fields": {
+    "summary": "Index refunds after a gateway timeout",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-ember",
+     "displayName": "Ember Lind",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-ember",
+     "displayName": "Ember Lind",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-09T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 0,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20360,
+     "key": "PAY-360",
+     "name": "Reconcile merchant reports with the ledger every night",
+     "summary": "Reconcile merchant reports with the ledger every night",
+     "color": {
+      "key": "color_3"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20360",
+     "key": "PAY-360",
+     "fields": {
+      "summary": "Reconcile merchant reports with the ledger every night",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31568",
+   "key": "PAY-1568",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31568",
+   "fields": {
+    "summary": "Retry partial refunds",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": null,
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-05T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 2,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31600",
+   "key": "PAY-1600",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31600",
+   "fields": {
+    "summary": "Retry refunds after a gateway timeout",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": null,
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-10T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31602",
+   "key": "PAY-1602",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31602",
+   "fields": {
+    "summary": "Show partial refunds",
+    "issuetype": {
+     "id": "10004",
+     "name": "Bug",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "4",
+     "name": "Low"
+    },
+    "assignee": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-03T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 0,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20360,
+     "key": "PAY-360",
+     "name": "Reconcile merchant reports with the ledger every night",
+     "summary": "Reconcile merchant reports with the ledger every night",
+     "color": {
+      "key": "color_3"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20360",
+     "key": "PAY-360",
+     "fields": {
+      "summary": "Reconcile merchant reports with the ledger every night",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31617",
+   "key": "PAY-1617",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31617",
+   "fields": {
+    "summary": "Log refunds after a gateway timeout",
+    "issuetype": {
+     "id": "10004",
+     "name": "Bug",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "4",
+     "name": "Low"
+    },
+    "assignee": {
+     "accountId": "u-ember",
+     "displayName": "Ember Lind",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-ember",
+     "displayName": "Ember Lind",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-09T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 0,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20380,
+     "key": "PAY-380",
+     "name": "Idempotent refunds API",
+     "summary": "Idempotent refunds API",
+     "color": {
+      "key": "color_8"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20380",
+     "key": "PAY-380",
+     "fields": {
+      "summary": "Idempotent refunds API",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31619",
+   "key": "PAY-1619",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31619",
+   "fields": {
+    "summary": "Cache partial refunds",
+    "issuetype": {
+     "id": "10001",
+     "name": "Story",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "1",
+     "name": "Highest"
+    },
+    "assignee": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-11T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 2,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": null,
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": []
+   }
+  },
+  {
+   "id": "31634",
+   "key": "PAY-1634",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31634",
+   "fields": {
+    "summary": "Show refunds after a gateway timeout",
+    "issuetype": {
+     "id": "10001",
+     "name": "Story",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "1",
+     "name": "Highest"
+    },
+    "assignee": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-08T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 2,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [
+     {
+      "id": "31635",
+      "key": "PAY-1635",
+      "self": "https://acme.atlassian.net/rest/api/2/issue/31635",
+      "fields": {
+       "summary": "Write the tests for it",
+       "status": {
+        "id": "10000",
+        "name": "To Do",
+        "statusCategory": {
+         "id": 2,
+         "key": "new",
+         "name": "To Do"
+        }
+       },
+       "priority": {
+        "id": "1",
+        "name": "Highest"
+       },
+       "issuetype": {
+        "id": "10003",
+        "name": "Sub-task",
+        "subtask": true,
+        "hierarchyLevel": -1
+       }
+      }
+     },
+     {
+      "id": "31636",
+      "key": "PAY-1636",
+      "self": "https://acme.atlassian.net/rest/api/2/issue/31636",
+      "fields": {
+       "summary": "Roll it out behind a flag",
+       "status": {
+        "id": "10000",
+        "name": "To Do",
+        "statusCategory": {
+         "id": 2,
+         "key": "new",
+         "name": "To Do"
+        }
+       },
+       "priority": {
+        "id": "3",
+        "name": "Medium"
+       },
+       "issuetype": {
+        "id": "10003",
+        "name": "Sub-task",
+        "subtask": true,
+        "hierarchyLevel": -1
+       }
+      }
+     }
+    ],
+    "issuelinks": [],
+    "epic": {
+     "id": 20360,
+     "key": "PAY-360",
+     "name": "Reconcile merchant reports with the ledger every night",
+     "summary": "Reconcile merchant reports with the ledger every night",
+     "color": {
+      "key": "color_3"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20360",
+     "key": "PAY-360",
+     "fields": {
+      "summary": "Reconcile merchant reports with the ledger every night",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31651",
+   "key": "PAY-1651",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31651",
+   "fields": {
+    "summary": "Cache refunds after a gateway timeout",
+    "issuetype": {
+     "id": "10001",
+     "name": "Story",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "2",
+     "name": "High"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-07T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": null,
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": []
+   }
+  },
+  {
+   "id": "31653",
+   "key": "PAY-1653",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31653",
+   "fields": {
+    "summary": "Rename partial refunds",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-ember",
+     "displayName": "Ember Lind",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-ember",
+     "displayName": "Ember Lind",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-09T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 0,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20380,
+     "key": "PAY-380",
+     "name": "Idempotent refunds API",
+     "summary": "Idempotent refunds API",
+     "color": {
+      "key": "color_8"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20380",
+     "key": "PAY-380",
+     "fields": {
+      "summary": "Idempotent refunds API",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31668",
+   "key": "PAY-1668",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31668",
+   "fields": {
+    "summary": "Explain refunds after a gateway timeout",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-ember",
+     "displayName": "Ember Lind",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-ember",
+     "displayName": "Ember Lind",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-06T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 0,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20400,
+     "key": "PAY-400",
+     "name": "Refunds that add up",
+     "summary": "Refunds that add up",
+     "color": {
+      "key": "color_4"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20400",
+     "key": "PAY-400",
+     "fields": {
+      "summary": "Refunds that add up",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "31670",
+   "key": "PAY-1670",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31670",
+   "fields": {
+    "summary": "Split partial refunds",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-08T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10010",
+     "key": "PAY",
+     "name": "Payments"
+    },
+    "comment": {
+     "comments": [],
+     "total": 2,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": {
+     "id": 20360,
+     "key": "PAY-360",
+     "name": "Reconcile merchant reports with the ledger every night",
+     "summary": "Reconcile merchant reports with the ledger every night",
+     "color": {
+      "key": "color_3"
+     },
+     "done": false
+    },
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "20360",
+     "key": "PAY-360",
+     "fields": {
+      "summary": "Reconcile merchant reports with the ledger every night",
+      "status": {
+       "id": "3",
+       "name": "In Progress",
+       "statusCategory": {
+        "id": 4,
+        "key": "indeterminate",
+        "name": "In Progress"
+       }
+      },
+      "issuetype": {
+       "id": "10000",
+       "name": "Epic",
+       "subtask": false,
+       "hierarchyLevel": 1
+      }
+     }
+    }
+   }
+  }
+ ]
+}

@@ -1,0 +1,129 @@
+{
+ "id": "81001",
+ "key": "CHK-1001",
+ "self": "https://acme.atlassian.net/rest/agile/1.0/issue/81001",
+ "fields": {
+  "summary": "Batch card tokens",
+  "issuetype": {
+   "id": "10001",
+   "name": "Story",
+   "subtask": false,
+   "hierarchyLevel": 0
+  },
+  "status": {
+   "id": "10000",
+   "name": "To Do",
+   "statusCategory": {
+    "id": 2,
+    "key": "new",
+    "name": "To Do"
+   }
+  },
+  "priority": {
+   "id": "2",
+   "name": "High"
+  },
+  "assignee": null,
+  "reporter": {
+   "accountId": "u-kestrel",
+   "displayName": "Kestrel Okafor",
+   "active": true,
+   "avatarUrls": {
+    "48x48": ""
+   },
+   "emailAddress": ""
+  },
+  "labels": [],
+  "updated": "2026-11-05T09:00:00.000+0000",
+  "created": "2026-11-03T09:00:00.000+0000",
+  "project": {
+   "id": "10014",
+   "key": "CHK",
+   "name": "Checkout"
+  },
+  "comment": {
+   "comments": [
+    {
+     "id": "810010",
+     "author": {
+      "accountId": "u-juniper",
+      "displayName": "Juniper Hale",
+      "active": true,
+      "avatarUrls": {
+       "48x48": ""
+      },
+      "emailAddress": ""
+     },
+     "updateAuthor": {
+      "accountId": "u-juniper",
+      "displayName": "Juniper Hale",
+      "active": true,
+      "avatarUrls": {
+       "48x48": ""
+      },
+      "emailAddress": ""
+     },
+     "body": "A note on CHK-1001, the first.",
+     "created": "2026-11-10T09:00:00.000+0000",
+     "updated": "2026-11-10T09:00:00.000+0000"
+    },
+    {
+     "id": "810011",
+     "author": {
+      "accountId": "u-kestrel",
+      "displayName": "Kestrel Okafor",
+      "active": true,
+      "avatarUrls": {
+       "48x48": ""
+      },
+      "emailAddress": ""
+     },
+     "updateAuthor": {
+      "accountId": "u-kestrel",
+      "displayName": "Kestrel Okafor",
+      "active": true,
+      "avatarUrls": {
+       "48x48": ""
+      },
+      "emailAddress": ""
+     },
+     "body": "A note on CHK-1001, the second.",
+     "created": "2026-11-11T09:07:00.000+0000",
+     "updated": "2026-11-11T09:07:00.000+0000"
+    }
+   ],
+   "total": 2,
+   "maxResults": 50,
+   "startAt": 0
+  },
+  "subtasks": [],
+  "issuelinks": [],
+  "epic": null,
+  "sprint": {
+   "id": 40,
+   "name": "Checkout sprint 1",
+   "state": "future",
+   "originBoardId": 11,
+   "startDate": "2026-12-01T09:00:00.000Z",
+   "endDate": "2026-12-12T17:00:00.000Z",
+   "goal": ""
+  },
+  "customfield_10020": [
+   {
+    "id": 40,
+    "name": "Checkout sprint 1",
+    "state": "future",
+    "originBoardId": 11,
+    "startDate": "2026-12-01T09:00:00.000Z",
+    "endDate": "2026-12-12T17:00:00.000Z",
+    "goal": ""
+   }
+  ],
+  "customfield_10016": null,
+  "duedate": null,
+  "components": [],
+  "fixVersions": [],
+  "description": "",
+  "attachment": []
+ }
+}

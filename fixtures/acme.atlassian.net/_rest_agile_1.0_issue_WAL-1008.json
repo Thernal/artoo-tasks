@@ -1,0 +1,70 @@
+{
+ "id": "71008",
+ "key": "WAL-1008",
+ "self": "https://acme.atlassian.net/rest/agile/1.0/issue/71008",
+ "fields": {
+  "summary": "Retry the payout calendar",
+  "issuetype": {
+   "id": "10002",
+   "name": "Task",
+   "subtask": false,
+   "hierarchyLevel": 0
+  },
+  "status": {
+   "id": "10000",
+   "name": "To Do",
+   "statusCategory": {
+    "id": 2,
+    "key": "new",
+    "name": "To Do"
+   }
+  },
+  "priority": {
+   "id": "3",
+   "name": "Medium"
+  },
+  "assignee": {
+   "accountId": "u-kestrel",
+   "displayName": "Kestrel Okafor",
+   "active": true,
+   "avatarUrls": {
+    "48x48": ""
+   },
+   "emailAddress": ""
+  },
+  "reporter": {
+   "accountId": "u-kestrel",
+   "displayName": "Kestrel Okafor",
+   "active": true,
+   "avatarUrls": {
+    "48x48": ""
+   },
+   "emailAddress": ""
+  },
+  "labels": [],
+  "updated": "2026-11-03T09:00:00.000+0000",
+  "created": "2026-11-03T09:00:00.000+0000",
+  "project": {
+   "id": "10013",
+   "key": "WAL",
+   "name": "Wallet"
+  },
+  "comment": {
+   "comments": [],
+   "total": 0,
+   "maxResults": 50,
+   "startAt": 0
+  },
+  "subtasks": [],
+  "issuelinks": [],
+  "epic": null,
+  "sprint": null,
+  "customfield_10020": null,
+  "customfield_10016": null,
+  "duedate": null,
+  "components": [],
+  "fixVersions": [],
+  "description": "",
+  "attachment": []
+ }
+}

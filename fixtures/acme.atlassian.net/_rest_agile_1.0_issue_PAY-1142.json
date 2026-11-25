@@ -1,0 +1,168 @@
+{
+ "id": "31142",
+ "key": "PAY-1142",
+ "self": "https://acme.atlassian.net/rest/agile/1.0/issue/31142",
+ "fields": {
+  "summary": "Split webhook deliveries",
+  "issuetype": {
+   "id": "10004",
+   "name": "Bug",
+   "subtask": false,
+   "hierarchyLevel": 0
+  },
+  "status": {
+   "id": "3",
+   "name": "In Progress",
+   "statusCategory": {
+    "id": 4,
+    "key": "indeterminate",
+    "name": "In Progress"
+   }
+  },
+  "priority": {
+   "id": "4",
+   "name": "Low"
+  },
+  "assignee": {
+   "accountId": "u-kestrel",
+   "displayName": "Kestrel Okafor",
+   "active": true,
+   "avatarUrls": {
+    "48x48": ""
+   },
+   "emailAddress": ""
+  },
+  "reporter": {
+   "accountId": "u-kestrel",
+   "displayName": "Kestrel Okafor",
+   "active": true,
+   "avatarUrls": {
+    "48x48": ""
+   },
+   "emailAddress": ""
+  },
+  "labels": [],
+  "updated": "2026-11-11T09:00:00.000+0000",
+  "created": "2026-11-03T09:00:00.000+0000",
+  "project": {
+   "id": "10010",
+   "key": "PAY",
+   "name": "Payments"
+  },
+  "comment": {
+   "comments": [
+    {
+     "id": "311420",
+     "author": {
+      "accountId": "u-juniper",
+      "displayName": "Juniper Hale",
+      "active": true,
+      "avatarUrls": {
+       "48x48": ""
+      },
+      "emailAddress": ""
+     },
+     "updateAuthor": {
+      "accountId": "u-juniper",
+      "displayName": "Juniper Hale",
+      "active": true,
+      "avatarUrls": {
+       "48x48": ""
+      },
+      "emailAddress": ""
+     },
+     "body": "A note on PAY-1142, the first.",
+     "created": "2026-11-10T09:00:00.000+0000",
+     "updated": "2026-11-10T09:00:00.000+0000"
+    },
+    {
+     "id": "311421",
+     "author": {
+      "accountId": "u-kestrel",
+      "displayName": "Kestrel Okafor",
+      "active": true,
+      "avatarUrls": {
+       "48x48": ""
+      },
+      "emailAddress": ""
+     },
+     "updateAuthor": {
+      "accountId": "u-kestrel",
+      "displayName": "Kestrel Okafor",
+      "active": true,
+      "avatarUrls": {
+       "48x48": ""
+      },
+      "emailAddress": ""
+     },
+     "body": "A note on PAY-1142, the second.",
+     "created": "2026-11-11T09:07:00.000+0000",
+     "updated": "2026-11-11T09:07:00.000+0000"
+    }
+   ],
+   "total": 2,
+   "maxResults": 50,
+   "startAt": 0
+  },
+  "subtasks": [],
+  "issuelinks": [],
+  "epic": {
+   "id": 20360,
+   "key": "PAY-360",
+   "name": "Reconcile merchant reports with the ledger every night",
+   "summary": "Reconcile merchant reports with the ledger every night",
+   "color": {
+    "key": "color_3"
+   },
+   "done": false
+  },
+  "sprint": {
+   "id": 36,
+   "name": "Reconciliation squad Q4 sprint 3",
+   "state": "active",
+   "startDate": "2026-11-10T09:00:00.000Z",
+   "endDate": "2026-11-21T17:00:00.000Z",
+   "originBoardId": 7,
+   "goal": "Move every nightly reconciliation job onto the replica, retire the old ledger exporter and get the merchant statement totals to match the bank to the cent before the quarter closes"
+  },
+  "customfield_10020": [
+   {
+    "id": 36,
+    "name": "Reconciliation squad Q4 sprint 3",
+    "state": "active",
+    "startDate": "2026-11-10T09:00:00.000Z",
+    "endDate": "2026-11-21T17:00:00.000Z",
+    "originBoardId": 7,
+    "goal": "Move every nightly reconciliation job onto the replica, retire the old ledger exporter and get the merchant statement totals to match the bank to the cent before the quarter closes"
+   }
+  ],
+  "customfield_10016": null,
+  "duedate": null,
+  "components": [],
+  "fixVersions": [],
+  "parent": {
+   "id": "20360",
+   "key": "PAY-360",
+   "fields": {
+    "summary": "Reconcile merchant reports with the ledger every night",
+    "status": {
+     "id": "3",
+     "name": "In Progress",
+     "statusCategory": {
+      "id": 4,
+      "key": "indeterminate",
+      "name": "In Progress"
+     }
+    },
+    "issuetype": {
+     "id": "10000",
+     "name": "Epic",
+     "subtask": false,
+     "hierarchyLevel": 1
+    }
+   }
+  },
+  "description": "",
+  "attachment": []
+ }
+}

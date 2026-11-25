@@ -1,3 +1,2955 @@
 {
- "issues": []
+ "startAt": 0,
+ "maxResults": 38,
+ "total": 38,
+ "issues": [
+  {
+   "id": "51001",
+   "key": "PLAT-1001",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/51001",
+   "fields": {
+    "summary": "Batch card tokens",
+    "issuetype": {
+     "id": "10001",
+     "name": "Story",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "3",
+     "name": "In Progress",
+     "statusCategory": {
+      "id": 4,
+      "key": "indeterminate",
+      "name": "In Progress"
+     }
+    },
+    "priority": {
+     "id": "2",
+     "name": "High"
+    },
+    "assignee": null,
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-05T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10012",
+     "key": "PLAT",
+     "name": "Platform"
+    },
+    "comment": {
+     "comments": [],
+     "total": 2,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": null,
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": []
+   }
+  },
+  {
+   "id": "51002",
+   "key": "PLAT-1002",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/51002",
+   "fields": {
+    "summary": "Throttle the risk score",
+    "issuetype": {
+     "id": "10004",
+     "name": "Bug",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10002",
+     "name": "Done",
+     "statusCategory": {
+      "id": 3,
+      "key": "done",
+      "name": "Done"
+     }
+    },
+    "priority": {
+     "id": "4",
+     "name": "Low"
+    },
+    "assignee": {
+     "accountId": "u-ember",
+     "displayName": "Ember Lind",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-ember",
+     "displayName": "Ember Lind",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-06T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10012",
+     "key": "PLAT",
+     "name": "Platform"
+    },
+    "comment": {
+     "comments": [],
+     "total": 0,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": null,
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": []
+   }
+  },
+  {
+   "id": "51003",
+   "key": "PLAT-1003",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/51003",
+   "fields": {
+    "summary": "Audit chargeback notices",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10002",
+     "name": "Done",
+     "statusCategory": {
+      "id": 3,
+      "key": "done",
+      "name": "Done"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-07T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10012",
+     "key": "PLAT",
+     "name": "Platform"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": null,
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": []
+   }
+  },
+  {
+   "id": "51004",
+   "key": "PLAT-1004",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/51004",
+   "fields": {
+    "summary": "Archive dispute evidence",
+    "issuetype": {
+     "id": "10001",
+     "name": "Story",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "1",
+     "name": "Highest"
+    },
+    "assignee": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-08T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10012",
+     "key": "PLAT",
+     "name": "Platform"
+    },
+    "comment": {
+     "comments": [],
+     "total": 2,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [
+     {
+      "id": "51005",
+      "key": "PLAT-1005",
+      "self": "https://acme.atlassian.net/rest/api/2/issue/51005",
+      "fields": {
+       "summary": "Write the tests for it",
+       "status": {
+        "id": "10000",
+        "name": "To Do",
+        "statusCategory": {
+         "id": 2,
+         "key": "new",
+         "name": "To Do"
+        }
+       },
+       "priority": {
+        "id": "1",
+        "name": "Highest"
+       },
+       "issuetype": {
+        "id": "10003",
+        "name": "Sub-task",
+        "subtask": true,
+        "hierarchyLevel": -1
+       }
+      }
+     },
+     {
+      "id": "51006",
+      "key": "PLAT-1006",
+      "self": "https://acme.atlassian.net/rest/api/2/issue/51006",
+      "fields": {
+       "summary": "Roll it out behind a flag",
+       "status": {
+        "id": "10000",
+        "name": "To Do",
+        "statusCategory": {
+         "id": 2,
+         "key": "new",
+         "name": "To Do"
+        }
+       },
+       "priority": {
+        "id": "3",
+        "name": "Medium"
+       },
+       "issuetype": {
+        "id": "10003",
+        "name": "Sub-task",
+        "subtask": true,
+        "hierarchyLevel": -1
+       }
+      }
+     }
+    ],
+    "issuelinks": [],
+    "epic": null,
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": []
+   }
+  },
+  {
+   "id": "51005",
+   "key": "PLAT-1005",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/51005",
+   "fields": {
+    "summary": "Write the tests for it",
+    "issuetype": {
+     "id": "10003",
+     "name": "Sub-task",
+     "subtask": true,
+     "hierarchyLevel": -1
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "1",
+     "name": "Highest"
+    },
+    "assignee": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-09T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10012",
+     "key": "PLAT",
+     "name": "Platform"
+    },
+    "comment": {
+     "comments": [],
+     "total": 2,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": null,
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "51004",
+     "key": "PLAT-1004",
+     "self": "https://acme.atlassian.net/rest/api/2/issue/51004",
+     "fields": {
+      "summary": "Archive dispute evidence",
+      "status": {
+       "id": "10000",
+       "name": "To Do",
+       "statusCategory": {
+        "id": 2,
+        "key": "new",
+        "name": "To Do"
+       }
+      },
+      "priority": {
+       "id": "1",
+       "name": "Highest"
+      },
+      "issuetype": {
+       "id": "10001",
+       "name": "Story",
+       "subtask": false,
+       "hierarchyLevel": 0
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "51006",
+   "key": "PLAT-1006",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/51006",
+   "fields": {
+    "summary": "Roll it out behind a flag",
+    "issuetype": {
+     "id": "10003",
+     "name": "Sub-task",
+     "subtask": true,
+     "hierarchyLevel": -1
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-10T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10012",
+     "key": "PLAT",
+     "name": "Platform"
+    },
+    "comment": {
+     "comments": [],
+     "total": 0,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": null,
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "51004",
+     "key": "PLAT-1004",
+     "self": "https://acme.atlassian.net/rest/api/2/issue/51004",
+     "fields": {
+      "summary": "Archive dispute evidence",
+      "status": {
+       "id": "10000",
+       "name": "To Do",
+       "statusCategory": {
+        "id": 2,
+        "key": "new",
+        "name": "To Do"
+       }
+      },
+      "priority": {
+       "id": "1",
+       "name": "Highest"
+      },
+      "issuetype": {
+       "id": "10001",
+       "name": "Story",
+       "subtask": false,
+       "hierarchyLevel": 0
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "51007",
+   "key": "PLAT-1007",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/51007",
+   "fields": {
+    "summary": "Document payout holds",
+    "issuetype": {
+     "id": "10004",
+     "name": "Bug",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10002",
+     "name": "Done",
+     "statusCategory": {
+      "id": 3,
+      "key": "done",
+      "name": "Done"
+     }
+    },
+    "priority": {
+     "id": "4",
+     "name": "Low"
+    },
+    "assignee": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-11T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10012",
+     "key": "PLAT",
+     "name": "Platform"
+    },
+    "comment": {
+     "comments": [],
+     "total": 2,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": null,
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": []
+   }
+  },
+  {
+   "id": "51008",
+   "key": "PLAT-1008",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/51008",
+   "fields": {
+    "summary": "Retry the payout calendar",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10002",
+     "name": "Done",
+     "statusCategory": {
+      "id": 3,
+      "key": "done",
+      "name": "Done"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-03T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10012",
+     "key": "PLAT",
+     "name": "Platform"
+    },
+    "comment": {
+     "comments": [],
+     "total": 0,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": null,
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": []
+   }
+  },
+  {
+   "id": "51009",
+   "key": "PLAT-1009",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/51009",
+   "fields": {
+    "summary": "Log failed captures",
+    "issuetype": {
+     "id": "10001",
+     "name": "Story",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "1",
+     "name": "Highest"
+    },
+    "assignee": {
+     "accountId": "u-juniper",
+     "displayName": "Juniper Hale",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-juniper",
+     "displayName": "Juniper Hale",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-04T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10012",
+     "key": "PLAT",
+     "name": "Platform"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": null,
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": []
+   }
+  },
+  {
+   "id": "51010",
+   "key": "PLAT-1010",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/51010",
+   "fields": {
+    "summary": "Show the reconciliation diff",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": null,
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-05T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10012",
+     "key": "PLAT",
+     "name": "Platform"
+    },
+    "comment": {
+     "comments": [],
+     "total": 2,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": null,
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": []
+   }
+  },
+  {
+   "id": "51011",
+   "key": "PLAT-1011",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/51011",
+   "fields": {
+    "summary": "Cache refunds after a gateway timeout",
+    "issuetype": {
+     "id": "10001",
+     "name": "Story",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "3",
+     "name": "In Progress",
+     "statusCategory": {
+      "id": 4,
+      "key": "indeterminate",
+      "name": "In Progress"
+     }
+    },
+    "priority": {
+     "id": "2",
+     "name": "High"
+    },
+    "assignee": {
+     "accountId": "u-ember",
+     "displayName": "Ember Lind",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-ember",
+     "displayName": "Ember Lind",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-06T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10012",
+     "key": "PLAT",
+     "name": "Platform"
+    },
+    "comment": {
+     "comments": [],
+     "total": 0,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": null,
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": []
+   }
+  },
+  {
+   "id": "51012",
+   "key": "PLAT-1012",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/51012",
+   "fields": {
+    "summary": "Explain the nightly ledger close",
+    "issuetype": {
+     "id": "10004",
+     "name": "Bug",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10002",
+     "name": "Done",
+     "statusCategory": {
+      "id": 3,
+      "key": "done",
+      "name": "Done"
+     }
+    },
+    "priority": {
+     "id": "4",
+     "name": "Low"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-07T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10012",
+     "key": "PLAT",
+     "name": "Platform"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": null,
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": []
+   }
+  },
+  {
+   "id": "51013",
+   "key": "PLAT-1013",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/51013",
+   "fields": {
+    "summary": "Rename partial refunds",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10002",
+     "name": "Done",
+     "statusCategory": {
+      "id": 3,
+      "key": "done",
+      "name": "Done"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-08T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10012",
+     "key": "PLAT",
+     "name": "Platform"
+    },
+    "comment": {
+     "comments": [],
+     "total": 2,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": null,
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": []
+   }
+  },
+  {
+   "id": "51014",
+   "key": "PLAT-1014",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/51014",
+   "fields": {
+    "summary": "Split the settlement report",
+    "issuetype": {
+     "id": "10001",
+     "name": "Story",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "1",
+     "name": "Highest"
+    },
+    "assignee": {
+     "accountId": "u-ember",
+     "displayName": "Ember Lind",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-ember",
+     "displayName": "Ember Lind",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-09T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10012",
+     "key": "PLAT",
+     "name": "Platform"
+    },
+    "comment": {
+     "comments": [],
+     "total": 0,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [
+     {
+      "id": "51015",
+      "key": "PLAT-1015",
+      "self": "https://acme.atlassian.net/rest/api/2/issue/51015",
+      "fields": {
+       "summary": "Write the tests for it",
+       "status": {
+        "id": "10000",
+        "name": "To Do",
+        "statusCategory": {
+         "id": 2,
+         "key": "new",
+         "name": "To Do"
+        }
+       },
+       "priority": {
+        "id": "1",
+        "name": "Highest"
+       },
+       "issuetype": {
+        "id": "10003",
+        "name": "Sub-task",
+        "subtask": true,
+        "hierarchyLevel": -1
+       }
+      }
+     },
+     {
+      "id": "51016",
+      "key": "PLAT-1016",
+      "self": "https://acme.atlassian.net/rest/api/2/issue/51016",
+      "fields": {
+       "summary": "Roll it out behind a flag",
+       "status": {
+        "id": "10000",
+        "name": "To Do",
+        "statusCategory": {
+         "id": 2,
+         "key": "new",
+         "name": "To Do"
+        }
+       },
+       "priority": {
+        "id": "3",
+        "name": "Medium"
+       },
+       "issuetype": {
+        "id": "10003",
+        "name": "Sub-task",
+        "subtask": true,
+        "hierarchyLevel": -1
+       }
+      }
+     }
+    ],
+    "issuelinks": [],
+    "epic": null,
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": []
+   }
+  },
+  {
+   "id": "51015",
+   "key": "PLAT-1015",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/51015",
+   "fields": {
+    "summary": "Write the tests for it",
+    "issuetype": {
+     "id": "10003",
+     "name": "Sub-task",
+     "subtask": true,
+     "hierarchyLevel": -1
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "1",
+     "name": "Highest"
+    },
+    "assignee": {
+     "accountId": "u-ember",
+     "displayName": "Ember Lind",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-ember",
+     "displayName": "Ember Lind",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-10T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10012",
+     "key": "PLAT",
+     "name": "Platform"
+    },
+    "comment": {
+     "comments": [],
+     "total": 0,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": null,
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "51014",
+     "key": "PLAT-1014",
+     "self": "https://acme.atlassian.net/rest/api/2/issue/51014",
+     "fields": {
+      "summary": "Split the settlement report",
+      "status": {
+       "id": "10000",
+       "name": "To Do",
+       "statusCategory": {
+        "id": 2,
+        "key": "new",
+        "name": "To Do"
+       }
+      },
+      "priority": {
+       "id": "1",
+       "name": "Highest"
+      },
+      "issuetype": {
+       "id": "10001",
+       "name": "Story",
+       "subtask": false,
+       "hierarchyLevel": 0
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "51016",
+   "key": "PLAT-1016",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/51016",
+   "fields": {
+    "summary": "Roll it out behind a flag",
+    "issuetype": {
+     "id": "10003",
+     "name": "Sub-task",
+     "subtask": true,
+     "hierarchyLevel": -1
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-ember",
+     "displayName": "Ember Lind",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-ember",
+     "displayName": "Ember Lind",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-11T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10012",
+     "key": "PLAT",
+     "name": "Platform"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": null,
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "51014",
+     "key": "PLAT-1014",
+     "self": "https://acme.atlassian.net/rest/api/2/issue/51014",
+     "fields": {
+      "summary": "Split the settlement report",
+      "status": {
+       "id": "10000",
+       "name": "To Do",
+       "statusCategory": {
+        "id": 2,
+        "key": "new",
+        "name": "To Do"
+       }
+      },
+      "priority": {
+       "id": "1",
+       "name": "Highest"
+      },
+      "issuetype": {
+       "id": "10001",
+       "name": "Story",
+       "subtask": false,
+       "hierarchyLevel": 0
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "51017",
+   "key": "PLAT-1017",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/51017",
+   "fields": {
+    "summary": "Batch merchant payouts",
+    "issuetype": {
+     "id": "10004",
+     "name": "Bug",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10002",
+     "name": "Done",
+     "statusCategory": {
+      "id": 3,
+      "key": "done",
+      "name": "Done"
+     }
+    },
+    "priority": {
+     "id": "4",
+     "name": "Low"
+    },
+    "assignee": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-03T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10012",
+     "key": "PLAT",
+     "name": "Platform"
+    },
+    "comment": {
+     "comments": [],
+     "total": 0,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": null,
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": []
+   }
+  },
+  {
+   "id": "51018",
+   "key": "PLAT-1018",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/51018",
+   "fields": {
+    "summary": "Throttle card tokens",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10002",
+     "name": "Done",
+     "statusCategory": {
+      "id": 3,
+      "key": "done",
+      "name": "Done"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-juniper",
+     "displayName": "Juniper Hale",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-juniper",
+     "displayName": "Juniper Hale",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-04T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10012",
+     "key": "PLAT",
+     "name": "Platform"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": null,
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": []
+   }
+  },
+  {
+   "id": "51019",
+   "key": "PLAT-1019",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/51019",
+   "fields": {
+    "summary": "Audit the risk score",
+    "issuetype": {
+     "id": "10001",
+     "name": "Story",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "1",
+     "name": "Highest"
+    },
+    "assignee": null,
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-05T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10012",
+     "key": "PLAT",
+     "name": "Platform"
+    },
+    "comment": {
+     "comments": [],
+     "total": 2,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": null,
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": []
+   }
+  },
+  {
+   "id": "51020",
+   "key": "PLAT-1020",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/51020",
+   "fields": {
+    "summary": "Archive chargeback notices",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-ember",
+     "displayName": "Ember Lind",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-ember",
+     "displayName": "Ember Lind",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-06T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10012",
+     "key": "PLAT",
+     "name": "Platform"
+    },
+    "comment": {
+     "comments": [],
+     "total": 0,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": null,
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": []
+   }
+  },
+  {
+   "id": "51021",
+   "key": "PLAT-1021",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/51021",
+   "fields": {
+    "summary": "Backfill dispute evidence",
+    "issuetype": {
+     "id": "10001",
+     "name": "Story",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "3",
+     "name": "In Progress",
+     "statusCategory": {
+      "id": 4,
+      "key": "indeterminate",
+      "name": "In Progress"
+     }
+    },
+    "priority": {
+     "id": "2",
+     "name": "High"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-07T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10012",
+     "key": "PLAT",
+     "name": "Platform"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": null,
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": []
+   }
+  },
+  {
+   "id": "51022",
+   "key": "PLAT-1022",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/51022",
+   "fields": {
+    "summary": "Index invoice numbers",
+    "issuetype": {
+     "id": "10004",
+     "name": "Bug",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10002",
+     "name": "Done",
+     "statusCategory": {
+      "id": 3,
+      "key": "done",
+      "name": "Done"
+     }
+    },
+    "priority": {
+     "id": "4",
+     "name": "Low"
+    },
+    "assignee": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-08T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10012",
+     "key": "PLAT",
+     "name": "Platform"
+    },
+    "comment": {
+     "comments": [],
+     "total": 2,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": null,
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": []
+   }
+  },
+  {
+   "id": "51023",
+   "key": "PLAT-1023",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/51023",
+   "fields": {
+    "summary": "Document the currency table",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10002",
+     "name": "Done",
+     "statusCategory": {
+      "id": 3,
+      "key": "done",
+      "name": "Done"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-ember",
+     "displayName": "Ember Lind",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-ember",
+     "displayName": "Ember Lind",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-09T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10012",
+     "key": "PLAT",
+     "name": "Platform"
+    },
+    "comment": {
+     "comments": [],
+     "total": 0,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": null,
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": []
+   }
+  },
+  {
+   "id": "51024",
+   "key": "PLAT-1024",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/51024",
+   "fields": {
+    "summary": "Retry fee schedules",
+    "issuetype": {
+     "id": "10001",
+     "name": "Story",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "1",
+     "name": "Highest"
+    },
+    "assignee": null,
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-10T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10012",
+     "key": "PLAT",
+     "name": "Platform"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [
+     {
+      "id": "51025",
+      "key": "PLAT-1025",
+      "self": "https://acme.atlassian.net/rest/api/2/issue/51025",
+      "fields": {
+       "summary": "Write the tests for it",
+       "status": {
+        "id": "10000",
+        "name": "To Do",
+        "statusCategory": {
+         "id": 2,
+         "key": "new",
+         "name": "To Do"
+        }
+       },
+       "priority": {
+        "id": "1",
+        "name": "Highest"
+       },
+       "issuetype": {
+        "id": "10003",
+        "name": "Sub-task",
+        "subtask": true,
+        "hierarchyLevel": -1
+       }
+      }
+     },
+     {
+      "id": "51026",
+      "key": "PLAT-1026",
+      "self": "https://acme.atlassian.net/rest/api/2/issue/51026",
+      "fields": {
+       "summary": "Roll it out behind a flag",
+       "status": {
+        "id": "10000",
+        "name": "To Do",
+        "statusCategory": {
+         "id": 2,
+         "key": "new",
+         "name": "To Do"
+        }
+       },
+       "priority": {
+        "id": "3",
+        "name": "Medium"
+       },
+       "issuetype": {
+        "id": "10003",
+        "name": "Sub-task",
+        "subtask": true,
+        "hierarchyLevel": -1
+       }
+      }
+     }
+    ],
+    "issuelinks": [],
+    "epic": null,
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": []
+   }
+  },
+  {
+   "id": "51025",
+   "key": "PLAT-1025",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/51025",
+   "fields": {
+    "summary": "Write the tests for it",
+    "issuetype": {
+     "id": "10003",
+     "name": "Sub-task",
+     "subtask": true,
+     "hierarchyLevel": -1
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "1",
+     "name": "Highest"
+    },
+    "assignee": null,
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-11T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10012",
+     "key": "PLAT",
+     "name": "Platform"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": null,
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "51024",
+     "key": "PLAT-1024",
+     "self": "https://acme.atlassian.net/rest/api/2/issue/51024",
+     "fields": {
+      "summary": "Retry fee schedules",
+      "status": {
+       "id": "10000",
+       "name": "To Do",
+       "statusCategory": {
+        "id": 2,
+        "key": "new",
+        "name": "To Do"
+       }
+      },
+      "priority": {
+       "id": "1",
+       "name": "Highest"
+      },
+      "issuetype": {
+       "id": "10001",
+       "name": "Story",
+       "subtask": false,
+       "hierarchyLevel": 0
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "51026",
+   "key": "PLAT-1026",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/51026",
+   "fields": {
+    "summary": "Roll it out behind a flag",
+    "issuetype": {
+     "id": "10003",
+     "name": "Sub-task",
+     "subtask": true,
+     "hierarchyLevel": -1
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": null,
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-03T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10012",
+     "key": "PLAT",
+     "name": "Platform"
+    },
+    "comment": {
+     "comments": [],
+     "total": 2,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": null,
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "51024",
+     "key": "PLAT-1024",
+     "self": "https://acme.atlassian.net/rest/api/2/issue/51024",
+     "fields": {
+      "summary": "Retry fee schedules",
+      "status": {
+       "id": "10000",
+       "name": "To Do",
+       "statusCategory": {
+        "id": 2,
+        "key": "new",
+        "name": "To Do"
+       }
+      },
+      "priority": {
+       "id": "1",
+       "name": "Highest"
+      },
+      "issuetype": {
+       "id": "10001",
+       "name": "Story",
+       "subtask": false,
+       "hierarchyLevel": 0
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "51027",
+   "key": "PLAT-1027",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/51027",
+   "fields": {
+    "summary": "Cache the reconciliation diff",
+    "issuetype": {
+     "id": "10004",
+     "name": "Bug",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10002",
+     "name": "Done",
+     "statusCategory": {
+      "id": 3,
+      "key": "done",
+      "name": "Done"
+     }
+    },
+    "priority": {
+     "id": "4",
+     "name": "Low"
+    },
+    "assignee": {
+     "accountId": "u-juniper",
+     "displayName": "Juniper Hale",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-juniper",
+     "displayName": "Juniper Hale",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-04T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10012",
+     "key": "PLAT",
+     "name": "Platform"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": null,
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": []
+   }
+  },
+  {
+   "id": "51028",
+   "key": "PLAT-1028",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/51028",
+   "fields": {
+    "summary": "Explain refunds after a gateway timeout",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10002",
+     "name": "Done",
+     "statusCategory": {
+      "id": 3,
+      "key": "done",
+      "name": "Done"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": null,
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-05T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10012",
+     "key": "PLAT",
+     "name": "Platform"
+    },
+    "comment": {
+     "comments": [],
+     "total": 2,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": null,
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": []
+   }
+  },
+  {
+   "id": "51029",
+   "key": "PLAT-1029",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/51029",
+   "fields": {
+    "summary": "Rename the nightly ledger close",
+    "issuetype": {
+     "id": "10001",
+     "name": "Story",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "1",
+     "name": "Highest"
+    },
+    "assignee": {
+     "accountId": "u-ember",
+     "displayName": "Ember Lind",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-ember",
+     "displayName": "Ember Lind",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-06T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10012",
+     "key": "PLAT",
+     "name": "Platform"
+    },
+    "comment": {
+     "comments": [],
+     "total": 0,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": null,
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": []
+   }
+  },
+  {
+   "id": "51030",
+   "key": "PLAT-1030",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/51030",
+   "fields": {
+    "summary": "Split partial refunds",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-you",
+     "displayName": "Avery Quinn",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-07T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10012",
+     "key": "PLAT",
+     "name": "Platform"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": null,
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": []
+   }
+  },
+  {
+   "id": "51031",
+   "key": "PLAT-1031",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/51031",
+   "fields": {
+    "summary": "Validate the settlement report",
+    "issuetype": {
+     "id": "10001",
+     "name": "Story",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "3",
+     "name": "In Progress",
+     "statusCategory": {
+      "id": 4,
+      "key": "indeterminate",
+      "name": "In Progress"
+     }
+    },
+    "priority": {
+     "id": "2",
+     "name": "High"
+    },
+    "assignee": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-08T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10012",
+     "key": "PLAT",
+     "name": "Platform"
+    },
+    "comment": {
+     "comments": [],
+     "total": 2,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": null,
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": []
+   }
+  },
+  {
+   "id": "51032",
+   "key": "PLAT-1032",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/51032",
+   "fields": {
+    "summary": "Export statement totals",
+    "issuetype": {
+     "id": "10004",
+     "name": "Bug",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10002",
+     "name": "Done",
+     "statusCategory": {
+      "id": 3,
+      "key": "done",
+      "name": "Done"
+     }
+    },
+    "priority": {
+     "id": "4",
+     "name": "Low"
+    },
+    "assignee": {
+     "accountId": "u-ember",
+     "displayName": "Ember Lind",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-ember",
+     "displayName": "Ember Lind",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-09T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10012",
+     "key": "PLAT",
+     "name": "Platform"
+    },
+    "comment": {
+     "comments": [],
+     "total": 0,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": null,
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": []
+   }
+  },
+  {
+   "id": "51033",
+   "key": "PLAT-1033",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/51033",
+   "fields": {
+    "summary": "Batch merchant onboarding checks",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10002",
+     "name": "Done",
+     "statusCategory": {
+      "id": 3,
+      "key": "done",
+      "name": "Done"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": null,
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-10T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10012",
+     "key": "PLAT",
+     "name": "Platform"
+    },
+    "comment": {
+     "comments": [],
+     "total": 1,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": null,
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": []
+   }
+  },
+  {
+   "id": "51034",
+   "key": "PLAT-1034",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/51034",
+   "fields": {
+    "summary": "Throttle merchant payouts",
+    "issuetype": {
+     "id": "10001",
+     "name": "Story",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "1",
+     "name": "Highest"
+    },
+    "assignee": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-11T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10012",
+     "key": "PLAT",
+     "name": "Platform"
+    },
+    "comment": {
+     "comments": [],
+     "total": 2,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [
+     {
+      "id": "51035",
+      "key": "PLAT-1035",
+      "self": "https://acme.atlassian.net/rest/api/2/issue/51035",
+      "fields": {
+       "summary": "Write the tests for it",
+       "status": {
+        "id": "10000",
+        "name": "To Do",
+        "statusCategory": {
+         "id": 2,
+         "key": "new",
+         "name": "To Do"
+        }
+       },
+       "priority": {
+        "id": "1",
+        "name": "Highest"
+       },
+       "issuetype": {
+        "id": "10003",
+        "name": "Sub-task",
+        "subtask": true,
+        "hierarchyLevel": -1
+       }
+      }
+     },
+     {
+      "id": "51036",
+      "key": "PLAT-1036",
+      "self": "https://acme.atlassian.net/rest/api/2/issue/51036",
+      "fields": {
+       "summary": "Roll it out behind a flag",
+       "status": {
+        "id": "10000",
+        "name": "To Do",
+        "statusCategory": {
+         "id": 2,
+         "key": "new",
+         "name": "To Do"
+        }
+       },
+       "priority": {
+        "id": "3",
+        "name": "Medium"
+       },
+       "issuetype": {
+        "id": "10003",
+        "name": "Sub-task",
+        "subtask": true,
+        "hierarchyLevel": -1
+       }
+      }
+     }
+    ],
+    "issuelinks": [],
+    "epic": null,
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": []
+   }
+  },
+  {
+   "id": "51035",
+   "key": "PLAT-1035",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/51035",
+   "fields": {
+    "summary": "Write the tests for it",
+    "issuetype": {
+     "id": "10003",
+     "name": "Sub-task",
+     "subtask": true,
+     "hierarchyLevel": -1
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "1",
+     "name": "Highest"
+    },
+    "assignee": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-03T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10012",
+     "key": "PLAT",
+     "name": "Platform"
+    },
+    "comment": {
+     "comments": [],
+     "total": 2,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": null,
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "51034",
+     "key": "PLAT-1034",
+     "self": "https://acme.atlassian.net/rest/api/2/issue/51034",
+     "fields": {
+      "summary": "Throttle merchant payouts",
+      "status": {
+       "id": "10000",
+       "name": "To Do",
+       "statusCategory": {
+        "id": 2,
+        "key": "new",
+        "name": "To Do"
+       }
+      },
+      "priority": {
+       "id": "1",
+       "name": "Highest"
+      },
+      "issuetype": {
+       "id": "10001",
+       "name": "Story",
+       "subtask": false,
+       "hierarchyLevel": 0
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "51036",
+   "key": "PLAT-1036",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/51036",
+   "fields": {
+    "summary": "Roll it out behind a flag",
+    "issuetype": {
+     "id": "10003",
+     "name": "Sub-task",
+     "subtask": true,
+     "hierarchyLevel": -1
+    },
+    "status": {
+     "id": "10000",
+     "name": "To Do",
+     "statusCategory": {
+      "id": 2,
+      "key": "new",
+      "name": "To Do"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-04T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10012",
+     "key": "PLAT",
+     "name": "Platform"
+    },
+    "comment": {
+     "comments": [],
+     "total": 0,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": null,
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": [],
+    "parent": {
+     "id": "51034",
+     "key": "PLAT-1034",
+     "self": "https://acme.atlassian.net/rest/api/2/issue/51034",
+     "fields": {
+      "summary": "Throttle merchant payouts",
+      "status": {
+       "id": "10000",
+       "name": "To Do",
+       "statusCategory": {
+        "id": 2,
+        "key": "new",
+        "name": "To Do"
+       }
+      },
+      "priority": {
+       "id": "1",
+       "name": "Highest"
+      },
+      "issuetype": {
+       "id": "10001",
+       "name": "Story",
+       "subtask": false,
+       "hierarchyLevel": 0
+      }
+     }
+    }
+   }
+  },
+  {
+   "id": "51037",
+   "key": "PLAT-1037",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/51037",
+   "fields": {
+    "summary": "Backfill chargeback notices",
+    "issuetype": {
+     "id": "10004",
+     "name": "Bug",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10002",
+     "name": "Done",
+     "statusCategory": {
+      "id": 3,
+      "key": "done",
+      "name": "Done"
+     }
+    },
+    "priority": {
+     "id": "4",
+     "name": "Low"
+    },
+    "assignee": null,
+    "reporter": {
+     "accountId": "u-kestrel",
+     "displayName": "Kestrel Okafor",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-05T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10012",
+     "key": "PLAT",
+     "name": "Platform"
+    },
+    "comment": {
+     "comments": [],
+     "total": 2,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": null,
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": []
+   }
+  },
+  {
+   "id": "51038",
+   "key": "PLAT-1038",
+   "self": "https://acme.atlassian.net/rest/agile/1.0/issue/51038",
+   "fields": {
+    "summary": "Index dispute evidence",
+    "issuetype": {
+     "id": "10002",
+     "name": "Task",
+     "subtask": false,
+     "hierarchyLevel": 0
+    },
+    "status": {
+     "id": "10002",
+     "name": "Done",
+     "statusCategory": {
+      "id": 3,
+      "key": "done",
+      "name": "Done"
+     }
+    },
+    "priority": {
+     "id": "3",
+     "name": "Medium"
+    },
+    "assignee": {
+     "accountId": "u-ember",
+     "displayName": "Ember Lind",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "reporter": {
+     "accountId": "u-ember",
+     "displayName": "Ember Lind",
+     "active": true,
+     "avatarUrls": {
+      "48x48": ""
+     },
+     "emailAddress": ""
+    },
+    "labels": [],
+    "updated": "2026-11-06T09:00:00.000+0000",
+    "created": "2026-11-03T09:00:00.000+0000",
+    "project": {
+     "id": "10012",
+     "key": "PLAT",
+     "name": "Platform"
+    },
+    "comment": {
+     "comments": [],
+     "total": 0,
+     "maxResults": 50,
+     "startAt": 0
+    },
+    "subtasks": [],
+    "issuelinks": [],
+    "epic": null,
+    "sprint": null,
+    "customfield_10020": null,
+    "customfield_10016": null,
+    "duedate": null,
+    "components": [],
+    "fixVersions": []
+   }
+  }
+ ]
 }

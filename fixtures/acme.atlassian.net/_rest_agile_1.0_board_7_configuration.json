@@ -1,6 +1,7 @@
 {
  "id": 7,
  "name": "Payments",
+ "type": "scrum",
  "columnConfig": {
   "columns": [
    {

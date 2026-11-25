@@ -1,5 +1,7 @@
 {
  "id": 9,
+ "name": "Platform",
+ "type": "kanban",
  "columnConfig": {
   "columns": [
    {
@@ -7,6 +9,14 @@
     "statuses": [
      {
       "id": "10000"
+     }
+    ]
+   },
+   {
+    "name": "In progress",
+    "statuses": [
+     {
+      "id": "3"
      }
     ]
    },
@@ -19,5 +29,9 @@
     ]
    }
   ]
+ },
+ "location": {
+  "type": "project",
+  "key": "PLAT"
  }
 }
