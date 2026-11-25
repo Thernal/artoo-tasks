@@ -420,7 +420,8 @@ impl Page {
                     look::small_button("tasks-retry", "Retry")
                         .tip("Read again  ⌘R")
                         .on_click(cx.listener(|this, _: &ClickEvent, _, cx| {
-                            this.store.update(cx, |s, cx| s.read_board(true, cx))
+                            this.store
+                                .update(cx, |s, cx| s.read_board(crate::store::Ask::Reload, cx))
                         })),
                 );
         }
@@ -483,6 +484,11 @@ impl Page {
         let group = shown.group;
         let ends = shown.info.active().and_then(|s| s.end.as_ref());
         line.child(div().flex_1())
+            // Painted as the Mac kept it, until the tracker answers.
+            .children(
+                self.kept_at(cx)
+                    .map(|at| div().text_color(theme::faint()).child(format!("from {at}"))),
+            )
             .children(ends.map(|end| {
                 let day = model::day_words(end);
                 div()
@@ -1925,6 +1931,14 @@ impl Page {
             .map(|(host, at)| (host, artoo_plugin_sdk::kit::format::clock(at)))
     }
 
+    /// When the board picked was read, while it is shown as the Mac kept it.
+    fn kept_at(&self, cx: &App) -> Option<String> {
+        let s = self.store.read(cx);
+        let board = s.board.as_ref().filter(|b| s.from_disk.contains(*b))?;
+        let at = s.read_at.get(board).copied()?;
+        Some(artoo_plugin_sdk::kit::format::clock(at))
+    }
+
     fn page_frame(&self) -> Div {
         artoo_plugin_sdk::kit::island()
             .flex_1()
@@ -2006,6 +2020,7 @@ mod tests {
                 state: "active".into(),
                 end: None,
             }],
+            ..Default::default()
         }
     }
 

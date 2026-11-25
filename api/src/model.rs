@@ -234,6 +234,10 @@ pub struct BoardInfo {
     pub columns: Vec<Column>,
     pub epics: Vec<Epic>,
     pub sprints: Vec<Sprint>,
+    /// The epics could not be read this time: the empty list is not the board's, and what was read before holds.
+    pub epics_unread: bool,
+    /// As `epics_unread`, for the sprints.
+    pub sprints_unread: bool,
 }
 
 impl BoardInfo {

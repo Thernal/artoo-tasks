@@ -6,7 +6,7 @@
 use crate::agents::{self as places_of, ISSUE};
 use crate::keep::{Group, View};
 use crate::model::BoardId;
-use crate::store::{Read, Store};
+use crate::store::{Ask, Read, Store};
 use artoo_plugin_sdk::agents::places;
 use artoo_plugin_sdk::core::markdown::Helper;
 use artoo_plugin_sdk::core::route::Route;
@@ -229,23 +229,10 @@ impl Page {
             cx.notify()
         })
         .detach();
-        // What is on screen is read again every minute while the window is in front, and as it comes there
-        // (`Page::window_front`): someone else's change shows (`Store::note_change`).
-        cx.spawn(async move |this, cx| {
-            loop {
-                cx.background_executor()
-                    .timer(Duration::from_secs(60))
-                    .await;
-                let Ok(()) = this.update(cx, |p, cx| {
-                    if p.front {
-                        p.read_again(cx)
-                    }
-                }) else {
-                    break;
-                };
-            }
-        })
-        .detach();
+        // What is on screen is read again every minute while the window is in front (the store's loop), and as it
+        // comes there (`Page::window_front`): someone else's change shows (`Store::note_change`).
+        let page = cx.weak_entity();
+        store.update(cx, |s, _| s.watch_page(page));
         Self {
             store,
             frame,
@@ -321,23 +308,32 @@ impl Page {
             .and_then(places_of::key_of)
     }
 
-    /// The issue or the board on screen read again, quietly.
     /// The tab's window come to the front (`front`) or gone behind another: what is on screen is read again as it
     /// comes.
     pub fn window_front(&mut self, front: bool, cx: &mut Context<Self>) {
         let came = front && !self.front;
         self.front = front;
         if came {
-            self.read_again(cx);
+            self.refresh(cx);
         }
     }
 
+    /// The issue or the board on screen read again by hand: all of it.
     pub fn read_again(&mut self, cx: &mut Context<Self>) {
+        self.read_shown(Ask::Reload, cx);
+    }
+
+    /// The issue or the board on screen read again, quietly.
+    pub fn refresh(&mut self, cx: &mut Context<Self>) {
+        self.read_shown(Ask::Refresh, cx);
+    }
+
+    fn read_shown(&mut self, ask: Ask, cx: &mut Context<Self>) {
         let key = self.issue_key();
         let site = self.route.as_ref().and_then(places_of::site_of);
         self.store.update(cx, |s, cx| match key {
             Some(key) => s.read_issue(&key, site.as_deref(), true, cx),
-            None => s.read_board(true, cx),
+            None => s.read_board(ask, cx),
         });
     }
 
@@ -372,7 +368,7 @@ impl Page {
             }
             None => {
                 s.read_boards(cx);
-                s.read_board(fresh, cx);
+                s.read_board(if fresh { Ask::Refresh } else { Ask::Show }, cx);
             }
         });
         cx.notify();

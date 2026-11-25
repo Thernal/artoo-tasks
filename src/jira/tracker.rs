@@ -255,10 +255,34 @@ fn board(site: &Site, b: &Value) -> Board {
     }
 }
 
-/// Board `id`'s columns, epics and sprints; a board without epics or sprints (kanban) has none, not a failure.
+/// Board `id`'s columns, epics and sprints, asked side by side; a board without epics or sprints (kanban) has none,
+/// not a failure.
 fn board_info(site: &Site, id: &str) -> Result<BoardInfo, String> {
-    let config = jira::get(site, &format!("/rest/agile/1.0/board/{id}/configuration"))?;
-    let columns = (config["columnConfig"]["columns"]
+    let list = |path: String| -> Option<Vec<Value>> {
+        jira::get(site, &path)
+            .ok()
+            .and_then(|v| v["values"].as_array().cloned())
+    };
+    let (config, epics, sprints) = std::thread::scope(|scope| {
+        let epics = scope.spawn(|| {
+            list(format!(
+                "/rest/agile/1.0/board/{id}/epic?done=false&maxResults=100"
+            ))
+        });
+        let sprints = scope.spawn(|| {
+            list(format!(
+                "/rest/agile/1.0/board/{id}/sprint?state=active,future&maxResults=50"
+            ))
+        });
+        let config = jira::get(site, &format!("/rest/agile/1.0/board/{id}/configuration"));
+        // A read that panicked is one not made.
+        (
+            config,
+            epics.join().ok().flatten(),
+            sprints.join().ok().flatten(),
+        )
+    });
+    let columns = (config?["columnConfig"]["columns"]
         .as_array()
         .into_iter()
         .flatten())
@@ -270,28 +294,12 @@ fn board_info(site: &Site, id: &str) -> Result<BoardInfo, String> {
     })
     .filter(|c| !c.states.is_empty())
     .collect();
-    let list = |path: String| -> Vec<Value> {
-        jira::get(site, &path)
-            .ok()
-            .and_then(|v| v["values"].as_array().cloned())
-            .unwrap_or_default()
-    };
-    let epics = list(format!(
-        "/rest/agile/1.0/board/{id}/epic?done=false&maxResults=100"
-    ))
-    .iter()
-    .filter_map(epic)
-    .collect();
-    let sprints = list(format!(
-        "/rest/agile/1.0/board/{id}/sprint?state=active,future&maxResults=50"
-    ))
-    .iter()
-    .filter_map(sprint)
-    .collect();
     Ok(BoardInfo {
         columns,
-        epics,
-        sprints,
+        epics_unread: epics.is_none(),
+        sprints_unread: sprints.is_none(),
+        epics: epics.iter().flatten().filter_map(epic).collect(),
+        sprints: sprints.iter().flatten().filter_map(sprint).collect(),
     })
 }
 

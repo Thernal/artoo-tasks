@@ -7,15 +7,37 @@
 //! What is kept on the Mac — drafts, an agent's comments waiting for Post, how each board is shown, the boards
 //! opened lately, a description being edited — is in the plugin's folder (`keep`).
 
+use crate::cache;
+use crate::flights::Flights;
 use crate::jira::{self, Site};
 use crate::keep;
 use crate::model::{
     self, Board, BoardId, BoardInfo, Field, Issue, Kind, Move, News, Person, Row, Write,
 };
-use artoo_plugin_sdk::gpui::{App, AppContext, Context, Entity, Global, Image, ImageFormat};
+use crate::page::Page;
+use artoo_plugin_sdk::gpui::{
+    App, AppContext, Context, Entity, Global, Image, ImageFormat, Task, WeakEntity,
+};
 use artoo_plugin_sdk::serde_json::Value;
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
+use std::time::Duration;
+
+/// How long a board's columns, epics and sprints are taken as read before a refresh asks for them again, seconds.
+const INFO_AGE: i64 = 600;
+
+/// Why a board is asked for.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Ask {
+    /// To be shown: read when it was not yet, or only kept from before.
+    Show,
+    /// The minute's refresh, or the board coming back on screen: its issues, the rest once old.
+    Refresh,
+    /// Read again by hand (⌘R, Retry): all of it.
+    Reload,
+    /// Something was written to the tracker: a read on its way may not have it.
+    Written,
+}
 
 /// A read: on its way, done, or why not.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -84,6 +106,19 @@ pub struct Store {
     pub read_at: HashMap<BoardId, i64>,
     /// Why a board could not be read again, over it as it was.
     pub stale: HashMap<BoardId, String>,
+    /// The boards painted as kept on the Mac, not read since the start.
+    pub from_disk: HashSet<BoardId>,
+    /// When each board's columns, epics and sprints were read last.
+    info_at: HashMap<BoardId, i64>,
+    row_reads: Flights<BoardId>,
+    info_reads: Flights<BoardId>,
+    move_reads: Flights<String>,
+    /// The boards' lists asked for so far: only the last one asked is taken.
+    boards_asked: u64,
+    /// The boards read last, as the Mac keeps them.
+    cache: cache::Cache,
+    /// The pages made, whose screens the minute's loop reads again.
+    pages: Vec<WeakEntity<Page>>,
     pub issues: HashMap<String, Read<Issue>>,
     pub moves: HashMap<String, Read<Vec<Move>>>,
     /// When each issue's moves were read, for its workflow's head.
@@ -106,14 +141,24 @@ pub struct Store {
     pub news: Vec<(String, News)>,
     /// The news read before, by `news_key`: one not among them is new.
     news_known: HashSet<String>,
-    /// News read at least once: what the first read finds is not toasted.
-    news_read: bool,
+    /// The sites whose news was read at least once: what a site's first read finds is not toasted.
+    news_read: HashSet<String>,
     /// News new since the last read, not toasted yet.
     pub news_fresh: Vec<(String, News)>,
     /// The news a toast's Open opens: the last toasted.
     pub news_last: Option<(String, String)>,
-    /// The news is read each minute.
+    /// The news is read as time goes.
     news_on: bool,
+    /// The minutes since the news was read.
+    news_waited: u32,
+}
+
+/// A site's news as it answered.
+type SiteNews = (String, Result<Vec<News>, String>);
+
+/// Whether the news is read after `waited` minutes: each minute while in front, every third behind.
+fn news_due(front: bool, waited: u32) -> bool {
+    waited >= if front { 1 } else { 3 }
 }
 
 /// A news' id among the others: its site, issue, kind and change.
@@ -138,15 +183,29 @@ pub fn get(cx: &mut App) -> Entity<Store> {
     crate::trackers::read_offered(cx);
     let (sites, missing) = jira::sites();
     let kept = keep::Kept::read();
-    let store = cx.new(|_| Store::blank(sites, missing, kept));
+    let cache = keep::folder()
+        .map(|dir| cache::Cache::read(dir.join("boards.json")))
+        .unwrap_or_default();
+    let store = cx.new(|_| Store::blank(sites, missing, kept, cache));
     cx.set_global(Shared(store.clone()));
+    store.update(cx, |s, cx| {
+        // The board shown last is read beside the boards' list, not after it.
+        s.read_boards(cx);
+        s.read_board(Ask::Show, cx);
+        s.keep_reading(cx);
+    });
     store
 }
 
 impl Store {
     /// Nothing read yet: the sites named, what is kept.
-    fn blank(sites: Vec<Site>, missing: Vec<String>, kept: keep::Kept) -> Self {
-        Store {
+    fn blank(
+        sites: Vec<Site>,
+        missing: Vec<String>,
+        kept: keep::Kept,
+        cache: cache::Cache,
+    ) -> Self {
+        let mut store = Store {
             sites,
             links: crate::links::read(),
             here: None,
@@ -161,6 +220,14 @@ impl Store {
             rows: HashMap::new(),
             read_at: HashMap::new(),
             stale: HashMap::new(),
+            from_disk: HashSet::new(),
+            info_at: HashMap::new(),
+            row_reads: Flights::default(),
+            info_reads: Flights::default(),
+            move_reads: Flights::default(),
+            boards_asked: 0,
+            cache,
+            pages: Vec::new(),
             issues: HashMap::new(),
             moves: HashMap::new(),
             moves_at: HashMap::new(),
@@ -177,18 +244,44 @@ impl Store {
             kept,
             news: Vec::new(),
             news_known: HashSet::new(),
-            news_read: false,
+            news_read: HashSet::new(),
             news_fresh: Vec::new(),
             news_last: None,
             news_on: false,
+            news_waited: 0,
+        };
+        store.paint_kept();
+        store
+    }
+
+    /// The boards kept on the Mac, as read when they were.
+    fn paint_kept(&mut self) {
+        for kept in &self.cache.boards {
+            let id = kept.board.key();
+            self.info.insert(id.clone(), Read::Done(kept.info.clone()));
+            self.rows.insert(id.clone(), Read::Done(kept.rows.clone()));
+            self.read_at.insert(id.clone(), kept.at);
+            self.from_disk.insert(id);
         }
+    }
+
+    /// The boards kept on the Mac whose accounts are still named.
+    fn kept_boards(&self) -> impl Iterator<Item = &Board> {
+        (self.cache.boards.iter())
+            .map(|s| &s.board)
+            .filter(|b| self.sites.iter().any(|s| s.key() == b.site))
     }
 }
 
 /// A store with nothing read and nothing kept, for a test.
 #[cfg(test)]
 pub fn test_store() -> Store {
-    Store::blank(Vec::new(), Vec::new(), keep::Kept::default())
+    Store::blank(
+        Vec::new(),
+        Vec::new(),
+        keep::Kept::default(),
+        cache::Cache::default(),
+    )
 }
 
 /// Reads `what` in the background and keeps it at `put` once in.
@@ -197,6 +290,15 @@ fn spawn_read<T: Send + 'static>(
     what: impl FnOnce() -> Result<T, String> + Send + 'static,
     put: impl FnOnce(&mut Store, Result<T, String>, &mut Context<Store>) + 'static,
 ) {
+    read_task(cx, what, put).detach();
+}
+
+/// `spawn_read`, given up when its task is dropped.
+fn read_task<T: Send + 'static>(
+    cx: &mut Context<Store>,
+    what: impl FnOnce() -> Result<T, String> + Send + 'static,
+    put: impl FnOnce(&mut Store, Result<T, String>, &mut Context<Store>) + 'static,
+) -> Task<()> {
     let task = cx.background_spawn(async move { what() });
     cx.spawn(async move |this, cx| {
         let read = task.await;
@@ -206,7 +308,6 @@ fn spawn_read<T: Send + 'static>(
         })
         .ok();
     })
-    .detach();
 }
 
 fn read_of<T>(r: Result<T, String>) -> Read<T> {
@@ -233,6 +334,8 @@ impl Store {
             return;
         }
         self.boards = Some(Read::Reading);
+        self.boards_asked += 1;
+        let asked = self.boards_asked;
         let reads: Vec<_> = (self.sites.iter().cloned())
             .map(|site| {
                 cx.background_spawn(async move {
@@ -254,7 +357,11 @@ impl Store {
                 }
             }
             this.update(cx, |this, cx| {
+                if this.boards_asked != asked {
+                    return;
+                }
                 this.me.extend(mes);
+                this.add_kept(&mut boards, &unread);
                 this.board = this.board_among(&boards);
                 this.boards = Some(if boards.is_empty() && !unread.is_empty() {
                     Read::Failed(
@@ -268,7 +375,7 @@ impl Store {
                     Read::Done(boards)
                 });
                 this.unread = unread;
-                this.read_board(false, cx);
+                this.read_board(Ask::Show, cx);
                 // Who you are is known now: what others did on your issues.
                 if this.news_on {
                     this.read_news(cx);
@@ -280,28 +387,77 @@ impl Store {
         .detach();
     }
 
-    /// The news read now and each minute after, from the first tab that lists it; once.
-    pub fn watch_news(&mut self, cx: &mut Context<Self>) {
-        if self.news_on || self.sites.is_empty() {
-            return;
-        }
-        self.news_on = true;
+    /// The boards of a site not reached that the Mac keeps, listed with the others'.
+    fn add_kept(&self, boards: &mut Vec<Board>, unread: &[(String, String)]) {
+        let kept: Vec<Board> = (self.kept_boards())
+            .filter(|k| unread.iter().any(|(host, _)| *host == k.site))
+            .filter(|k| !boards.iter().any(|b| b.key() == k.key()))
+            .cloned()
+            .collect();
+        boards.extend(kept);
+    }
+
+    /// `page`'s screen read again by the minute's loop for as long as it is there.
+    pub fn watch_page(&mut self, page: WeakEntity<Page>) {
+        self.pages.push(page);
+    }
+
+    /// The one loop, each minute: what each page in front shows is read again, and the news when it is due.
+    fn keep_reading(&mut self, cx: &mut Context<Self>) {
         cx.spawn(async move |this, cx| {
             loop {
-                let Ok(()) = this.update(cx, |s, cx| s.read_news(cx)) else {
+                cx.background_executor()
+                    .timer(Duration::from_secs(60))
+                    .await;
+                let Ok(pages) = this.update(cx, |s, _| {
+                    s.pages.retain(|p| p.upgrade().is_some());
+                    s.pages.clone()
+                }) else {
                     break;
                 };
-                cx.background_executor()
-                    .timer(std::time::Duration::from_secs(60))
-                    .await;
+                // The pages ask the store themselves, so they are told outside its own update.
+                let mut front = false;
+                for page in pages {
+                    page.update(cx, |page, cx| {
+                        if page.front {
+                            front = true;
+                            page.refresh(cx);
+                        }
+                    })
+                    .ok();
+                }
+                let Ok(()) = this.update(cx, |s, cx| s.news_minute(front, cx)) else {
+                    break;
+                };
             }
         })
         .detach();
     }
 
+    /// A minute gone, a window of Artoo in front or not.
+    fn news_minute(&mut self, front: bool, cx: &mut Context<Self>) {
+        if !self.news_on {
+            return;
+        }
+        self.news_waited += 1;
+        if news_due(front, self.news_waited) {
+            self.read_news(cx);
+        }
+    }
+
+    /// The news read now and as time goes on, from the first tab that lists it; once.
+    pub fn watch_news(&mut self, cx: &mut Context<Self>) {
+        if self.news_on || self.sites.is_empty() {
+            return;
+        }
+        self.news_on = true;
+        self.read_news(cx);
+    }
+
     /// What others did lately on your issues, every site's where who you are is known; the boards (and you) read
     /// first.
     fn read_news(&mut self, cx: &mut Context<Self>) {
+        self.news_waited = 0;
         if self.boards.is_none() {
             return self.read_boards(cx);
         }
@@ -319,28 +475,37 @@ impl Store {
             cx,
             move || {
                 Ok((sites.iter())
-                    .flat_map(|(site, me)| {
-                        let host = site.key().to_owned();
-                        (model::news(site, me).unwrap_or_default().into_iter())
-                            .map(move |n| (host.clone(), n))
-                    })
+                    .map(|(site, me)| (site.key().to_owned(), model::news(site, me)))
                     .collect::<Vec<_>>())
             },
-            |this, read: Result<Vec<(String, News)>, String>, _| {
-                let Ok(news) = read else {
-                    return;
-                };
-                let fresh = (news.iter())
-                    .filter(|(h, n)| !this.news_known.contains(&news_key(h, n)))
-                    .cloned();
-                if this.news_read {
-                    this.news_fresh.extend(fresh);
+            |this, read: Result<Vec<SiteNews>, String>, _| {
+                if let Ok(read) = read {
+                    this.take_news(read);
                 }
-                this.news_read = true;
-                (this.news_known).extend(news.iter().map(|(h, n)| news_key(h, n)));
-                this.news = news;
             },
         );
+    }
+
+    /// Each site's news as read; a site not read keeps what it had.
+    fn take_news(&mut self, mut read: Vec<SiteNews>) {
+        let mut news = Vec::new();
+        for site in &self.sites {
+            let host = site.key();
+            let got = (read.iter().position(|(h, _)| h == host)).map(|i| read.swap_remove(i).1);
+            let Some(Ok(got)) = got else {
+                news.extend(self.news.iter().filter(|(h, _)| h == host).cloned());
+                continue;
+            };
+            let first = self.news_read.insert(host.to_owned());
+            for n in got {
+                let new = self.news_known.insert(news_key(host, &n));
+                if new && !first {
+                    self.news_fresh.push((host.to_owned(), n.clone()));
+                }
+                news.push((host.to_owned(), n));
+            }
+        }
+        self.news = news;
     }
 
     /// The boards read again: a site not reached tried once more (Retry).
@@ -358,6 +523,8 @@ impl Store {
         self.missing = missing;
         self.me.clear();
         self.projects.clear();
+        // Asked with the accounts as they were.
+        self.drop_reads(|_| true);
         self.read_boards_again(cx);
         cx.notify();
     }
@@ -450,7 +617,17 @@ impl Store {
             Read::Failed(why.join(" · "))
         };
         Some(match self.boards.as_ref()? {
-            Read::Reading => Read::Reading,
+            Read::Reading => {
+                let kept: Vec<Board> = (self.kept_boards())
+                    .filter(|b| hosts.contains(&b.site))
+                    .cloned()
+                    .collect();
+                if kept.is_empty() {
+                    Read::Reading
+                } else {
+                    Read::Done(kept)
+                }
+            }
             Read::Failed(_) if unread.is_empty() => Read::Done(Vec::new()),
             Read::Failed(_) => failed(),
             Read::Done(boards) => {
@@ -497,13 +674,21 @@ impl Store {
     fn pick_here(&mut self, cx: &mut Context<Self>) {
         let boards = match &self.boards {
             Some(Read::Done(boards)) => boards.clone(),
-            _ => return cx.notify(),
+            // The list on its way: the project's own board at once, when the Mac keeps it.
+            _ => {
+                let kept: Vec<Board> = self.kept_boards().cloned().collect();
+                let own = (self.here.as_ref()).and_then(|p| self.kept.boards.get(p));
+                if !own.is_some_and(|own| kept.iter().any(|b| b.key() == *own)) {
+                    return cx.notify();
+                }
+                kept
+            }
         };
         let board = self.board_among(&boards);
         if board != self.board {
             self.board = board;
             self.faces.clear();
-            self.read_board(false, cx);
+            self.read_board(Ask::Show, cx);
         }
         cx.notify();
     }
@@ -513,59 +698,200 @@ impl Store {
         self.board = Some(id.clone());
         self.faces.clear();
         self.kept.opened_board(id, self.here.as_deref());
-        self.read_board(false, cx);
+        self.read_board(Ask::Show, cx);
         cx.notify();
     }
 
-    /// The board picked: its columns, epics and sprints, and its issues; read when they are not yet, or again with
-    /// `again` (quietly: what was read stays on screen, and a failure says so over it).
-    pub fn read_board(&mut self, again: bool, cx: &mut Context<Self>) {
+    /// The board picked: its columns, epics and sprints, and its issues, as `ask` needs them, quietly (what was read
+    /// stays on screen, and a failure says so over it). A board left is no longer read.
+    pub fn read_board(&mut self, ask: Ask, cx: &mut Context<Self>) {
         let Some(board) = self.board.clone() else {
             return;
         };
+        self.drop_reads(|b| *b != board);
         let Some(site) = self.site_of(&board.0) else {
             return;
         };
-        if again || !self.info.contains_key(&board) {
-            if !self.info.contains_key(&board) {
-                self.info.insert(board.clone(), Read::Reading);
-            }
+        if let Some(number) = self.begin_info(&board, ask, now()) {
             let (s, id, key) = (site.clone(), board.1.clone(), board.clone());
-            spawn_read(
+            let task = read_task(
                 cx,
                 move || model::board_info(&s, &id),
-                move |this, read, _| {
-                    if read.is_ok() || !matches!(this.info.get(&key), Some(Read::Done(_))) {
-                        this.info.insert(key, read_of(read));
+                move |this, read, cx| {
+                    if this.put_info(&key, number, read, now()) {
+                        this.keep_board(&key, cx);
                     }
                 },
             );
+            self.info_reads.hold(&board, number, task);
         }
-        if !again && self.rows.contains_key(&board) {
+        if let Some(number) = self.begin_rows(&board, ask) {
+            let (id, key) = (board.1.clone(), board.clone());
+            let task = read_task(
+                cx,
+                move || model::board_issues(&site, &id),
+                move |this, read, cx| {
+                    if this.put_rows(&key, number, read, now()) {
+                        this.keep_board(&key, cx);
+                    }
+                },
+            );
+            self.row_reads.hold(&board, number, task);
+        }
+    }
+
+    /// The read of `board`'s columns, epics and sprints that `ask` calls for, marked as on its way.
+    fn begin_info(&mut self, board: &BoardId, ask: Ask, now: i64) -> Option<u64> {
+        let read = self.info.get(board);
+        let at = self.info_at.get(board);
+        let wanted = match ask {
+            Ask::Reload => true,
+            Ask::Show => read.is_none() || (matches!(read, Some(Read::Done(_))) && at.is_none()),
+            Ask::Refresh | Ask::Written => at.is_none_or(|at| now - at >= INFO_AGE),
+        };
+        // `Reading` with no read on its way was never answered.
+        let wanted = wanted || matches!(read, Some(Read::Reading));
+        let number = wanted.then(|| self.info_reads.begin(board, false))??;
+        self.info.entry(board.clone()).or_insert(Read::Reading);
+        Some(number)
+    }
+
+    /// The read of `board`'s issues that `ask` calls for, marked as on its way.
+    fn begin_rows(&mut self, board: &BoardId, ask: Ask) -> Option<u64> {
+        let wanted = ask != Ask::Show
+            || self.from_disk.contains(board)
+            || matches!(self.rows.get(board), None | Some(Read::Reading));
+        let number = wanted.then(|| self.row_reads.begin(board, ask == Ask::Written))??;
+        self.rows.entry(board.clone()).or_insert(Read::Reading);
+        Some(number)
+    }
+
+    /// Read `number` of `board`'s columns, epics and sprints answered; whether something new was taken. A part not
+    /// read stays as it was, as the whole does when none was.
+    fn put_info(
+        &mut self,
+        board: &BoardId,
+        number: u64,
+        read: Result<BoardInfo, String>,
+        now: i64,
+    ) -> bool {
+        if !self.info_reads.land(board, number) {
+            return false;
+        }
+        match read {
+            Ok(mut info) => {
+                if let Some(Read::Done(before)) = self.info.get(board) {
+                    if info.epics_unread {
+                        info.epics = before.epics.clone();
+                    }
+                    if info.sprints_unread {
+                        info.sprints = before.sprints.clone();
+                    }
+                }
+                self.info.insert(board.clone(), Read::Done(info));
+                self.info_at.insert(board.clone(), now);
+                true
+            }
+            Err(why) => {
+                if !matches!(self.info.get(board), Some(Read::Done(_))) {
+                    self.info.insert(board.clone(), Read::Failed(why));
+                }
+                false
+            }
+        }
+    }
+
+    /// Read `number` of `board`'s issues answered; whether they were taken.
+    fn put_rows(
+        &mut self,
+        board: &BoardId,
+        number: u64,
+        read: Result<Vec<Row>, String>,
+        now: i64,
+    ) -> bool {
+        if !self.row_reads.land(board, number) {
+            return false;
+        }
+        match read {
+            Ok(rows) => {
+                self.rows.insert(board.clone(), Read::Done(rows));
+                self.read_at.insert(board.clone(), now);
+                self.stale.remove(board);
+                self.from_disk.remove(board);
+                true
+            }
+            // Read before: kept, the failure said over it.
+            Err(why) => {
+                if matches!(self.rows.get(board), Some(Read::Done(_))) {
+                    self.stale.insert(board.clone(), why);
+                } else {
+                    self.rows.insert(board.clone(), Read::Failed(why));
+                }
+                false
+            }
+        }
+    }
+
+    /// The reads of the boards `unwanted` names given up: nothing waits for them.
+    fn drop_reads(&mut self, unwanted: impl Fn(&BoardId) -> bool) {
+        for board in self.row_reads.cancel(&unwanted) {
+            if self.rows.get(&board) == Some(&Read::Reading) {
+                self.rows.remove(&board);
+            }
+        }
+        for board in self.info_reads.cancel(&unwanted) {
+            if self.info.get(&board) == Some(&Read::Reading) {
+                self.info.remove(&board);
+            }
+        }
+    }
+
+    /// `board` as it is read now, kept on the Mac for the next start.
+    fn keep_board(&mut self, board: &BoardId, cx: &mut Context<Self>) {
+        // Issues still as the Mac keeps them are not written back as new.
+        if self.from_disk.contains(board) {
             return;
         }
-        if !self.rows.contains_key(&board) {
-            self.rows.insert(board.clone(), Read::Reading);
+        let known = match &self.boards {
+            Some(Read::Done(boards)) => boards.iter().find(|b| b.key() == *board),
+            _ => None,
+        };
+        let (Some(known), Some(Read::Done(info)), Some(Read::Done(rows)), Some(&at)) = (
+            known.or_else(|| self.cache.board(board)),
+            self.info.get(board),
+            self.rows.get(board),
+            self.read_at.get(board),
+        ) else {
+            return;
+        };
+        let snapshot = cache::Snapshot {
+            board: known.clone(),
+            info: info.clone(),
+            rows: rows.clone(),
+            at,
+        };
+        self.cache.put(snapshot);
+        self.write_cache(cx);
+    }
+
+    fn write_cache(&self, cx: &mut Context<Self>) {
+        if let Some(writing) = self.cache.writing() {
+            cx.background_spawn(async move { writing() }).detach();
         }
-        let id = board.1.clone();
-        spawn_read(
-            cx,
-            move || model::board_issues(&site, &id),
-            move |this, read, _| match read {
-                Ok(rows) => {
-                    this.rows.insert(board.clone(), Read::Done(rows));
-                    this.read_at.insert(board.clone(), now());
-                    this.stale.remove(&board);
-                }
-                // Read before: kept, the failure said over it.
-                Err(why) if matches!(this.rows.get(&board), Some(Read::Done(_))) => {
-                    this.stale.insert(board, why);
-                }
-                Err(why) => {
-                    this.rows.insert(board, Read::Failed(why));
-                }
-            },
-        );
+    }
+
+    /// What was read and kept of account `host`'s boards let go: the account removed, or another token typed for it.
+    pub fn forget_boards(&mut self, host: &str, cx: &mut Context<Self>) {
+        self.drop_reads(|b| b.0 == host);
+        self.rows.retain(|b, _| b.0 != host);
+        self.info.retain(|b, _| b.0 != host);
+        self.read_at.retain(|b, _| b.0 != host);
+        self.info_at.retain(|b, _| b.0 != host);
+        self.stale.retain(|b, _| b.0 != host);
+        self.from_disk.retain(|b| b.0 != host);
+        if self.cache.forget(host) {
+            self.write_cache(cx);
+        }
     }
 
     /// Issue `key`, read when it is not yet, or again with `again`: from its site when it is known, else from the first
@@ -733,16 +1059,23 @@ impl Store {
         let Some(site) = self.site_for(key) else {
             return;
         };
-        self.moves.insert(key.to_owned(), Read::Reading);
-        let (k, put) = (key.to_owned(), key.to_owned());
-        spawn_read(
+        let key = key.to_owned();
+        let Some(number) = self.move_reads.begin(&key, false) else {
+            return;
+        };
+        self.moves.insert(key.clone(), Read::Reading);
+        let (k, put) = (key.clone(), key.clone());
+        let task = read_task(
             cx,
             move || model::moves(&site, &k),
             move |this, read, _| {
-                this.moves_at.insert(put.clone(), now());
-                this.moves.insert(put, read_of(read));
+                if this.move_reads.land(&put, number) {
+                    this.moves_at.insert(put.clone(), now());
+                    this.moves.insert(put, read_of(read));
+                }
             },
         );
+        self.move_reads.hold(&key, number, task);
     }
 
     /// Issue `key`'s edit screen, once.
@@ -907,8 +1240,9 @@ impl Store {
                 done(this, read, cx);
                 if ok {
                     this.moves.remove(&at.0);
+                    this.move_reads.cancel(|key| *key == at.0);
                     this.read_issue(&at.0, Some(&host), true, cx);
-                    this.read_board(true, cx);
+                    this.read_board(Ask::Written, cx);
                 }
             },
         );
@@ -951,7 +1285,8 @@ impl Store {
     pub fn picked(&self) -> Option<&Board> {
         match &self.boards {
             Some(Read::Done(boards)) => boards.iter().find(|b| Some(b.key()) == self.board),
-            _ => None,
+            _ => (self.kept_boards())
+                .find(|b| Some(b.key()) == self.board && self.reads_here(&b.site)),
         }
     }
 
@@ -1010,6 +1345,178 @@ mod tests {
             site: "acme.atlassian.net".into(),
             project: None,
         }
+    }
+
+    fn row(key: &str) -> Row {
+        Row {
+            key: key.into(),
+            ..Default::default()
+        }
+    }
+
+    fn site(host: &str) -> Site {
+        Site {
+            url: format!("https://{host}"),
+            kind: crate::trackers::JIRA.into(),
+            ..Default::default()
+        }
+    }
+
+    #[test]
+    fn two_reads_of_one_board_make_one_call() {
+        let mut store = test_store();
+        let id = board("1").key();
+        assert!(store.begin_rows(&id, Ask::Show).is_some());
+        assert!(store.begin_info(&id, Ask::Show, 0).is_some());
+        for ask in [Ask::Show, Ask::Refresh, Ask::Reload] {
+            assert_eq!(store.begin_rows(&id, ask), None);
+            assert_eq!(store.begin_info(&id, ask, 0), None);
+        }
+    }
+
+    #[test]
+    fn an_older_answer_is_ignored() {
+        let mut store = test_store();
+        let id = board("1").key();
+        let old = store.begin_rows(&id, Ask::Show).unwrap();
+        let new = store.begin_rows(&id, Ask::Written).unwrap();
+        assert!(store.put_rows(&id, new, Ok(vec![row("PAY-2")]), 2));
+        assert!(!store.put_rows(&id, old, Ok(vec![row("PAY-1")]), 3));
+        assert_eq!(store.rows[&id], Read::Done(vec![row("PAY-2")]));
+        assert_eq!(store.read_at[&id], 2);
+    }
+
+    #[test]
+    fn a_board_left_is_no_longer_read() {
+        let mut store = test_store();
+        let (left, shown) = (board("1").key(), board("2").key());
+        let number = store.begin_rows(&left, Ask::Show).unwrap();
+        store.drop_reads(|b| *b != shown);
+        assert!(!store.rows.contains_key(&left));
+        assert!(!store.put_rows(&left, number, Ok(vec![row("PAY-1")]), 1));
+        assert!(store.begin_rows(&left, Ask::Show).is_some());
+    }
+
+    #[test]
+    fn a_refresh_reads_the_issues_and_the_rest_once_old() {
+        let mut store = test_store();
+        let id = board("1").key();
+        let (info, rows) = (
+            store.begin_info(&id, Ask::Show, 0).unwrap(),
+            store.begin_rows(&id, Ask::Show).unwrap(),
+        );
+        store.put_info(&id, info, Ok(BoardInfo::default()), 100);
+        store.put_rows(&id, rows, Ok(Vec::new()), 100);
+        assert_eq!(store.begin_rows(&id, Ask::Show), None);
+        assert!(store.begin_rows(&id, Ask::Refresh).is_some());
+        assert_eq!(store.begin_info(&id, Ask::Show, 160), None);
+        assert_eq!(store.begin_info(&id, Ask::Refresh, 160), None);
+        assert!(
+            store
+                .begin_info(&id, Ask::Refresh, 100 + INFO_AGE)
+                .is_some()
+        );
+        store.drop_reads(|_| true);
+        assert!(store.begin_info(&id, Ask::Reload, 160).is_some());
+    }
+
+    #[test]
+    fn epics_and_sprints_not_read_stay_as_they_were() {
+        let mut store = test_store();
+        let id = board("1").key();
+        let had = BoardInfo {
+            epics: vec![model::Epic {
+                key: "PAY-1".into(),
+                ..Default::default()
+            }],
+            sprints: vec![model::Sprint {
+                id: 7,
+                ..Default::default()
+            }],
+            ..Default::default()
+        };
+        let first = store.begin_info(&id, Ask::Show, 0).unwrap();
+        store.put_info(&id, first, Ok(had.clone()), 1);
+        let next = store.begin_info(&id, Ask::Reload, 2).unwrap();
+        let missed = BoardInfo {
+            epics_unread: true,
+            sprints_unread: true,
+            ..Default::default()
+        };
+        store.put_info(&id, next, Ok(missed), 2);
+        let now = store.info[&id].done().unwrap();
+        assert_eq!((&now.epics, &now.sprints), (&had.epics, &had.sprints));
+        // Read, and none: they are gone.
+        let last = store.begin_info(&id, Ask::Reload, 3).unwrap();
+        store.put_info(&id, last, Ok(BoardInfo::default()), 3);
+        assert!(store.info[&id].done().unwrap().epics.is_empty());
+        let failed = store.begin_info(&id, Ask::Reload, 4).unwrap();
+        store.put_info(&id, failed, Err("no answer".into()), 4);
+        assert!(store.info[&id].done().is_some());
+    }
+
+    #[test]
+    fn a_site_not_read_keeps_its_news() {
+        let mut store = test_store();
+        store.sites = vec![site("a.example"), site("b.example")];
+        let news = |id: &str| News {
+            id: id.into(),
+            ..Default::default()
+        };
+        let ids = |store: &Store| -> Vec<String> {
+            store.news.iter().map(|(_, n)| n.id.clone()).collect()
+        };
+        store.take_news(vec![
+            ("a.example".into(), Ok(vec![news("1")])),
+            ("b.example".into(), Err("no answer".into())),
+        ]);
+        store.take_news(vec![
+            ("a.example".into(), Err("no answer".into())),
+            ("b.example".into(), Ok(vec![news("2")])),
+        ]);
+        assert_eq!(ids(&store), ["1", "2"]);
+        // A site's first read toasts nothing.
+        assert!(store.news_fresh.is_empty());
+        store.take_news(vec![("a.example".into(), Ok(vec![news("3"), news("1")]))]);
+        assert_eq!(ids(&store), ["3", "1", "2"]);
+        assert_eq!(store.news_fresh.len(), 1);
+    }
+
+    #[test]
+    fn the_news_waits_longer_behind() {
+        assert!(news_due(true, 1));
+        assert!(!news_due(false, 2));
+        assert!(news_due(false, 3));
+    }
+
+    #[test]
+    fn offline_the_last_board_shows_as_kept_and_marked_stale() {
+        let mut cache = cache::Cache::default();
+        cache.put(cache::Snapshot {
+            board: board("1"),
+            info: BoardInfo::default(),
+            rows: vec![row("PAY-1")],
+            at: 50,
+        });
+        let kept = keep::Kept {
+            last_board: Some(board("1").key()),
+            ..Default::default()
+        };
+        let mut store = Store::blank(vec![site("acme.atlassian.net")], Vec::new(), kept, cache);
+        let id = board("1").key();
+        // Painted before anything answers.
+        assert_eq!(store.picked(), Some(&board("1")));
+        assert_eq!(store.board_rows(), Some(&vec![row("PAY-1")]));
+        assert!(store.from_disk.contains(&id));
+        let read = store.begin_rows(&id, Ask::Show).expect("read all the same");
+        let unread = [("acme.atlassian.net".to_owned(), "no answer".to_owned())];
+        let mut boards = Vec::new();
+        store.add_kept(&mut boards, &unread);
+        assert_eq!(boards, [board("1")]);
+        store.put_rows(&id, read, Err("no answer".into()), 90);
+        assert_eq!(store.stale[&id], "no answer");
+        assert_eq!(store.read_at[&id], 50);
+        assert_eq!(store.board_rows(), Some(&vec![row("PAY-1")]));
     }
 
     #[test]

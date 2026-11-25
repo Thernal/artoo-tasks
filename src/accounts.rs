@@ -460,8 +460,16 @@ impl Accounts {
             return cx.notify();
         }
         let project = form.project.clone();
+        // Another account, or another token for this one: what was kept of its boards may not be theirs to see.
+        let forgotten = match replaced {
+            Some(old) if old != key => Some(old),
+            _ => (!token.is_empty()).then(|| key.clone()),
+        };
         self.close(cx);
         let linked = self.store.update(cx, |s, cx| {
+            if let Some(host) = forgotten {
+                s.forget_boards(&host, cx);
+            }
             s.sites_again(cx);
             match project {
                 Some(project) => s.link(&project, &key, true, cx),
@@ -485,7 +493,10 @@ impl Accounts {
             return cx.notify();
         }
         self.close(cx);
-        self.store.update(cx, |s, cx| s.sites_again(cx));
+        self.store.update(cx, |s, cx| {
+            s.forget_boards(&key, cx);
+            s.sites_again(cx);
+        });
     }
 
     pub fn key(&mut self, event: &KeyDownEvent, cx: &mut Context<Self>) -> Typed {

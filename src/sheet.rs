@@ -856,7 +856,8 @@ impl Page {
                         });
                     }
                     p.close_sheet(cx);
-                    p.store.update(cx, |s, cx| s.read_board(true, cx));
+                    p.store
+                        .update(cx, |s, cx| s.read_board(crate::store::Ask::Written, cx));
                     for why in after {
                         p.frame.error(why.into(), cx);
                     }
