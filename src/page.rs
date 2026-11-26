@@ -15,8 +15,8 @@ use artoo_plugin_sdk::core::markdown::Helper;
 use artoo_plugin_sdk::core::route::Route;
 use artoo_plugin_sdk::core::textedit::TextEdit;
 use artoo_plugin_sdk::gpui::{
-    self, AnyElement, App, ClipboardItem, Context, Entity, KeyDownEvent, Keystroke, Pixels, Point,
-    ScrollHandle, Window, div, prelude::*,
+    self, AnyElement, App, ClipboardItem, Context, Entity, FontWeight, KeyDownEvent, Keystroke,
+    Pixels, Point, ScrollHandle, Window, div, prelude::*,
 };
 use artoo_plugin_sdk::kit::composer::{Compose, ComposeAct, Look, Short, Target, Typed as Written};
 use artoo_plugin_sdk::kit::emoji_picker::PickerKey;
@@ -972,6 +972,32 @@ impl Page {
             return div().into_any_element();
         };
         let place = note.spot.words();
+        // Who reads it as the design's chip says it: the chat's mark, its agent and its folder (the owner, 2026-11-26).
+        let agents = self.frame.services().get::<Rc<dyn Agents>>();
+        let chat = (agents.as_ref()).and_then(|a| {
+            a.route_of(None, std::path::Path::new(&self.here), cx)
+                .map(|c| (a, c))
+        });
+        let (mark, words) = match chat {
+            Some((a, c)) => {
+                let agent = c
+                    .agent
+                    .split_whitespace()
+                    .next()
+                    .unwrap_or("Agent")
+                    .to_owned();
+                let folder = (c.repo.file_name())
+                    .map(|f| f.to_string_lossy().into_owned())
+                    .unwrap_or_default();
+                let words = if folder.is_empty() {
+                    agent
+                } else {
+                    format!("{agent} · {folder}")
+                };
+                (a.mark(&c.session, cx), words)
+            }
+            None => (('A', theme::agent()), "Your agent".to_owned()),
+        };
         let head = div()
             .flex()
             .flex_col()
@@ -984,7 +1010,36 @@ impl Page {
                     .text_size(px(12.))
                     .text_color(theme::muted())
                     .child("To:")
-                    .child(div().text_color(theme::agent()).child("Your agent")),
+                    .child(
+                        div()
+                            .h(px(22.))
+                            .px(px(6.))
+                            .flex()
+                            .items_center()
+                            .gap(px(6.))
+                            .rounded(px(5.))
+                            .border_1()
+                            .border_color(theme::island_border())
+                            .child(
+                                div()
+                                    .size(px(14.))
+                                    .rounded(px(4.))
+                                    .bg(mark.1)
+                                    .flex()
+                                    .items_center()
+                                    .justify_center()
+                                    .text_size(px(9.))
+                                    .font_weight(FontWeight::BOLD)
+                                    .text_color(theme::on_accent())
+                                    .child(mark.0.to_string()),
+                            )
+                            .child(
+                                div()
+                                    .font_weight(FontWeight::SEMIBOLD)
+                                    .text_color(theme::agent())
+                                    .child(words),
+                            ),
+                    ),
             )
             .child(
                 div()
@@ -1259,10 +1314,11 @@ impl Render for Page {
             Some(key) => self.issue_page(key, cx),
             None => self.own_page(cx),
         };
+        let viewport = window.viewport_size();
         let workflow = self
             .workflow
             .clone()
-            .map(|key| self.workflow_card(&key, cx));
+            .map(|key| self.workflow_card(&key, viewport, cx));
         div()
             .size_full()
             .min_w_0()

@@ -3,7 +3,7 @@
 //! filter over them (⌘P); Drafts at the foot, with how many.
 
 use crate::keep::KeptSlice;
-use crate::model::{Board, BoardId};
+use crate::model::Board;
 use crate::page::{INPUT_BOARDS, Page, SPACE};
 use crate::store::{Read, Store};
 use crate::trackers::SiteExt;
@@ -91,7 +91,8 @@ pub fn side(page: &Entity<Page>, width: f32, cx: &mut App) -> Option<AnyElement>
     let mut body = div().flex().flex_col().gap(px(2.)).child(filter);
     match s.boards_in(&project) {
         Some(Read::Done(boards)) => {
-            let boards = lately_first(s, boards.into_iter().filter(|b| matches(b, &typed)));
+            // As the tracker lists them: a board picked stays where it is (the owner, 2026-11-26).
+            let boards: Vec<Board> = boards.into_iter().filter(|b| matches(b, &typed)).collect();
             if boards.is_empty() && !typed.trim().is_empty() {
                 body = body.child(
                     div()
@@ -207,41 +208,14 @@ pub fn side(page: &Entity<Page>, width: f32, cx: &mut App) -> Option<AnyElement>
                         on,
                     )
                     .gap(px(8.))
-                    .child(
-                        icons::icon("layers")
-                            .size(px(14.))
-                            .text_color(theme::muted())
-                            .when(left.is_some(), |i| i.mt(px(2.))),
-                    );
-                    // Where the board was left, on a line of its own: the slice's name cut, its count whole.
-                    let row = match &left {
-                        Some(left) => row.h(px(44.)).items_start().py(px(6.)).child(
-                            div().flex_1().min_w_0().child(name).child(
-                                div()
-                                    .flex()
-                                    .gap(px(6.))
-                                    .mt(px(1.))
-                                    .text_size(px(11.))
-                                    .text_color(theme::faint())
-                                    .children((!left.name.is_empty()).then(|| {
-                                        div().min_w_0().truncate().child(left.name.clone())
-                                    }))
-                                    .children(
-                                        (left.count.clone()).map(|n| div().flex_none().child(n)),
-                                    ),
-                            ),
-                        ),
-                        None => row.h(px(28.)).child(name.flex_1().min_w_0()),
-                    };
+                    .child(crate::look::board_glyph_in(14., theme::muted()));
+                    // One line, as the design has it (the owner, 2026-11-26): where the board was left is its tip's.
+                    let row = row.h(px(28.)).child(name.flex_1().min_w_0());
                     body = body.child(
                         row
                             // A tracker without project keys (Trello: the board's own short link) shows none.
                             .children(key.map(|k| {
-                                div()
-                                    .text_size(px(11.))
-                                    .text_color(theme::faint())
-                                    .when(left.is_some(), |k| k.mt(px(3.)))
-                                    .child(k)
+                                div().text_size(px(11.)).text_color(theme::faint()).child(k)
                             }))
                             .tip(tip)
                             .on_click(move |_, _, cx| {
@@ -289,7 +263,9 @@ pub fn side(page: &Entity<Page>, width: f32, cx: &mut App) -> Option<AnyElement>
     let n = s.kept.drafts.len();
     if !sites.is_empty() {
         let (page, frame) = (page.clone(), frame.clone());
+        // Drafts at the panel's foot, as the design has it (the owner, 2026-11-26).
         list = list
+            .child(div().flex_1())
             .child(
                 div()
                     .mt(px(8.))
@@ -392,20 +368,6 @@ fn matches(b: &Board, typed: &str) -> bool {
         .all(|w| hay.contains(&w.to_lowercase()))
 }
 
-/// `boards` in the side panel's order: the ones opened lately first, as Design has them, then as the tracker lists
-/// them.
-fn lately_first(s: &Store, boards: impl IntoIterator<Item = Board>) -> Vec<Board> {
-    let mut boards: Vec<Board> = boards.into_iter().collect();
-    boards.sort_by_key(|b| lately(&s.kept.recent, b));
-    boards
-}
-
-/// Where board `b` stands among `recent`, the boards opened lately, newest first; after them all when it is not one.
-fn lately(recent: &[BoardId], b: &Board) -> usize {
-    let key = b.key();
-    (recent.iter().position(|r| *r == key)).unwrap_or(usize::MAX)
-}
-
 /// Where a board was left, as its row in Boards says it.
 #[derive(Debug, PartialEq)]
 struct Left {
@@ -438,12 +400,12 @@ fn left_on(kept: &KeptSlice) -> Option<Left> {
 }
 
 /// The boards the side panel shows for project `project` with `typed` in its filter, in its order: by site, as the
-/// sites are kept, each site's opened lately first.
+/// sites are kept, each site's as the tracker lists them.
 fn shown_boards(s: &Store, project: &str, typed: &str) -> Vec<Board> {
     let Some(Read::Done(boards)) = s.boards_in(project) else {
         return Vec::new();
     };
-    let boards = lately_first(s, boards.into_iter().filter(|b| matches(b, typed)));
+    let boards: Vec<Board> = boards.into_iter().filter(|b| matches(b, typed)).collect();
     (s.sites_in(project).iter())
         .flat_map(|site| (boards.iter()).filter(move |b| b.site == site.key()))
         .cloned()

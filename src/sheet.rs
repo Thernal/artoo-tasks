@@ -1769,13 +1769,8 @@ impl Page {
                         ),
                     )
                     .child(
-                        look::small_button("draft-delete", "Delete")
-                            .child(
-                                icons::icon("trash")
-                                    .size(px(12.))
-                                    .text_color(theme::muted()),
-                            )
-                            .tip("Delete the draft  ⌘⌫")
+                        // Its glyph alone, as the design draws it (the owner, 2026-11-26).
+                        look::icon_button("draft-delete", "trash", "Delete the draft  ⌘⌫")
                             .on_click(cx.listener(move |this, _: &ClickEvent, _, cx| {
                                 this.delete_draft(id, cx)
                             })),

@@ -159,6 +159,8 @@ pub fn bar(page: &Entity<Page>, route: Option<&Route>, cx: &mut App) -> Option<B
         );
     let faces = page.update(cx, |p, cx| p.faces(cx));
     let on_slot = page.clone();
+    // Not reached: the band over the list says it, with Retry (`Page::unreached_band`).
+    let slot = slot.filter(|s| !matches!(s, fresh::Slot::CantReach(_)));
     let slot = slot.map(|slot| {
         page.read(cx).fresh.slot(slot, move |action, cx| {
             on_slot.update(cx, |p, cx| p.slot_clicked(action, cx))

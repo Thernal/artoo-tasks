@@ -1229,6 +1229,7 @@ impl Page {
             self.pick = order.first().cloned();
         }
         let banner = self.slice_banner(&shown, cx);
+        let unreached = self.unreached_band(&shown, cx);
         if let Some(empty) = shown.empty.clone() {
             let facts = self.facts_line(&shown, cx);
             match empty {
@@ -1270,6 +1271,7 @@ impl Page {
         if shown.columns {
             return (self.page_frame())
                 .relative()
+                .children(unreached)
                 .child(self.facts_line(&shown, cx))
                 .children(head)
                 .children(banner)
@@ -1292,6 +1294,7 @@ impl Page {
         }
         let list = (self.list_frame())
             .relative()
+            .children(unreached)
             .child(self.facts_line(&shown, cx))
             .children(head)
             .children(banner)
@@ -1313,6 +1316,49 @@ impl Page {
             .into_any_element();
         let preview = self.preview(&shown, cx);
         self.frame.list_page(list, preview, cx)
+    }
+
+    /// Its site not reached, a copy kept on screen: a band over the list, `Can't reach acme.atlassian.net · boards
+    /// from 14:32` and Retry, as the design has it, not a word in the bar's middle (the owner, 2026-11-26).
+    fn unreached_band(&mut self, shown: &Shown, cx: &mut Context<Self>) -> Option<AnyElement> {
+        let Some(artoo_plugin_sdk::kit::fresh::Slot::CantReach(at)) = self.store.read(cx).slot()
+        else {
+            return None;
+        };
+        Some(
+            div()
+                .flex_none()
+                .flex()
+                .items_center()
+                .gap(px(8.))
+                .h(px(32.))
+                .px(px(12.))
+                .border_b_1()
+                .border_color(theme::border())
+                .bg(theme::warning_bg())
+                .text_size(px(12.))
+                .text_color(theme::warning())
+                .child(
+                    div()
+                        .flex_none()
+                        .size(px(6.))
+                        .rounded_full()
+                        .bg(theme::warning()),
+                )
+                .child(
+                    div()
+                        .flex_1()
+                        .min_w_0()
+                        .truncate()
+                        .child(format!("Can’t reach {} · boards from {at}", shown.host)),
+                )
+                .child(
+                    look::small_button("tasks-unreached-retry", "Retry")
+                        .tip("Read again  ⌘R")
+                        .on_click(cx.listener(|this, _: &ClickEvent, _, cx| this.read_again(cx))),
+                )
+                .into_any_element(),
+        )
     }
 
     /// What the slice shown asks of the tracker as the page stands: the Backlog's filter (its words, Mine, its
@@ -1793,7 +1839,7 @@ impl Page {
                             .text_color(theme::text())
                             .child(row.summary.clone()),
                     )
-                    .child(count(format!("{done} of {all}")))
+                    .child(look::count_chip(format!("{done} of {all}")))
                     .child(self.state_control(row, Anchor::Row(row.key.clone()), true, cx))
                     .child(
                         div()
@@ -1859,13 +1905,7 @@ impl Page {
                             )
                             .tip(where_else),
                     )
-                    .child(
-                        div()
-                            .px(px(6.))
-                            .rounded(px(4.))
-                            .bg(theme::hover())
-                            .child(count(format!("{done} of {all} done"))),
-                    )
+                    .child(look::count_chip(format!("{done} of {all} done")))
                     .child(add(cx, e.name.clone(), Some(e.key.clone()), None))
                     .child(chevron)
             }
@@ -1920,6 +1960,13 @@ impl Page {
         if let Some(p) = &r.priority {
             facts = facts.child(look::priority_fact(&r.key, p));
         }
+        // The key, its priority, its epic; what else it has at the row's far end (the owner, 2026-11-26).
+        if shown.group != Group::Epic
+            && let Some(e) = &epic
+        {
+            facts = facts.child(look::epic_lozenge(e));
+        }
+        facts = facts.child(div().flex_1());
         if r.subtasks.1 > 0 {
             facts = facts.child(look::subtasks_fact(&r.key, r.subtasks.0, r.subtasks.1));
         }
@@ -1928,11 +1975,6 @@ impl Page {
         }
         if let Some(b) = r.blocked_by.first() {
             facts = facts.child(look::blocked_fact(&r.key, b));
-        }
-        if shown.group != Group::Epic
-            && let Some(e) = &epic
-        {
-            facts = facts.child(div().flex_1()).child(look::epic_lozenge(e));
         }
         let who = self.who_control(r, me, anchor.clone(), who_open, cx);
         let chip = self.state_control(r, anchor.clone(), true, cx);
@@ -1964,6 +2006,7 @@ impl Page {
             div()
                 .id(SharedString::from(format!("row-check-{}", r.key)))
                 .flex_none()
+                .mt(px(3.))
                 .size(px(14.))
                 .rounded(px(3.))
                 .border_1()
@@ -2011,10 +2054,12 @@ impl Page {
             .group("tasks-row")
             .flex_none()
             .flex()
-            .items_center()
-            .gap(px(8.))
+            // Its person at the top, on the summary's line, not in the row's middle (the owner, 2026-11-26).
+            .items_start()
+            .pt(px(9.))
+            .gap(px(6.))
             .h(px(62.))
-            .pl(px(if indent { 36. } else { 12. }))
+            .pl(px(if indent { 28. } else { 8. }))
             .pr(px(12.))
             .border_b_1()
             .border_color(theme::border())
@@ -2024,7 +2069,7 @@ impl Page {
             .when(!picked && !tinted, |d| d.hover(|s| s.bg(theme::hover())))
             .when(saving, |d| d.opacity(0.7))
             .children(check)
-            .child(who)
+            .child(div().flex_none().mt(px(1.)).child(who))
             .child(
                 div()
                     .flex_1()
@@ -2547,7 +2592,7 @@ impl Page {
                     .child(look::kind_mark(&row.kind, row.subtask))
                     .child(self.issue_link("lane", &row.key, look::key(&row.key), cx))
                     .child(title(row.summary.clone()))
-                    .child(faint(format!("{done} of {all}")))
+                    .child(look::count_chip(format!("{done} of {all}")))
                     .child(div().flex_1())
                     .children(row.assignee.as_ref().map(|p| look::face(&p.name, me, 16.)))
                     .child(self.state_control(row, Anchor::Row(row.key.clone()), true, cx))
@@ -2571,7 +2616,7 @@ impl Page {
                     .child(look::kind_mark("Epic", false))
                     .child(self.issue_link("lane", &e.key, look::key(&e.key), cx))
                     .child(look::epic_lozenge(&e))
-                    .child(faint(format!("{done} of {all}")))
+                    .child(look::count_chip(format!("{done} of {all}")))
                     .child(div().flex_1())
                     .child(
                         div()

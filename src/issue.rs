@@ -24,7 +24,7 @@ use artoo_plugin_sdk::kit::composer::{Compose, ComposeAct, Look, Target, Typed a
 use artoo_plugin_sdk::kit::hover::Hover;
 use artoo_plugin_sdk::kit::{controls, icons, input, markdown, px, theme};
 use artoo_plugin_sdk::serde_json::{Value, json};
-use artoo_plugin_sdk::shell::Typed;
+use artoo_plugin_sdk::shell::{MenuItem, Typed};
 use std::cell::Cell;
 use std::path::PathBuf;
 use std::rc::Rc;
@@ -976,7 +976,13 @@ impl Page {
             link_base: None,
             clip: false,
         };
-        let input = desc.render_input(look, acts, cx);
+        // The section is the editor: its outline lit, no box of its own inside it (the owner, 2026-11-26: no
+        // container in a container).
+        let input = desc
+            .render_input(look, acts, cx)
+            .border_0()
+            .rounded(px(0.))
+            .bg(gpui::transparent_black());
         let editor = artoo_plugin_sdk::shell::input_box(
             div().id("tasks-desc-box").child(input),
             INPUT_DESC,
@@ -1052,13 +1058,14 @@ impl Page {
         });
         let _ = issue;
         section("Description")
+            .border_color(theme::accent())
             .child(
                 div()
                     .flex()
                     .flex_col()
                     .gap(px(10.))
-                    .p(px(12.))
-                    .children(warn)
+                    .p(px(4.))
+                    .children(warn.map(|w| w.m(px(8.))))
                     .child(editor),
             )
             .into_any_element()
@@ -1752,22 +1759,56 @@ impl Page {
                 .into_any_element()
             },
         );
-        let mut rel = div().flex().flex_wrap().gap(px(4.));
-        for (ix, (_, words, _)) in relations.iter().enumerate() {
-            rel = rel.child(
-                controls::chip(
-                    SharedString::from(format!("rel-{ix}")),
-                    words.clone(),
-                    ix == link.relation,
-                )
-                .on_click(cx.listener(move |this, _: &ClickEvent, _, cx| {
-                    if let Some(l) = this.issue.link.as_mut() {
-                        l.relation = ix;
-                    }
-                    cx.notify();
-                })),
-            );
-        }
+        // The relation a drop-down beside the field, as the design has it (the owner, 2026-11-26); ⇥ steps it.
+        let picked = (relations.get(link.relation))
+            .map(|(_, w, _)| w.clone())
+            .unwrap_or_default();
+        let (me, frame, choices) = (
+            cx.entity().downgrade(),
+            self.frame.clone(),
+            relations.clone(),
+        );
+        let at_now = link.relation;
+        let rel = div()
+            .id("tasks-link-relation")
+            .flex_none()
+            .h(px(28.))
+            .px(px(8.))
+            .flex()
+            .items_center()
+            .gap(px(4.))
+            .rounded(px(6.))
+            .border_1()
+            .border_color(theme::island_border())
+            .text_size(px(12.))
+            .text_color(theme::text())
+            .cursor_pointer()
+            .hover(|d| d.bg(theme::hover()))
+            .child(picked)
+            .child(
+                icons::icon("chevron")
+                    .size(px(12.))
+                    .text_color(theme::muted()),
+            )
+            .tip("The relation  ⇥")
+            .on_click(move |e: &ClickEvent, _, cx| {
+                let items = (choices.iter().enumerate())
+                    .map(|(ix, (_, words, _))| {
+                        let me = me.clone();
+                        MenuItem::new(words.clone(), move |_, cx| {
+                            me.update(cx, |this, cx| {
+                                if let Some(l) = this.issue.link.as_mut() {
+                                    l.relation = ix;
+                                }
+                                cx.notify();
+                            })
+                            .ok();
+                        })
+                        .checked(ix == at_now)
+                    })
+                    .collect();
+                frame.menu(e.position(), vec![items], cx);
+            });
         let mut found = div().flex().flex_col();
         match &link.found {
             Read::Reading => {
@@ -1840,39 +1881,44 @@ impl Page {
                 this.frame.leave_keyboard(crate::page::INPUT_POP, cx);
                 cx.notify();
             }))
-            .child(rel)
-            .child(artoo_plugin_sdk::shell::input_box(
-                div()
-                    .id("tasks-link-field")
-                    .h(px(28.))
-                    .px(px(8.))
-                    .flex()
-                    .items_center()
-                    .gap(px(6.))
-                    .rounded(px(6.))
-                    .bg(theme::base())
-                    .border_1()
-                    .border_color(if typing {
-                        theme::focus()
-                    } else {
-                        theme::island_border()
-                    })
-                    .text_size(px(12.))
-                    .child(
-                        icons::icon("search")
-                            .size(px(12.))
-                            .text_color(theme::faint()),
-                    )
-                    .child(field),
-                crate::page::INPUT_POP,
-                &self.frame,
-            ))
+            .child(
+                div().flex().items_center().gap(px(6.)).child(rel).child(
+                    artoo_plugin_sdk::shell::input_box(
+                        div()
+                            .id("tasks-link-field")
+                            .flex_1()
+                            .min_w_0()
+                            .h(px(28.))
+                            .px(px(8.))
+                            .flex()
+                            .items_center()
+                            .gap(px(6.))
+                            .rounded(px(6.))
+                            .bg(theme::base())
+                            .border_1()
+                            .border_color(if typing {
+                                theme::focus()
+                            } else {
+                                theme::island_border()
+                            })
+                            .text_size(px(12.))
+                            .child(
+                                icons::icon("search")
+                                    .size(px(12.))
+                                    .text_color(theme::faint()),
+                            )
+                            .child(field),
+                        crate::page::INPUT_POP,
+                        &self.frame,
+                    ),
+                ),
+            )
             .child(found)
             .child(
                 div()
                     .text_size(px(11.))
                     .text_color(theme::faint())
-                    .child("↵ links · esc"),
+                    .child("↵ links · ⇥ relation · esc"),
             )
             .into_any_element()
     }
@@ -3140,7 +3186,14 @@ impl Page {
 
     /// An issue's workflow over the page: the board's states in order, the one it is in ringed, the moves from it
     /// numbered as Move to numbers them.
-    pub fn workflow_card(&mut self, key: &str, cx: &mut Context<Self>) -> AnyElement {
+    /// The workflow over the whole window, its middle, the window dimmed (the owner, 2026-11-26: centred, as the
+    /// design has it); `viewport` is the window's size.
+    pub fn workflow_card(
+        &mut self,
+        key: &str,
+        viewport: gpui::Size<gpui::Pixels>,
+        cx: &mut Context<Self>,
+    ) -> AnyElement {
         let s = self.store.read(cx);
         let info = s.board_info().cloned().unwrap_or_default();
         let row = s.row(key).cloned();
@@ -3264,17 +3317,27 @@ impl Page {
                     .child(self.issue_link("workflow", key, div().child(key.to_owned()), cx)),
             );
         }
-        div()
+        let shade = div()
             .id("tasks-workflow")
-            .absolute()
-            .inset_0()
+            .w(viewport.width)
+            .h(viewport.height)
             .flex()
             .items_center()
             .justify_center()
             .bg(gpui::black().opacity(0.45))
             .occlude()
+            .on_mouse_down(
+                gpui::MouseButton::Left,
+                cx.listener(|this, _, _, cx| {
+                    this.workflow = None;
+                    cx.notify();
+                }),
+            )
             .child(
                 div()
+                    .id("tasks-workflow-card")
+                    .occlude()
+                    .on_mouse_down(gpui::MouseButton::Left, |_, _, cx| cx.stop_propagation())
                     .flex()
                     .flex_col()
                     .gap(px(16.))
@@ -3330,12 +3393,15 @@ impl Page {
                                 ),
                             ),
                     ),
-            )
-            .on_mouse_down_out(cx.listener(|this, _, _, cx| {
-                this.workflow = None;
-                cx.notify();
-            }))
-            .into_any_element()
+            );
+        gpui::deferred(
+            gpui::anchored()
+                .position_mode(gpui::AnchoredPositionMode::Window)
+                .position(gpui::point(px(0.), px(0.)))
+                .child(shade),
+        )
+        .with_priority(1)
+        .into_any_element()
     }
 }
 

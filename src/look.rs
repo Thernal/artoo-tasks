@@ -268,11 +268,12 @@ pub fn state_mark(state: &State, size: f32) -> Div {
 
 /// The mark of a blocked issue: a ring struck through, red.
 pub fn blocked_mark() -> Div {
-    div()
-        .flex_none()
-        .text_color(theme::removed())
-        .text_size(px(12.))
-        .child("⊘")
+    // The struck ring as an icon, the size of the row's other glyphs (the owner, 2026-11-26: it was too small).
+    div().flex_none().child(
+        icons::icon("circle-slash")
+            .size(px(14.))
+            .text_color(theme::removed()),
+    )
 }
 
 /// A small button drawn as the design's `.button` in a line of facts: words on the panel's colour, a hairline round.
@@ -381,6 +382,24 @@ pub fn priority_fact(key: &str, name: &str) -> Stateful<Div> {
     )
 }
 
+/// A count in a chip, as the design draws `1 of 3` in a story's or an epic's head (the owner, 2026-11-26: such counts
+/// in a chip everywhere).
+pub fn count_chip(text: impl Into<SharedString>) -> Div {
+    div()
+        .flex_none()
+        .h(px(18.))
+        .px(px(6.))
+        .flex()
+        .items_center()
+        .rounded(px(4.))
+        .border_1()
+        .border_color(theme::island_border())
+        .text_size(px(11.))
+        .text_color(theme::muted())
+        .whitespace_nowrap()
+        .child(text.into())
+}
+
 /// How many sub-tasks are done of all: `▤ 1/3`.
 pub fn subtasks_fact(key: &str, done: usize, all: usize) -> Stateful<Div> {
     fact(
@@ -419,7 +438,11 @@ pub fn blocked_tip(by: &crate::model::Brief) -> (String, String) {
 
 /// The board layout's glyph: a frame in columns, drawn since the kit has no icon of it.
 pub fn board_glyph(size: f32) -> Div {
-    let line = theme::text();
+    board_glyph_in(size, theme::text())
+}
+
+/// `board_glyph` in colour `line`: a board's row in Boards draws it quiet.
+pub fn board_glyph_in(size: f32, line: gpui::Rgba) -> Div {
     div()
         .flex_none()
         .size(px(size - 2.))

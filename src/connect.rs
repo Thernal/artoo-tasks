@@ -180,7 +180,7 @@ impl Page {
             let end = (!open).then(|| {
                 let (accounts, id, project) =
                     (accounts.clone(), kind.id.clone(), project.to_owned());
-                crate::look::small_button(format!("tasks-add-{}", kind.id), "Add…")
+                crate::look::small_button(format!("tasks-add-{}", kind.id), "Connect")
                     .h(px(28.))
                     .on_click(move |_, _, cx| {
                         if let Some(a) = &accounts {

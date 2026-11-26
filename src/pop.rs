@@ -11,7 +11,8 @@ use crate::trackers::SiteExt;
 use artoo_plugin_sdk::core::textedit::TextEdit;
 use artoo_plugin_sdk::gpui;
 use artoo_plugin_sdk::gpui::{
-    AnyElement, ClickEvent, Context, FontWeight, Hsla, KeyDownEvent, SharedString, div, prelude::*,
+    AnyElement, ClickEvent, Context, Div, FontWeight, Hsla, KeyDownEvent, SharedString, div,
+    prelude::*,
 };
 use artoo_plugin_sdk::kit::hover::Hover;
 use artoo_plugin_sdk::kit::{icons, input, px, theme};
@@ -28,9 +29,32 @@ pub enum Lead {
     Kind(String),
     Epic(Epic),
     Check(bool),
+    /// A check and the person's face, or nobody's ring: People beside Mine · All, as the design draws them.
+    CheckFace(bool, Option<(String, bool)>),
     Icon(&'static str),
     /// A chevron: what unfolds, turned when open.
     Turn(bool),
+}
+
+/// A row's check, ticked or not.
+fn check_box(on: bool) -> Div {
+    div()
+        .flex_none()
+        .size(px(14.))
+        .rounded(px(3.))
+        .border_1()
+        .border_color(if on { theme::accent() } else { theme::faint() })
+        .when(on, |d| d.bg(theme::accent()))
+        .flex()
+        .items_center()
+        .justify_center()
+        .when(on, |d| {
+            d.child(
+                icons::icon("check")
+                    .size(px(10.))
+                    .text_color(theme::on_accent()),
+            )
+        })
 }
 
 /// What picking a row does.
@@ -46,7 +70,6 @@ pub enum Act {
     Set(String, Value),
     Many(String, Value, bool),
     Workflow,
-    Url(String),
     /// A select of New task set: its field, the value, its words; of a field of many, a value toggled.
     Sheet(String, Value, String),
     SheetMany(String, Value, String),
@@ -107,6 +130,8 @@ pub struct Body {
     pub rows: Vec<PopRow>,
     pub foot: Option<String>,
     pub reading: bool,
+    /// A link at the foot's right end: its words and where it goes (`Open PAY-400 in Jira ↗`).
+    pub link: Option<(String, String)>,
 }
 
 fn open_of(rows: &[Row], who: Option<&Person>) -> usize {
@@ -432,6 +457,7 @@ impl Page {
                     rows,
                     foot: None,
                     reading,
+                    link: None,
                 }
             }
             PopKind::Assign => {
@@ -481,6 +507,7 @@ impl Page {
                     rows,
                     foot: None,
                     reading,
+                    link: None,
                 }
             }
             PopKind::Epic => {
@@ -519,22 +546,16 @@ impl Page {
                 }
                 let site = s.site_of(&host);
                 let foot = now.as_ref().map(|k| format!("Open {k} in Jira ↗"));
-                if let (Some(k), Some(site)) = (now, site) {
-                    let mut open = PopRow::new(
-                        Lead::Icon("external"),
-                        format!("Open {k} in Jira"),
-                        Act::Url(format!("{}/browse/{k}", site.url)),
-                    );
-                    open.rule = true;
-                    rows.push(open);
-                }
-                let _ = foot;
+                // At the foot's right end, as the design has it (the owner, 2026-11-26), not a row of its own.
+                let link = (foot.zip(now.zip(site)))
+                    .map(|(words, (k, site))| (words, format!("{}/browse/{k}", site.url)));
                 Body {
                     title: format!("Epic of {}", pop.key),
                     filter: Some(format!("Filter epics in {board}")),
                     rows,
                     foot: Some("↵ move · esc".into()),
                     reading: false,
+                    link,
                 }
             }
             PopKind::Sprints => sprint_rows(s, pop),
@@ -559,10 +580,17 @@ impl Page {
                             .as_ref()
                             .map_or(crate::board::NONE.to_owned(), |p| p.id.clone());
                         let on = s.faces.contains(&id);
-                        let name = p
-                            .as_ref()
-                            .map_or("Unassigned".to_owned(), |p| p.name.clone());
-                        let mut r = PopRow::new(Lead::Check(on), name, Act::Face(Some(id)));
+                        let mine =
+                            (p.as_ref().zip(me.as_ref())).is_some_and(|(p, me)| p.id == me.id);
+                        // Each with their face, you as `You` (the owner, 2026-11-26: as the design).
+                        let name = match p {
+                            Some(_) if mine => "You".to_owned(),
+                            Some(p) => p.name.clone(),
+                            None => "Unassigned".to_owned(),
+                        };
+                        let face = p.as_ref().map(|p| (p.name.clone(), mine));
+                        let mut r =
+                            PopRow::new(Lead::CheckFace(on, face), name, Act::Face(Some(id)));
                         r.hint = Some(n.to_string());
                         r
                     })
@@ -578,6 +606,7 @@ impl Page {
                     rows,
                     foot: None,
                     reading: false,
+                    link: None,
                 }
             }
             PopKind::Field(id) => {
@@ -642,6 +671,7 @@ impl Page {
                     rows,
                     foot: None,
                     reading,
+                    link: None,
                 }
             }
             PopKind::Ask => Body {
@@ -650,6 +680,7 @@ impl Page {
                 rows: Vec::new(),
                 foot: None,
                 reading: false,
+                link: None,
             },
             PopKind::Sheet(field) => {
                 let (title, mut rows, reading) = self.sheet_rows(field, &f, cx);
@@ -665,6 +696,7 @@ impl Page {
                     rows,
                     foot: None,
                     reading,
+                    link: None,
                 }
             }
         }
@@ -918,6 +950,16 @@ impl Page {
                     .into_any_element(),
                 Lead::Kind(k) => look::kind_mark(k, false).into_any_element(),
                 Lead::Epic(_) => look::kind_mark("Epic", false).into_any_element(),
+                Lead::CheckFace(on, face) => div()
+                    .flex()
+                    .items_center()
+                    .gap(px(8.))
+                    .child(check_box(*on))
+                    .child(match face {
+                        Some((name, me)) => look::face(name, *me, 16.).into_any_element(),
+                        None => look::nobody(16.).into_any_element(),
+                    })
+                    .into_any_element(),
                 Lead::Check(on) => div()
                     .size(px(14.))
                     .rounded(px(3.))
@@ -1044,17 +1086,32 @@ impl Page {
         }
         card = card.child(list);
         if let Some(foot) = body.foot {
+            let link = body.link.map(|(words, url)| {
+                div()
+                    .id("pop-foot-link")
+                    .cursor_pointer()
+                    .text_color(theme::muted())
+                    .hover(|d| d.text_color(theme::text()))
+                    .child(words)
+                    .on_click(cx.listener(move |this, _: &ClickEvent, _, cx| {
+                        this.close_pop(cx);
+                        cx.open_url(&url);
+                    }))
+            });
             card = card.child(
                 div()
                     .mt(px(4.))
                     .px(px(12.))
                     .pt(px(6.))
                     .pb(px(4.))
+                    .flex()
+                    .items_center()
                     .border_t_1()
                     .border_color(theme::border())
                     .text_size(px(11.))
                     .text_color(theme::faint())
-                    .child(foot),
+                    .child(div().flex_1().child(foot))
+                    .children(link),
             );
         }
         card.into_any_element()
@@ -1287,10 +1344,6 @@ impl Page {
                 self.close_pop(cx);
                 self.workflow = Some(key);
                 cx.notify();
-            }
-            Act::Url(url) => {
-                self.close_pop(cx);
-                cx.open_url(&url);
             }
             act @ (Act::Sheet(..) | Act::SheetMany(..)) => self.sheet_pick(act, cx),
             Act::Slice(slice) => {
@@ -1660,6 +1713,7 @@ fn move_rows(s: &Store, keys: &[String]) -> Body {
         rows: out,
         foot: None,
         reading: false,
+        link: None,
     }
 }
 
@@ -1679,6 +1733,7 @@ fn sprint_rows(s: &Store, pop: &Pop) -> Body {
             rows,
             foot: None,
             reading: true,
+            link: None,
         };
     };
     let view = sl.view.as_ref();
@@ -1761,6 +1816,7 @@ fn sprint_rows(s: &Store, pop: &Pop) -> Body {
         rows,
         foot: None,
         reading: false,
+        link: None,
     }
 }
 
@@ -1806,12 +1862,14 @@ fn field_rows(field: &Field, current: &Value, filter: &str, s: &Store, key: &str
             .filter(|(l, _)| fits(l))
             .map(|(l, n)| {
                 let has = on.contains(&l);
+                // A tag, not a check box (the owner, 2026-11-26); the issue's own ticked at the row's end.
                 let mut r = PopRow::new(
-                    Lead::Check(has),
+                    Lead::Icon("tag"),
                     l.clone(),
                     Act::Many("labels".into(), json!(l), !has),
                 );
                 r.hint = Some(n.to_string());
+                r.checked = has;
                 r
             })
             .collect();
@@ -1939,7 +1997,7 @@ mod tests {
         let mut rows: Vec<PopRow> = (0..11).map(set).collect();
         rows[0].key = Some('i');
         rows[2].hint = Some("2 of 3 done".into());
-        rows.push(PopRow::new(Lead::None, "Open", Act::Url(String::new())));
+        rows.push(PopRow::new(Lead::None, "Open", Act::Workflow));
         numbered(&mut rows);
         let keys: String = rows.iter().map(|r| r.key.unwrap_or('-')).collect();
         assert_eq!(keys, "i123456789--");
