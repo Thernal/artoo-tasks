@@ -773,7 +773,7 @@ impl Accounts {
                     .gap(px(8.))
                     .when(host.is_some(), |d| {
                         d.child(
-                            crate::look::small_button("tracker-remove", "Remove")
+                            crate::look::button("tracker-remove", "Remove")
                                 .tip_two("Stop reading this tracker", "Its token stays")
                                 .on_click(
                                     cx.listener(|this, _: &ClickEvent, _, cx| this.remove(cx)),
@@ -782,7 +782,7 @@ impl Accounts {
                     })
                     .child(div().flex_1())
                     .child(
-                        crate::look::small_button("tracker-cancel", "Cancel")
+                        crate::look::button("tracker-cancel", "Cancel")
                             .tip("esc")
                             .on_click(cx.listener(|this, _: &ClickEvent, _, cx| this.close(cx))),
                     )
@@ -924,7 +924,7 @@ impl Accounts {
                                 ),
                         )
                         .child(
-                            crate::look::small_button("tracker-space-cancel", "Cancel")
+                            crate::look::button("tracker-space-cancel", "Cancel")
                                 .h(px(28.))
                                 .tip("esc")
                                 .on_click(
@@ -1118,7 +1118,7 @@ impl Accounts {
                         )),
                     )
                     .child(
-                        crate::look::small_button(
+                        controls::row_button(
                             SharedString::from(format!("tracker-change-{host}")),
                             if open { "Close" } else { "Change" },
                         )
@@ -1283,23 +1283,11 @@ impl Render for ReadIn {
 /// Test as a glyph with its sentence for a tooltip; a host not reached keeps its word, Retry.
 fn test_button(id: SharedString, unreached: bool) -> gpui::Stateful<gpui::Div> {
     match unreached {
-        true => crate::look::small_button(id, "Retry").tip("Read its boards again"),
-        false => div()
-            .id(id)
-            .flex_none()
-            .size(px(24.))
-            .flex()
-            .items_center()
-            .justify_center()
-            .rounded(px(6.))
-            .cursor_pointer()
-            .hover(|s| s.bg(theme::hover()))
-            .child(
-                icons::icon("activity")
-                    .size(px(14.))
-                    .text_color(theme::muted()),
-            )
-            .tip_two("Test", "Who the token is, read now"),
+        true => controls::row_button(id, "Retry").tip("Read its boards again"),
+        // On a button's ground beside Change, as the design draws it (the owner, 2026-11-26).
+        false => {
+            controls::row_icon_button(id, "activity").tip_two("Test", "Who the token is, read now")
+        }
     }
 }
 

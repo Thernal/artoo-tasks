@@ -96,9 +96,8 @@ pub struct PopRow {
     pub rule: bool,
     /// A section's title before it: `Active`.
     pub head: Option<String>,
-    /// A second line under its text, faint, and what ends that line in bold: `78 issues · ends Fri 28 Nov`, `9 yours`.
+    /// A second line under its text, faint: `78 issues · 12d over`.
     pub under: Option<String>,
-    pub strong: Option<String>,
     /// Its tooltip: where its key is said.
     pub tip: Option<String>,
     pub act: Act,
@@ -116,7 +115,6 @@ impl PopRow {
             rule: false,
             head: None,
             under: None,
-            strong: None,
             tip: None,
             act,
         }
@@ -327,13 +325,44 @@ impl Page {
             .key("A"),
         ];
         if self.can_move(&[key.to_owned()], cx) {
+            if let Some(board) = self.store.read(cx).board.clone() {
+                self.store.update(cx, |s, cx| s.count_sprints(&board, cx));
+            }
+            // Where it may go, a second menu opened on hover as the design's (the owner, 2026-11-26).
+            let mut groups = vec![Vec::new()];
+            for r in move_rows(self.store.read(cx), &[key.to_owned()]).rows {
+                if r.rule {
+                    groups.push(Vec::new());
+                }
+                let words = r.text.clone();
+                let entry = match r.act {
+                    Act::MoveTo(to, top) => {
+                        let (page, key) = (page.clone(), key.to_owned());
+                        gpui_menu_item(&words, move |cx| {
+                            page.update(cx, |p, cx| {
+                                p.move_issues(vec![key.clone()], to.clone(), top, cx)
+                            })
+                            .ok();
+                        })
+                    }
+                    _ => gpui_menu_item(&words, |_| {}),
+                };
+                let entry = match (&r.lead, r.under) {
+                    (Lead::Icon(name), _) => entry.icon(name),
+                    (_, Some(under)) => entry.under(under),
+                    _ => entry,
+                };
+                if let Some(group) = groups.last_mut() {
+                    group.push(entry.checked(r.checked));
+                }
+            }
             first.push(
-                item("Move to…", |p, key, cx| {
-                    p.open_move_to(Anchor::Row(key.to_owned()), key, cx)
-                })
-                .icon("layers")
-                .key("M"),
+                gpui_menu_item("Move to", |_| {})
+                    .icon("layers")
+                    .subs(groups),
             );
+            // Picked with others to move together: the rows show their checks from then on.
+            first.push(item("Select", |p, key, cx| p.toggle_selected(key, cx)).icon("check"));
         }
         let s = self.store.read(cx);
         let url = s.browse_url(key);
@@ -564,7 +593,7 @@ impl Page {
                     title: format!("Epic of {}", pop.key),
                     filter: Some(format!("Filter epics in {board}")),
                     rows,
-                    foot: Some("↵ move · esc".into()),
+                    foot: None,
                     reading: false,
                     link,
                 }
@@ -919,6 +948,9 @@ impl Page {
                     .child("Reading…"),
             );
         }
+        // The picked one's check at the row's left, as a menu's (the owner, 2026-11-26): a column of its own while
+        // one is picked, so the names line up.
+        let marks = body.rows.iter().any(|r| r.checked);
         let mut list = div()
             .id("tasks-pop-rows")
             .flex()
@@ -1006,30 +1038,21 @@ impl Page {
                     .child(self.issue_link("pop", &e.key, look::key(&e.key), cx))
                     .child(look::epic_lozenge(&self.store.read(cx).epic(e)))
                     .into_any_element(),
-                _ if r.under.is_some() || r.strong.is_some() => div()
+                _ if r.under.is_some() => div()
                     .min_w_0()
                     .flex()
                     .flex_col()
                     .child(div().truncate().child(r.text.clone()))
                     .child(
                         div()
-                            .flex()
-                            .gap(px(8.))
                             .text_size(px(11.))
                             .text_color(theme::faint())
-                            .children(r.under.clone().map(|u| div().truncate().child(u)))
-                            .children(r.strong.clone().map(|s| {
-                                div()
-                                    .flex_none()
-                                    .font_weight(FontWeight::SEMIBOLD)
-                                    .text_color(theme::text())
-                                    .child(s)
-                            })),
+                            .children(r.under.clone().map(|u| div().truncate().child(u))),
                     )
                     .into_any_element(),
                 _ => div().truncate().child(r.text.clone()).into_any_element(),
             };
-            let two = r.under.is_some() || r.strong.is_some();
+            let two = r.under.is_some();
             let tip = r.tip.clone();
             let enabled = !matches!(act, Act::Nothing);
             list = list.child(
@@ -1049,7 +1072,17 @@ impl Page {
                         d.cursor_pointer().hover(|s| s.bg(theme::hover()))
                     })
                     .when(!enabled && !r.checked, |d| d.text_color(theme::faint()))
-                    .child(lead)
+                    .when(marks, |d| {
+                        d.child(div().flex_none().w(px(13.)).when(r.checked, |d| {
+                            d.child(
+                                icons::icon("check")
+                                    .size(px(13.))
+                                    .text_color(theme::accent()),
+                            )
+                        }))
+                    })
+                    // The check's column stands in for an empty lead.
+                    .when(!(marks && matches!(r.lead, Lead::None)), |d| d.child(lead))
                     .child(
                         div()
                             .flex_1()
@@ -1083,20 +1116,15 @@ impl Page {
                                     .child(n)
                             }),
                     )
-                    .when(r.checked, |d| {
-                        d.child(
-                            icons::icon("check")
-                                .size(px(13.))
-                                .text_color(theme::accent()),
-                        )
-                    })
                     .on_click(cx.listener(move |this, _: &ClickEvent, _, cx| {
                         this.pop_pick(act.clone(), cx)
                     })),
             );
         }
         card = card.child(list);
-        if let Some(foot) = body.foot {
+        // A foot holds its link alone: no keys at a menu's foot (the owner, 2026-11-26).
+        if body.foot.is_some() || body.link.is_some() {
+            let foot = body.foot.unwrap_or_default();
             let link = body.link.map(|(words, url)| {
                 div()
                     .id("pop-foot-link")
@@ -1208,7 +1236,7 @@ impl Page {
                 .justify_end()
                 .gap(px(8.))
                 .child(
-                    look::small_button("ask-cancel", "Cancel")
+                    look::button("ask-cancel", "Cancel")
                         .on_click(cx.listener(|this, _: &ClickEvent, _, cx| this.close_pop(cx))),
                 )
                 .child(
@@ -1701,6 +1729,7 @@ fn move_rows(s: &Store, keys: &[String]) -> Body {
                 let count = (counts.and_then(|c| c.reads.get(&t.slice))).and_then(|r| r.count);
                 let mut r = PopRow::new(Lead::None, sprint.name.clone(), act);
                 r.under = Some(slices::sprint_words(sprint, count, unit, now));
+                r.tip = slices::sprint_dates(sprint);
                 r
             }
             _ if t.top => {
@@ -1762,9 +1791,7 @@ fn sprint_rows(s: &Store, pop: &Pop) -> Body {
             unit,
             now,
         ));
-        r.strong = (read.and_then(|r| r.mine))
-            .filter(|n| *n > 0 && sprint.state != "closed")
-            .map(|n| format!("{n} yours"));
+        r.tip = slices::sprint_dates(sprint);
         r.checked = view == Some(&slice);
         r.act = Act::Slice(slice);
         r

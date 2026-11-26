@@ -32,8 +32,10 @@ pub fn side(page: &Entity<Page>, width: f32, cx: &mut App) -> Option<AnyElement>
     let s = store.read(cx);
     let sites = s.sites_in(&project);
     let unread = s.unread_in(&project);
-    let mut list = div()
+    // An island of its own, as Code's tree and the list beside it are (the owner, 2026-11-26, asked twice).
+    let mut list = artoo_plugin_sdk::kit::island()
         .w(px(width))
+        .flex_none()
         .min_w_0()
         .h_full()
         .min_h_0()

@@ -75,18 +75,15 @@ pub fn bar(page: &Entity<Page>, route: Option<&Route>, cx: &mut App) -> Option<B
                 .map(|site| format!("{}/browse/{key}", site.url))
                 .unwrap_or_default(),
         };
-        let title = s.issue(&key).map(|i| i.row.summary.clone());
+        // The key alone: the page's head under the bar has its title (the owner, 2026-11-26).
         let mut parts = BarParts {
-            path: Some(PagePath {
-                title,
-                ..path(
-                    std::iter::once("Tasks".to_owned())
-                        .chain(board_name)
-                        .collect(),
-                    &key,
-                    None,
-                )
-            }),
+            path: Some(path(
+                std::iter::once("Tasks".to_owned())
+                    .chain(board_name)
+                    .collect(),
+                &key,
+                None,
+            )),
             ..Default::default()
         };
         parts.more = Page::more_items(page, cx);
@@ -172,7 +169,6 @@ pub fn bar(page: &Entity<Page>, route: Option<&Route>, cx: &mut App) -> Option<B
         .gap(px(10.))
         .child(tabs)
         .children(faces)
-        .children(slot)
         .into_any_element();
     let (v1, v2, v3) = (page.clone(), page.clone(), page.clone());
     let layout = controls::group()
@@ -200,8 +196,14 @@ pub fn bar(page: &Entity<Page>, route: Option<&Route>, cx: &mut App) -> Option<B
         } else {
             "Filter issues"
         }),
+        // ⌘F opens it; no field standing in the bar (the owner, 2026-11-26).
+        filter_on_keys: true,
         ..Default::default()
     };
+    // How current the board is, at the bar's right as the requests' list has it (the owner, 2026-11-26).
+    if let Some(slot) = slot {
+        parts.actions.push(BarAction::new("tasks-fresh", slot));
+    }
     parts.actions.push(
         BarAction::new("tasks-layout", layout)
             .folds(

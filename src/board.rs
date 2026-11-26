@@ -1330,6 +1330,10 @@ impl Page {
                 .gap(px(8.))
                 .h(px(32.))
                 .px(px(12.))
+                // The island's top corners are its own: a clip is square (the owner, 2026-11-26).
+                .when(!artoo_plugin_sdk::kit::flat(), |s| {
+                    s.rounded_t(px(artoo_plugin_sdk::kit::ISLAND_RADIUS - 1.))
+                })
                 .border_b_1()
                 .border_color(theme::border())
                 .bg(theme::warning_bg())
@@ -1999,7 +2003,9 @@ impl Page {
             }))
             .children(self.pop_here(&anchor, PopKind::MoveTo, cx));
         let check_key = key.clone();
-        let check = movable.then(|| {
+        // Only while some are picked to move together: it keeps no room before the face otherwise (the owner,
+        // 2026-11-26); the row's menu has Select.
+        let check = (movable && selecting).then(|| {
             div()
                 .id(SharedString::from(format!("row-check-{}", r.key)))
                 .flex_none()
@@ -2021,10 +2027,6 @@ impl Page {
                             .size(px(10.))
                             .text_color(theme::on_accent()),
                     )
-                })
-                // A hover that changes `display` lays out and paints apart, which GPUI refuses; visibility is safe.
-                .when(!selecting, |d| {
-                    d.invisible().group_hover("tasks-row", |s| s.visible())
                 })
                 .cursor_pointer()
                 .tip("Select, to move several together")
@@ -2113,7 +2115,7 @@ impl Page {
     }
 
     /// Issue `key` checked or let go on the board.
-    fn toggle_selected(&mut self, key: &str, cx: &mut Context<Self>) {
+    pub(crate) fn toggle_selected(&mut self, key: &str, cx: &mut Context<Self>) {
         if let Some(at) = self.selected.iter().position(|k| k == key) {
             self.selected.remove(at);
         } else {
@@ -2312,6 +2314,9 @@ impl Page {
             let ids = std::iter::once(String::new())
                 .chain(shelf.rows.iter().map(|r| row_line(&r.key)))
                 .collect();
+            // The Backlog column stands apart on the panel's colour, the others on the window's (the owner,
+            // 2026-11-26: the backlog's colours as the design's).
+            let backlog = name.eq_ignore_ascii_case("backlog");
             let lines = self.column_lines.entry(name.clone()).or_default();
             let state = lines.show(&shown.listed(), ids);
             let of = shown.clone();
@@ -2341,7 +2346,14 @@ impl Page {
                     .p(px(6.))
                     .pb(px(0.))
                     .rounded(px(8.))
-                    .bg(theme::base())
+                    .bg(if backlog {
+                        theme::panel()
+                    } else {
+                        theme::base()
+                    })
+                    .when(backlog, |d| {
+                        d.border_1().border_color(theme::island_border())
+                    })
                     .drag_over::<Dragged>(|d, _, _, _| d.bg(theme::hover()))
                     .on_drop(
                         cx.listener(move |this, d: &Dragged, _, cx| this.drop_card(&d.key, ix, cx)),
@@ -2374,11 +2386,9 @@ impl Page {
             .whitespace_nowrap()
             .child(look::state_mark(state, 13.))
             .child(name.to_owned())
+            // Its count in plain words beside its name, as the design's head.
             .child(
                 div()
-                    .px(px(6.))
-                    .rounded_full()
-                    .bg(theme::hover())
                     .text_size(px(11.))
                     .font_weight(FontWeight::NORMAL)
                     .text_color(theme::muted())
@@ -2716,7 +2726,8 @@ impl Page {
             .pt(px(10.))
             .pb(px(8.))
             .rounded(px(6.))
-            .bg(theme::panel())
+            // On the editor's colour, lighter than the column under it, as the design's cards.
+            .bg(theme::editor())
             .border_1()
             .border_color(if picked {
                 theme::accent()
@@ -3290,16 +3301,17 @@ impl Page {
         if many {
             let open = self.pop_at(&Anchor::Faces, PopKind::People);
             out = out.child(
+                // A circle as the faces are, those picked of it a badge on its corner (the owner, 2026-11-26).
                 div()
                     .id("faces-more")
                     .relative()
+                    .flex_none()
+                    .size(px(22.))
                     .flex()
                     .items_center()
-                    .gap(px(2.))
-                    .h(px(22.))
-                    .px(px(6.))
+                    .justify_center()
                     .rounded_full()
-                    .text_size(px(11.))
+                    .text_size(px(10.))
                     .text_color(theme::muted())
                     .bg(theme::hover())
                     .cursor_pointer()
@@ -3308,7 +3320,23 @@ impl Page {
                     })
                     .child(format!("+{more}"))
                     .when(hidden > 0, |d| {
-                        d.child(div().text_color(theme::accent()).child(hidden.to_string()))
+                        d.child(
+                            div()
+                                .absolute()
+                                .top(px(-5.))
+                                .right(px(-5.))
+                                .min_w(px(13.))
+                                .h(px(13.))
+                                .px(px(3.))
+                                .flex()
+                                .items_center()
+                                .justify_center()
+                                .rounded_full()
+                                .bg(theme::accent())
+                                .text_size(px(9.))
+                                .text_color(theme::on_accent())
+                                .child(hidden.to_string()),
+                        )
                     })
                     .tip(format!("Everyone on this board · {}", all.len()))
                     .on_click(cx.listener(|this, _: &ClickEvent, _, cx| {

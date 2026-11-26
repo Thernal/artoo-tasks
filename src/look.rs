@@ -306,6 +306,21 @@ pub fn small_button(
         .child(words.into())
 }
 
+/// `small_button` as tall as the kit's filled button, for a row it shares with one: one height in a row (the owner,
+/// 2026-11-26).
+pub fn button(id: impl Into<SharedString>, words: impl Into<SharedString>) -> gpui::Stateful<Div> {
+    small_button(id, words).h(px(28.)).text_size(px(13.))
+}
+
+/// `square_button` as tall as the kit's filled button, for a row it shares with one.
+pub fn icon_action(
+    id: impl Into<SharedString>,
+    icon: &'static str,
+    tip: impl Into<SharedString>,
+) -> gpui::Stateful<Div> {
+    square_button(id, icon).size(px(28.)).tip(tip)
+}
+
 /// A fold's chevron: down while open, turning a quarter to the right as it folds (#56, 1), as the app's sections'.
 pub fn chevron(id: impl Into<gpui::ElementId>, open: bool, size: f32) -> impl IntoElement {
     motion::toward(
@@ -336,16 +351,7 @@ pub fn short_ago(time: i64) -> String {
     }
 }
 
-/// A 24 px square button with one icon and its tooltip: the design's icon button in a row of facts.
-pub fn icon_button(
-    id: impl Into<SharedString>,
-    icon: &'static str,
-    tip: impl Into<SharedString>,
-) -> gpui::Stateful<Div> {
-    square_button(id, icon).tip(tip)
-}
-
-/// `icon_button` before its tooltip, for one whose tooltip is a title and a quieter line.
+/// A 24 px square button with one icon, its tooltip set by the caller: the design's icon button in a row of facts.
 pub fn square_button(id: impl Into<SharedString>, icon: &'static str) -> gpui::Stateful<Div> {
     div()
         .id(id.into())

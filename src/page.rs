@@ -15,10 +15,13 @@ use artoo_plugin_sdk::core::markdown::Helper;
 use artoo_plugin_sdk::core::route::Route;
 use artoo_plugin_sdk::core::textedit::TextEdit;
 use artoo_plugin_sdk::gpui::{
-    self, AnyElement, App, ClipboardItem, Context, Entity, FontWeight, KeyDownEvent, Keystroke,
-    Pixels, Point, ScrollHandle, Window, div, prelude::*,
+    self, AnyElement, App, ClipboardItem, Context, Entity, KeyDownEvent, Keystroke, Pixels, Point,
+    ScrollHandle, Window, div, prelude::*,
 };
-use artoo_plugin_sdk::kit::composer::{Compose, ComposeAct, Look, Short, Target, Typed as Written};
+use artoo_plugin_sdk::kit::composer::{
+    Audience, Compose, ComposeAct, FootEvent, FootLook, Look, OnFoot, Room, Short, Target,
+    Typed as Written,
+};
 use artoo_plugin_sdk::kit::emoji_picker::PickerKey;
 use artoo_plugin_sdk::kit::fresh::SlotAction;
 use artoo_plugin_sdk::kit::{controls, icons, markdown, motion, px, room, theme};
@@ -994,68 +997,70 @@ impl Page {
                 } else {
                     format!("{agent} · {folder}")
                 };
-                (a.mark(&c.session, cx), words)
+                (Some(a.mark(&c.session, cx)), words)
             }
-            None => (('A', theme::agent()), "Your agent".to_owned()),
+            None => (None, "Your agent".to_owned()),
         };
+        // Drawn as a request's note for the agent is, by the same pieces: its `To:` chip, its place under it, its foot
+        // (the owner, 2026-11-26: a comment here is a request's comment).
+        let audience = || Audience {
+            words: words.clone(),
+            mark,
+            both: false,
+            switch: false,
+        };
+        let foot_page = cx.entity().downgrade();
+        let on: OnFoot = Rc::new(move |event, cx| {
+            foot_page
+                .update(cx, |this, cx| match event {
+                    FootEvent::Cancel => {
+                        this.note = None;
+                        this.frame.leave_keyboard(NOTE, cx);
+                        cx.notify();
+                    }
+                    FootEvent::Add => this.add_note(cx),
+                    FootEvent::More(at) => {
+                        let text = (this.note.as_ref())
+                            .map(|n| n.compose.edit.text().to_owned())
+                            .unwrap_or_default();
+                        let copy = MenuItem::new("Copy as markdown", move |_, cx| {
+                            cx.write_to_clipboard(gpui::ClipboardItem::new_string(text.clone()))
+                        });
+                        this.frame.menu(at, vec![vec![copy]], cx);
+                    }
+                    _ => {}
+                })
+                .ok();
+        });
         let head = div()
             .flex()
             .flex_col()
+            .items_start()
             .gap(px(6.))
+            .child(note.compose.audience_chip(&audience(), on.clone()))
             .child(
                 div()
+                    .h(px(22.))
+                    .px(px(8.))
                     .flex()
                     .items_center()
                     .gap(px(6.))
-                    .text_size(px(12.))
-                    .text_color(theme::muted())
-                    .child("To:")
-                    .child(
-                        div()
-                            .h(px(22.))
-                            .px(px(6.))
-                            .flex()
-                            .items_center()
-                            .gap(px(6.))
-                            .rounded(px(5.))
-                            .border_1()
-                            .border_color(theme::island_border())
-                            .child(
-                                div()
-                                    .size(px(14.))
-                                    .rounded(px(4.))
-                                    .bg(mark.1)
-                                    .flex()
-                                    .items_center()
-                                    .justify_center()
-                                    .text_size(px(9.))
-                                    .font_weight(FontWeight::BOLD)
-                                    .text_color(theme::on_accent())
-                                    .child(mark.0.to_string()),
-                            )
-                            .child(
-                                div()
-                                    .font_weight(FontWeight::SEMIBOLD)
-                                    .text_color(theme::agent())
-                                    .child(words),
-                            ),
-                    ),
-            )
-            .child(
-                div()
-                    .flex()
-                    .items_center()
-                    .gap(px(4.))
-                    .px(px(6.))
-                    .py(px(2.))
-                    .rounded(px(4.))
-                    .bg(theme::hover())
+                    .rounded(px(6.))
+                    .bg(theme::selected())
                     .text_size(px(11.))
                     .text_color(theme::muted())
-                    .child(icons::icon("pin").size(px(11.)).text_color(theme::muted()))
+                    .child(icons::icon("pin").size(px(12.)).text_color(theme::muted()))
                     .child(place),
             )
             .into_any_element();
+        let tail = note.compose.foot(
+            FootLook {
+                audience: audience(),
+                room: Room::L,
+                review: false,
+            },
+            on,
+        );
         let page = cx.entity();
         let acts: artoo_plugin_sdk::kit::composer::ComposeActs = Rc::new(move |act, cx| {
             page.update(cx, |this, cx| {
@@ -1082,25 +1087,13 @@ impl Page {
                 }
             });
         });
-        let add = controls::primary_button("tasks-note-add", "Add to drafts", "⌘↵")
-            .bg(theme::agent())
-            .on_click(cx.listener(|this, _, _, cx| this.add_note(cx)));
-        let cancel = div()
-            .id("tasks-note-cancel")
-            .cursor_pointer()
-            .child(icons::icon("x").size(px(14.)).text_color(theme::muted()))
-            .on_click(cx.listener(|this, _, _, cx| {
-                this.note = None;
-                this.frame.leave_keyboard(NOTE, cx);
-                cx.notify();
-            }));
         let look = Look {
             tone: theme::agent(),
             placeholder: "What should the agent do here?".into(),
             head: Some(head),
             lead: None,
             tools: tools(),
-            tail: vec![cancel.into_any_element(), add.into_any_element()],
+            tail,
             folded: false,
             focused: true,
             lines: None,

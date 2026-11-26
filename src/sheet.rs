@@ -503,7 +503,6 @@ impl Page {
             rule: false,
             head: None,
             under: None,
-            strong: None,
             tip: None,
             act: Act::Sheet(id.to_owned(), value, words),
         };
@@ -1559,21 +1558,18 @@ impl Page {
                             .px(px(18.))
                             .border_t_1()
                             .border_color(theme::border())
+                            // Every action of a popover at its right end, one height (the owner, 2026-11-26).
+                            .child(div().flex_1())
                             .child(
-                                look::small_button("sheet-draft", "Save as draft")
+                                look::button("sheet-draft", "Save as draft")
                                     .tip("Keep it on this Mac  ⌘S")
                                     .on_click(cx.listener(|this, _: &ClickEvent, _, cx| {
                                         this.keep_draft(cx)
                                     })),
                             )
-                            .child(div().flex_1())
-                            .child(
-                                look::small_button("sheet-cancel", "Cancel")
-                                    .tip("esc")
-                                    .on_click(cx.listener(|this, _: &ClickEvent, _, cx| {
-                                        this.close_sheet(cx)
-                                    })),
-                            )
+                            .child(look::button("sheet-cancel", "Cancel").tip("esc").on_click(
+                                cx.listener(|this, _: &ClickEvent, _, cx| this.close_sheet(cx)),
+                            ))
                             .child(
                                 controls::primary_button(
                                     "sheet-create",
@@ -1801,7 +1797,7 @@ impl Page {
                     )
                     .child(
                         // Its glyph alone, as the design draws it (the owner, 2026-11-26).
-                        look::icon_button("draft-delete", "trash", "Delete the draft  ⌘⌫")
+                        look::icon_action("draft-delete", "trash", "Delete the draft  ⌘⌫")
                             .on_click(cx.listener(move |this, _: &ClickEvent, _, cx| {
                                 this.delete_draft(id, cx)
                             })),

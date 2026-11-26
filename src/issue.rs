@@ -95,6 +95,8 @@ fn section(title: &str) -> Div {
                 .gap(px(8.))
                 .px(px(16.))
                 .h(px(40.))
+                // Its own corners inside the card's: a clip is square, the card's are round (the owner, 2026-11-26).
+                .rounded_t(px(7.))
                 .bg(theme::panel())
                 .border_b_1()
                 .border_color(theme::island_border())
@@ -120,6 +122,7 @@ fn section_with(head: Div) -> Div {
                 .gap(px(8.))
                 .px(px(16.))
                 .h(px(40.))
+                .rounded_t(px(7.))
                 .bg(theme::panel())
                 .border_b_1()
                 .border_color(theme::island_border())
@@ -299,6 +302,14 @@ impl Page {
                     .track_scroll(&self.issue_scroll)
                     .children(changed)
                     .child(head)
+                    // A line between the head and the cards, as the design's page has it (the owner, 2026-11-26).
+                    .child(
+                        div()
+                            .h(px(1.))
+                            .w_full()
+                            .mb(px(16.))
+                            .bg(theme::island_border()),
+                    )
                     .child(
                         // The content as wide as a request's, Details right beside it (the owner, 2026-11-26).
                         div()
@@ -948,7 +959,7 @@ impl Page {
                     "An edit left open stays here until you save or cancel it",
                 )
                 .into_any_element(),
-            look::icon_button("tasks-desc-cancel", "x", "Cancel  esc")
+            look::icon_action("tasks-desc-cancel", "x", "Cancel  esc")
                 .on_click(cx.listener(|this, _: &ClickEvent, _, cx| this.cancel_description(cx)))
                 .into_any_element(),
             controls::primary_button(
@@ -980,11 +991,13 @@ impl Page {
         };
         // The section is the editor: its outline lit, no box of its own inside it (the owner, 2026-11-26: no
         // container in a container).
+        // On the editor's colour, as the design's open description (the owner, 2026-11-26).
         let input = desc
             .render_input(look, acts, cx)
             .border_0()
-            .rounded(px(0.))
-            .bg(gpui::transparent_black());
+            .rounded_t(px(0.))
+            .rounded_b(px(7.))
+            .bg(theme::editor());
         let editor = artoo_plugin_sdk::shell::input_box(
             div().id("tasks-desc-box").child(input),
             INPUT_DESC,
@@ -1916,12 +1929,6 @@ impl Page {
                 ),
             )
             .child(found)
-            .child(
-                div()
-                    .text_size(px(11.))
-                    .text_color(theme::faint())
-                    .child("↵ links · ⇥ relation · esc"),
-            )
             .into_any_element()
     }
 
@@ -2488,17 +2495,14 @@ impl Page {
                             .items_center()
                             .gap(px(8.))
                             .child(
-                                look::small_button(
-                                    SharedString::from(format!("pend-edit-{id}")),
-                                    "Edit",
-                                )
-                                .tip("Edit  E")
-                                .on_click(cx.listener(
-                                    move |this, _: &ClickEvent, _, cx| this.edit_pending(id, cx),
-                                )),
+                                look::button(SharedString::from(format!("pend-edit-{id}")), "Edit")
+                                    .tip("Edit  E")
+                                    .on_click(cx.listener(move |this, _: &ClickEvent, _, cx| {
+                                        this.edit_pending(id, cx)
+                                    })),
                             )
                             .child(
-                                look::small_button(
+                                look::button(
                                     SharedString::from(format!("pend-discard-{id2}")),
                                     "Discard",
                                 )
@@ -3378,14 +3382,15 @@ impl Page {
                             .flex()
                             .items_center()
                             .gap(px(8.))
+                            // Every action of a popover at its right end, one height (the owner, 2026-11-26).
+                            .child(div().flex_1())
                             .children(url.map(|u| {
-                                look::small_button(
+                                look::button(
                                     "wf-jira",
                                     format!("Open in {}", crate::trackers::tracker_of(&u)),
                                 )
                                 .on_click(move |_, _, cx| cx.open_url(&u))
                             }))
-                            .child(div().flex_1())
                             .child(
                                 controls::primary_button("wf-close", "Close", "esc").on_click(
                                     cx.listener(|this, _: &ClickEvent, _, cx| {

@@ -257,8 +257,8 @@ pub fn grouped(n: usize) -> String {
     out
 }
 
-/// A sprint's line under its name in the sprint picker: `78 issues · ends Fri 28 Nov · 5 days left`, `No issues yet ·
-/// starts Wed 3 Dec`, `ended Fri 14 Nov`; its issues left out until they are counted.
+/// A sprint's line under its name in the sprint picker: `78 issues · 5d left` (`ends 28 Nov` once no days are left to
+/// count), `No issues yet · starts 3 Dec`, `ended 14 Nov`; its issues left out until they are counted.
 pub fn sprint_words(sprint: &Sprint, count: Option<usize>, unit: &str, now: i64) -> String {
     let day = |d: &Option<String>| d.as_deref().map(short_day);
     let mut out = Vec::new();
@@ -271,13 +271,28 @@ pub fn sprint_words(sprint: &Sprint, count: Option<usize>, unit: &str, now: i64)
         Some(n) => out.push(artoo_plugin_sdk::kit::format::plural(n, unit)),
         None => {}
     }
+    // Two facts at most, the days left before the date (the owner, 2026-11-26: the picker's lines said too much);
+    // the dates are the row's tooltip, `sprint_dates`.
     if sprint.state == "future" {
         out.extend(day(&sprint.start).map(|d| format!("starts {d}")));
     } else {
-        out.extend(day(&sprint.end).map(|d| format!("ends {d}")));
-        out.extend((sprint.end.as_deref()).and_then(|e| Some(days_left_short(e, now)?.0)));
+        match (sprint.end.as_deref()).and_then(|e| days_left_short(e, now)) {
+            Some((left, _)) => out.push(left),
+            None => out.extend(day(&sprint.end).map(|d| format!("ends {d}"))),
+        }
     }
     out.join(" · ")
+}
+
+/// When a sprint runs, for its tooltip: `14 Nov – 28 Nov`, or the one day known.
+pub fn sprint_dates(sprint: &Sprint) -> Option<String> {
+    let day = |d: &Option<String>| d.as_deref().map(short_day);
+    match (day(&sprint.start), day(&sprint.end)) {
+        (Some(a), Some(b)) => Some(format!("{a} – {b}")),
+        (Some(a), None) => Some(format!("Starts {a}")),
+        (None, Some(b)) => Some(format!("Ends {b}")),
+        (None, None) => None,
+    }
 }
 
 /// How far a slice's issues have got, sub-tasks left out: done, in progress or review, to do.
@@ -989,14 +1004,13 @@ mod tests {
         let now = stamp("2026-11-23T09:30:00.000Z").unwrap();
         let mut active = sprint(34, "active", Some("2026-11-28T17:00:00.000Z"));
         active.start = Some("2026-11-17T09:00:00.000Z".into());
+        // Its count and its days, the dates left to the tooltip.
         assert_eq!(
             sprint_words(&active, Some(78), "issue", now),
-            "78 issues · ends 28 Nov · 5d left"
+            "78 issues · 5d left"
         );
-        assert_eq!(
-            sprint_words(&active, None, "issue", now),
-            "ends 28 Nov · 5d left"
-        );
+        assert_eq!(sprint_words(&active, None, "issue", now), "5d left");
+        assert_eq!(sprint_dates(&active).as_deref(), Some("17 Nov – 28 Nov"));
         let mut future = sprint(35, "future", None);
         future.start = Some("2026-12-03T09:00:00.000Z".into());
         assert_eq!(
