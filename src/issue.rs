@@ -79,13 +79,14 @@ pub struct LinkPick {
 }
 
 fn section(title: &str) -> Div {
+    // As a request's cards are drawn (the owner, 2026-11-26): the head a band of its own over a hairline, the body
+    // on the page's colour.
     div()
         .flex()
         .flex_col()
         .rounded(px(8.))
         .border_1()
-        .border_color(theme::border())
-        .bg(theme::panel())
+        .border_color(theme::island_border())
         .overflow_hidden()
         .child(
             div()
@@ -94,8 +95,9 @@ fn section(title: &str) -> Div {
                 .gap(px(8.))
                 .px(px(16.))
                 .h(px(40.))
+                .bg(theme::panel())
                 .border_b_1()
-                .border_color(theme::border())
+                .border_color(theme::island_border())
                 .text_size(px(13.))
                 .font_weight(FontWeight::SEMIBOLD)
                 .text_color(theme::text())
@@ -110,8 +112,7 @@ fn section_with(head: Div) -> Div {
         .flex_col()
         .rounded(px(8.))
         .border_1()
-        .border_color(theme::border())
-        .bg(theme::panel())
+        .border_color(theme::island_border())
         .overflow_hidden()
         .child(
             head.flex()
@@ -119,8 +120,9 @@ fn section_with(head: Div) -> Div {
                 .gap(px(8.))
                 .px(px(16.))
                 .h(px(40.))
+                .bg(theme::panel())
                 .border_b_1()
-                .border_color(theme::border())
+                .border_color(theme::island_border())
                 .text_size(px(13.))
                 .text_color(theme::text()),
         )
