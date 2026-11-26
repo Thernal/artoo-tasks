@@ -3099,10 +3099,13 @@ impl Page {
                         .child("None")
                         .into_any_element()
                 } else {
+                    // Room over and under the chips, so their round ends stay inside the field's corners, as the
+                    // design's (the owner, 2026-11-26).
                     div()
                         .flex()
                         .flex_wrap()
                         .gap(px(4.))
+                        .py(px(3.))
                         .children(labels.iter().map(|l| look::pill(l)))
                         .into_any_element()
                 }
