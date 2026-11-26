@@ -1155,12 +1155,43 @@ impl Page {
                 .w(px(96.))
                 .flex_none()
                 .when(top, |d| d.pt(px(6.)))
+                .when(!top, |d| d.h(px(28.)).flex().items_center())
                 .text_size(px(12.))
                 .text_color(theme::muted())
                 .child(text.to_owned())
         };
         let line =
             |l: Div, v: AnyElement| div().flex().items_start().gap(px(12.)).child(l).child(v);
+        // Two fields side by side, as the design pairs them (the owner, 2026-11-26): each half its label and its
+        // select, which fills the half.
+        let half = |text: &str, v: Div| {
+            div()
+                .flex_1()
+                .min_w_0()
+                .flex()
+                .items_start()
+                .gap(px(12.))
+                .child(
+                    div()
+                        .w(px(96.))
+                        .h(px(28.))
+                        .flex_none()
+                        .flex()
+                        .items_center()
+                        .text_size(px(12.))
+                        .text_color(theme::muted())
+                        .child(text.to_owned()),
+                )
+                .child(v.w_auto().flex_1().min_w_0())
+        };
+        let pair = |a: Div, b: Option<Div>| {
+            div()
+                .flex()
+                .items_start()
+                .gap(px(20.))
+                .child(a)
+                .child(b.unwrap_or_else(|| div().flex_1()))
+        };
         let typing_summary = at == At::Summary;
         let edit = &self
             .sheet
@@ -1341,18 +1372,17 @@ impl Page {
             } else {
                 f.name.clone()
             };
-            asks_lines.push(line(label(&name, false), sel.into_any_element()));
+            asks_lines.push(half(&name, sel));
         }
-        let mut form = div()
-            .flex()
-            .flex_col()
-            .gap(px(10.))
-            .p(px(18.))
-            .child(line(
-                label("Project", false),
-                project_sel.into_any_element(),
-            ))
-            .child(line(label("Type", false), kind_sel.into_any_element()));
+        let mut asks_cells = asks_lines.into_iter();
+        let mut asks_lines = Vec::new();
+        while let Some(a) = asks_cells.next() {
+            asks_lines.push(pair(a, asks_cells.next()));
+        }
+        let mut form = div().flex().flex_col().gap(px(10.)).p(px(18.)).child(pair(
+            half("Project", project_sel),
+            Some(half("Type", kind_sel)),
+        ));
         if let Some((pk, ps)) = &parent {
             form = form.child(line(
                 label("Parent", false),
@@ -1410,16 +1440,17 @@ impl Page {
                     .children(description)
                     .into_any_element(),
             ))
-            .child(line(label("Assignee", false), who_sel.into_any_element()));
-        if let Some(p) = pri_sel {
-            form = form.child(line(label("Priority", false), p.into_any_element()));
-        }
-        if caps.labels {
-            form = form.child(line(label("Labels", false), labels_sel.into_any_element()));
-        }
-        if let Some(sp) = sprint_sel {
-            form = form.child(line(label("Sprint", false), sp.into_any_element()));
-        }
+            .child(pair(
+                half("Assignee", who_sel),
+                pri_sel.map(|p| half("Priority", p)),
+            ));
+        let labels_half = caps.labels.then(|| half("Labels", labels_sel));
+        let sprint_half = sprint_sel.map(|sp| half("Sprint", sp));
+        form = match (labels_half, sprint_half) {
+            (Some(l), sp) => form.child(pair(l, sp)),
+            (None, Some(sp)) => form.child(pair(sp, None)),
+            (None, None) => form,
+        };
         if !asks_lines.is_empty() {
             form = form.child(
                 div()

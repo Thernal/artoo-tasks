@@ -136,11 +136,18 @@ impl Form {
         let kind = self.kind();
         let jira = kind.id == trackers::JIRA;
         let cloud = jira && trackers::cloud_host(&self.host());
+        let host = self.host();
         match (&kind.token_page, cloud) {
             (Some((words, url)), _) => Some((words.clone(), url.clone())),
             (None, true) => Some((
                 "Make one on id.atlassian.com".into(),
                 "https://id.atlassian.com/manage-profile/security/api-tokens".into(),
+            )),
+            // Jira Server and Data Center: the profile's tokens on the site typed (the owner, 2026-11-26: the link
+            // goes where the site says, and shows).
+            (None, false) if jira && !host.is_empty() => Some((
+                "Make one in your Jira profile".into(),
+                server_token_page(&host),
             )),
             _ => None,
         }
@@ -150,6 +157,18 @@ impl Form {
     fn kind(&self) -> TrackerKind {
         trackers::kind(&trackers::kind_of(&self.host()))
     }
+}
+
+/// Where Jira Server and Data Center make a personal access token: the profile's tab on `host`.
+fn server_token_page(host: &str) -> String {
+    let base = if host.contains("://") {
+        host.trim_end_matches('/').to_owned()
+    } else {
+        format!("https://{}", host.trim_end_matches('/'))
+    };
+    format!(
+        "{base}/secure/ViewProfile.jspa?selectedTab=com.atlassian.pats.pats-plugin:jira-user-personal-access-tokens"
+    )
 }
 
 pub struct Accounts {
@@ -1169,9 +1188,11 @@ impl Accounts {
             );
         } else {
             out = out.child(
-                div().pt(px(10.)).child(
-                    crate::look::small_button("tracker-add", "Add a tracker")
+                // As the design draws it: a button as wide as its words, its + first (the owner, 2026-11-26).
+                div().pt(px(10.)).flex().child(
+                    crate::look::small_button("tracker-add", "")
                         .child(icons::icon("plus").size(px(12.)).text_color(theme::muted()))
+                        .child("Add a tracker")
                         .tip(adds())
                         .on_click(cx.listener(|this, _: &ClickEvent, _, cx| this.open(None, cx))),
                 ),
@@ -1274,7 +1295,7 @@ fn test_button(id: SharedString, unreached: bool) -> gpui::Stateful<gpui::Div> {
             .cursor_pointer()
             .hover(|s| s.bg(theme::hover()))
             .child(
-                icons::icon("user-check")
+                icons::icon("activity")
                     .size(px(14.))
                     .text_color(theme::muted()),
             )

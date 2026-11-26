@@ -300,8 +300,10 @@ impl Page {
                     .children(changed)
                     .child(head)
                     .child(
+                        // The content as wide as a request's, Details right beside it (the owner, 2026-11-26).
                         div()
                             .w_full()
+                            .max_w(px(960. + 16. + 260. + 40.))
                             .flex()
                             .items_start()
                             .gap(px(16.))

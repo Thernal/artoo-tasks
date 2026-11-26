@@ -223,6 +223,27 @@ pub fn days_left(end: &str, now: i64) -> Option<(String, bool)> {
     })
 }
 
+/// `days_left` in a few letters, where room is short (the owner, 2026-11-26: `ended 12 days ago` was a sentence):
+/// `5d left`, `ends today`, `12d over`; and whether they are few.
+pub fn days_left_short(end: &str, now: i64) -> Option<(String, bool)> {
+    let days = stamp(end)?.div_euclid(86_400) - now.div_euclid(86_400);
+    Some(match days {
+        ..0 => (format!("{}d over", -days), true),
+        0 => ("ends today".into(), true),
+        days => (format!("{days}d left"), days <= 3),
+    })
+}
+
+/// A day without its weekday: `28 Nov`.
+fn short_day(text: &str) -> String {
+    let words = day_words(text);
+    const DAYS: [&str; 7] = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    match words.split_once(' ') {
+        Some((week, rest)) if DAYS.contains(&week) => rest.to_owned(),
+        _ => words,
+    }
+}
+
 /// A number as people read it: `2,123`.
 pub fn grouped(n: usize) -> String {
     let digits = n.to_string();
@@ -239,7 +260,7 @@ pub fn grouped(n: usize) -> String {
 /// A sprint's line under its name in the sprint picker: `78 issues · ends Fri 28 Nov · 5 days left`, `No issues yet ·
 /// starts Wed 3 Dec`, `ended Fri 14 Nov`; its issues left out until they are counted.
 pub fn sprint_words(sprint: &Sprint, count: Option<usize>, unit: &str, now: i64) -> String {
-    let day = |d: &Option<String>| d.as_deref().map(day_words);
+    let day = |d: &Option<String>| d.as_deref().map(short_day);
     let mut out = Vec::new();
     if sprint.state == "closed" {
         out.extend(day(&sprint.end).map(|d| format!("ended {d}")));
@@ -254,7 +275,7 @@ pub fn sprint_words(sprint: &Sprint, count: Option<usize>, unit: &str, now: i64)
         out.extend(day(&sprint.start).map(|d| format!("starts {d}")));
     } else {
         out.extend(day(&sprint.end).map(|d| format!("ends {d}")));
-        out.extend((sprint.end.as_deref()).and_then(|e| Some(days_left(e, now)?.0)));
+        out.extend((sprint.end.as_deref()).and_then(|e| Some(days_left_short(e, now)?.0)));
     }
     out.join(" · ")
 }
@@ -970,22 +991,22 @@ mod tests {
         active.start = Some("2026-11-17T09:00:00.000Z".into());
         assert_eq!(
             sprint_words(&active, Some(78), "issue", now),
-            "78 issues · ends Sat 28 Nov · 5 days left"
+            "78 issues · ends 28 Nov · 5d left"
         );
         assert_eq!(
             sprint_words(&active, None, "issue", now),
-            "ends Sat 28 Nov · 5 days left"
+            "ends 28 Nov · 5d left"
         );
         let mut future = sprint(35, "future", None);
         future.start = Some("2026-12-03T09:00:00.000Z".into());
         assert_eq!(
             sprint_words(&future, Some(0), "issue", now),
-            "No issues yet · starts Thu 3 Dec"
+            "No issues yet · starts 3 Dec"
         );
         let closed = sprint(33, "closed", Some("2026-11-14T17:00:00.000Z"));
         assert_eq!(
             sprint_words(&closed, Some(40), "issue", now),
-            "ended Sat 14 Nov"
+            "ended 14 Nov"
         );
     }
 

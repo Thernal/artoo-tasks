@@ -134,15 +134,18 @@ pub fn side(page: &Entity<Page>, width: f32, cx: &mut App) -> Option<AnyElement>
                                 leave_host.clone(),
                             );
                             let words = format!("Stop reading {host} in this project");
+                            // Each with its icon, as the design draws the menu (the owner, 2026-11-26).
                             let item = MenuItem::new(words, move |_, cx| {
                                 store
                                     .update(cx, |s, cx| s.link(&project, &host, false, cx))
                                     .ok();
-                            });
+                            })
+                            .icon("x");
                             let frame = leave_frame.clone();
                             let accounts = MenuItem::new("Settings → Accounts", move |_, cx| {
                                 frame.open_settings(artoo_plugin_sdk::hosts::connect::SETTINGS, cx)
-                            });
+                            })
+                            .icon("settings");
                             leave_frame.menu(e.position, vec![vec![item], vec![accounts]], cx);
                         })
                         .flex()

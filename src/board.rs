@@ -1036,7 +1036,19 @@ impl Page {
                     .size(px(12.))
                     .text_color(theme::muted()),
             )
-            .tip(format!("{}\nPick a sprint  S", slice.name))
+            // The sprint's goal on hover (the owner, 2026-11-26), not a line of its own.
+            .map(|d| {
+                let goal = (slice.sprint.as_ref())
+                    .map(|sp| sp.goal.clone())
+                    .filter(|g| !g.is_empty());
+                match goal {
+                    Some(goal) => d.tip_two(
+                        format!("{}  ·  Pick a sprint  S", slice.name),
+                        format!("Goal: {goal}"),
+                    ),
+                    None => d.tip(format!("{}\nPick a sprint  S", slice.name)),
+                }
+            })
             .on_click(cx.listener(|this, _: &ClickEvent, _, cx| this.open_sprints(cx)))
             .children(self.pop_here(&Anchor::Picker, PopKind::Sprints, cx))
             .into_any_element()
@@ -1092,47 +1104,38 @@ impl Page {
             .gap(px(8.))
             .child(bar)
             .child(div().text_color(theme::text()).child(progress.short(count)));
+        // Its dates a clock and a few letters, the days and the goal in the tooltip (the owner, 2026-11-26: the goal
+        // on hover only, the dates short).
         let when = sprint.end.as_deref().map(|end| {
-            let left = slices::days_left(end, crate::store::now());
+            let now = crate::store::now();
+            let left = slices::days_left_short(end, now);
+            let mut tip = span_words(sprint.start.as_deref(), end);
+            if let Some((words, _)) = slices::days_left(end, now) {
+                tip = format!("{tip} · {words}");
+            }
+            let goal = sprint.goal.clone();
             div()
+                .id(SharedString::from(format!("sprint-when-{id}")))
                 .flex()
                 .items_center()
-                .gap(px(8.))
+                .gap(px(4.))
                 .child(
-                    div()
-                        .flex()
-                        .items_center()
-                        .gap(px(4.))
-                        .child(
-                            icons::icon("clock")
-                                .size(px(12.))
-                                .text_color(theme::muted()),
-                        )
-                        .child(span_words(sprint.start.as_deref(), end)),
+                    icons::icon("clock")
+                        .size(px(12.))
+                        .text_color(theme::muted()),
                 )
                 .children(left.map(|(words, few)| {
                     div()
                         .when(few, |d| d.text_color(theme::warning()))
                         .child(words)
                 }))
-        });
-        let goal = (!sprint.goal.is_empty()).then(|| {
-            div()
-                .id(SharedString::from(format!("sprint-goal-{id}")))
-                .flex_1()
-                .min_w_0()
-                .flex()
-                .items_center()
-                .gap(px(6.))
-                .child(
-                    div()
-                        .flex_none()
-                        .text_size(px(10.))
-                        .text_color(theme::faint())
-                        .child("GOAL"),
-                )
-                .child(div().min_w_0().truncate().child(sprint.goal.clone()))
-                .tip(sprint.goal.clone())
+                .map(|d| {
+                    if goal.is_empty() {
+                        d.tip(tip)
+                    } else {
+                        d.tip_two(tip, format!("Goal: {goal}"))
+                    }
+                })
         });
         let head = div()
             .id(SharedString::from(format!("sprint-head-{id}")))
@@ -1151,11 +1154,11 @@ impl Page {
         let Some(folded) = fold else {
             return head
                 .child(line().children(when).child(div().flex_1()).child(how_far))
-                .children(goal.map(|g| line().child(g)))
                 .into_any_element();
         };
         let fold_id = part_id(id);
-        head.bg(theme::base())
+        // As light as the design's head, not the list's darkest (the owner, 2026-11-26).
+        head.bg(theme::panel())
             .cursor_pointer()
             .child(
                 line()
@@ -1174,13 +1177,7 @@ impl Page {
                             .text_color(theme::text())
                             .child(sprint.name.clone()),
                     )
-                    .children(when),
-            )
-            .child(
-                line()
-                    .pl(px(20.))
-                    .children(goal)
-                    .when(sprint.goal.is_empty(), |d| d.child(div().flex_1()))
+                    .children(when)
                     .child(how_far),
             )
             .on_click(cx.listener(move |this, _: &ClickEvent, _, cx| this.fold(&fold_id, cx)))
@@ -2683,12 +2680,8 @@ impl Page {
         if let Some(p) = &r.priority {
             meta = meta.child(look::priority_fact(&r.key, p));
         }
-        if r.subtasks.1 > 0 {
-            meta = meta.child(look::subtasks_fact(&r.key, r.subtasks.0, r.subtasks.1));
-        }
-        if r.comments > 0 {
-            meta = meta.child(look::comments_fact(&r.key, r.comments));
-        }
+        // A card says its key, priority and what blocks it, as the design's cards do: no counts (the owner,
+        // 2026-11-26: no comment count on the cards).
         if let Some(b) = r.blocked_by.first() {
             meta = meta.child(look::blocked_fact(&r.key, b));
         }

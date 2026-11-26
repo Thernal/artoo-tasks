@@ -315,11 +315,15 @@ impl Page {
                 page.update(cx, |p, cx| act(p, &key, cx)).ok();
             })
         };
+        // Each with its icon, as the design's row menu (the owner, 2026-11-26).
         let mut first = vec![
-            item("Open", |p, key, cx| p.open_issue(key, cx)).key("↵"),
+            item("Open", |p, key, cx| p.open_issue(key, cx))
+                .icon("open")
+                .key("↵"),
             item("Assign…", |p, key, cx| {
                 p.open_pop(PopKind::Assign, Anchor::Row(key.to_owned()), key, cx)
             })
+            .icon("user")
             .key("A"),
         ];
         if self.can_move(&[key.to_owned()], cx) {
@@ -327,18 +331,25 @@ impl Page {
                 item("Move to…", |p, key, cx| {
                     p.open_move_to(Anchor::Row(key.to_owned()), key, cx)
                 })
+                .icon("layers")
                 .key("M"),
             );
         }
         let s = self.store.read(cx);
         let url = s.browse_url(key);
         let copied = key.to_owned();
-        let mut second = vec![gpui_menu_item("Copy key", move |cx| {
-            cx.write_to_clipboard(gpui::ClipboardItem::new_string(copied.clone()))
-        })];
-        if let Some(url) = url {
+        let tracker = url.as_deref().map(crate::trackers::tracker_of);
+        let mut second = vec![
+            gpui_menu_item("Copy key", move |cx| {
+                cx.write_to_clipboard(gpui::ClipboardItem::new_string(copied.clone()))
+            })
+            .icon("copy"),
+        ];
+        if let (Some(url), Some(tracker)) = (url, tracker) {
             second.push(
-                gpui_menu_item("Open in the tracker", move |cx| cx.open_url(&url)).key("⌥⌘J"),
+                gpui_menu_item(&format!("Open in {tracker}"), move |cx| cx.open_url(&url))
+                    .icon("external")
+                    .key("⌥⌘J"),
             );
         }
         self.frame.menu(at, vec![first, second], cx);

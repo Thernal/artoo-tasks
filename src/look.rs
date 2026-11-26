@@ -241,7 +241,14 @@ pub fn key(text: &str) -> Div {
 pub fn state_mark(state: &State, size: f32) -> Div {
     let c = state_color(state);
     let review = state.name.to_lowercase().contains("review");
+    // A kanban board's Backlog: a box of rows, as the design marks it, not a ring like To do's.
+    let backlog = state.name.eq_ignore_ascii_case("backlog");
     match state.category.as_str() {
+        _ if backlog => div().flex_none().child(
+            icons::icon("rows")
+                .size(px(size))
+                .text_color(theme::muted()),
+        ),
         "done" => div()
             .flex_none()
             .child(icons::icon("check").size(px(size)).text_color(c)),
