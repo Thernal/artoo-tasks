@@ -66,7 +66,7 @@ pub fn scope(store: Entity<Store>, page: Entity<Page>) -> Search {
                 let open = Opens::Route(issue_route(&key, Some(&host)));
                 found.insert(
                     0,
-                    Find::new("Tasks", key, "Reading…".into(), open).glyph("list-checks"),
+                    Find::new("Tasks", key, "Reading…".into(), open).glyph(crate::look::TASKS_ICON),
                 );
             }
             found
@@ -280,7 +280,7 @@ fn issue_find(s: &Store, site: &str, row: &Row) -> Find {
         detail,
         open,
     )
-    .glyph("list-checks")
+    .glyph(crate::look::TASKS_ICON)
 }
 
 #[cfg(test)]

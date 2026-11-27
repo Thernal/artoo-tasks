@@ -2047,7 +2047,6 @@ impl Page {
                 .tip(why)
         });
         let tinted = glyph.is_some();
-        let indent = shown.group == Group::Story && r.parent.is_some();
         div()
             .id(SharedString::from(format!("row-{}", r.key)))
             .group("tasks-row")
@@ -2058,7 +2057,9 @@ impl Page {
             .pt(px(9.))
             .gap(px(6.))
             .h(px(62.))
-            .pl(px(if indent { 28. } else { 8. }))
+            // A sub-task under its story as far left as any row: its face under the story's mark (the owner,
+            // 2026-11-27).
+            .pl(px(8.))
             .pr(px(12.))
             .border_b_1()
             .border_color(theme::border())
@@ -2838,7 +2839,7 @@ impl Page {
         else {
             return frame()
                 .child(controls::empty_state(
-                    "list-checks",
+                    look::TASKS_ICON,
                     "No issue picked".into(),
                     String::new(),
                     None,

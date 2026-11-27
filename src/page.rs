@@ -24,7 +24,7 @@ use artoo_plugin_sdk::kit::composer::{
 };
 use artoo_plugin_sdk::kit::emoji_picker::PickerKey;
 use artoo_plugin_sdk::kit::fresh::SlotAction;
-use artoo_plugin_sdk::kit::{controls, icons, markdown, motion, px, room, theme};
+use artoo_plugin_sdk::kit::{controls, markdown, motion, px, room, theme};
 use artoo_plugin_sdk::shell::{Frame, MenuItem, Typed, spaces};
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
@@ -136,18 +136,6 @@ pub enum Spot {
         mine: bool,
         count: Option<usize>,
     },
-}
-
-impl Spot {
-    /// What the note's place says, as the Agents window says it.
-    fn words(&self) -> String {
-        match self {
-            Spot::Para { key, para, .. } => format!("{key} · description · ¶{para}"),
-            Spot::Board {
-                name, mine, count, ..
-            } => places_of::board_words(name, *mine, *count),
-        }
-    }
 }
 
 /// A note for the agent being written.
@@ -974,7 +962,6 @@ impl Page {
         let Some(note) = &self.note else {
             return div().into_any_element();
         };
-        let place = note.spot.words();
         // Who reads it as the design's chip says it: the chat's mark, its agent and its folder (the owner, 2026-11-26).
         let agents = self.frame.services().get::<Rc<dyn Agents>>();
         let chat = (agents.as_ref()).and_then(|a| {
@@ -1037,21 +1024,8 @@ impl Page {
             .flex_col()
             .items_start()
             .gap(px(6.))
+            // Who reads it, and no box saying where: the page shows where it is written (the owner, 2026-11-27).
             .child(note.compose.audience_chip(&audience(), on.clone()))
-            .child(
-                div()
-                    .h(px(22.))
-                    .px(px(8.))
-                    .flex()
-                    .items_center()
-                    .gap(px(6.))
-                    .rounded(px(6.))
-                    .bg(theme::selected())
-                    .text_size(px(11.))
-                    .text_color(theme::muted())
-                    .child(icons::icon("pin").size(px(12.)).text_color(theme::muted()))
-                    .child(place),
-            )
             .into_any_element();
         let tail = note.compose.foot(
             FootLook {

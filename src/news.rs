@@ -25,7 +25,9 @@ pub fn offer(cx: &mut App) {
                 Kind::listed(MENTIONED, "Mentions you").why(Why::Mentions),
                 Kind::listed(CHANGED, "Your issue changed"),
             ],
-        ),
+        )
+        // Its rows wear its tab's icon, not a letter (the owner, 2026-11-27).
+        .icon(crate::look::TASKS_ICON),
     );
 }
 

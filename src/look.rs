@@ -8,6 +8,9 @@ use artoo_plugin_sdk::gpui::{
 use artoo_plugin_sdk::kit::hover::Hover;
 use artoo_plugin_sdk::kit::{discussion, icons, motion, px, theme};
 
+/// Tasks' glyph, its tab's and its notices' in the Inbox: the design's square with a check (the owner, 2026-11-27).
+pub const TASKS_ICON: &str = "square-check";
+
 /// A colour as the marks mix it: `c` at `alpha`.
 pub fn tint(c: impl Into<Hsla>, alpha: f32) -> Hsla {
     let c: Hsla = c.into();
@@ -353,6 +356,13 @@ pub fn short_ago(time: i64) -> String {
 
 /// A 24 px square button with one icon, its tooltip set by the caller: the design's icon button in a row of facts.
 pub fn square_button(id: impl Into<SharedString>, icon: &'static str) -> gpui::Stateful<Div> {
+    // A trash is the danger's, everywhere: its colour on its tint (the owner, 2026-11-27).
+    if icon == "trash" {
+        return danger_frame(div().id(id.into()))
+            .justify_center()
+            .size(px(24.))
+            .child(icons::icon(icon).size(px(14.)).text_color(theme::removed()));
+    }
     div()
         .id(id.into())
         .flex_none()
@@ -366,6 +376,36 @@ pub fn square_button(id: impl Into<SharedString>, icon: &'static str) -> gpui::S
         .cursor_pointer()
         .hover(|s| s.bg(theme::hover()))
         .child(icons::icon(icon).size(px(14.)).text_color(theme::muted()))
+}
+
+/// `button` for what cannot be undone (Remove): the danger's colour on its tint.
+pub fn danger_button(
+    id: impl Into<SharedString>,
+    words: impl Into<SharedString>,
+) -> gpui::Stateful<Div> {
+    danger_frame(div().id(id.into()))
+        .gap(px(4.))
+        .h(px(28.))
+        .px(px(10.))
+        .text_size(px(13.))
+        .child(words.into())
+}
+
+/// The danger's frame: its tint, deeper under the pointer, its colour for the words and glyphs.
+fn danger_frame(d: gpui::Stateful<Div>) -> gpui::Stateful<Div> {
+    d.flex_none()
+        .flex()
+        .items_center()
+        .rounded(px(6.))
+        .bg(theme::danger_bg())
+        .text_color(theme::removed())
+        .cursor_pointer()
+        .hover(|s| {
+            s.bg(gpui::Rgba {
+                a: 0.26,
+                ..theme::removed()
+            })
+        })
 }
 
 /// A fact of a row or a card: a glyph and, where it has one, its figure; its sentence is the tooltip.

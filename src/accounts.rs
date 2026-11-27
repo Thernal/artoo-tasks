@@ -773,7 +773,7 @@ impl Accounts {
                     .gap(px(8.))
                     .when(host.is_some(), |d| {
                         d.child(
-                            crate::look::button("tracker-remove", "Remove")
+                            crate::look::danger_button("tracker-remove", "Remove")
                                 .tip_two("Stop reading this tracker", "Its token stays")
                                 .on_click(
                                     cx.listener(|this, _: &ClickEvent, _, cx| this.remove(cx)),

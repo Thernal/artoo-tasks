@@ -297,7 +297,8 @@ fn install(cx: &mut App) {
         SpaceInfo {
             space: Space(page::SPACE),
             label: "Tasks",
-            icon: "list-checks",
+            // The design's glyph for Tasks (the owner, 2026-11-27).
+            icon: crate::look::TASKS_ICON,
             order: 50,
             go: "tasks.space",
         },
@@ -662,7 +663,7 @@ fn install(cx: &mut App) {
                         .map(|i| i.row.summary.clone())
                         .unwrap_or_default();
                     Some(ItemRow {
-                        icon: icons::icon("list-checks")
+                        icon: icons::icon(crate::look::TASKS_ICON)
                             .size(px(14.))
                             .text_color(theme::muted())
                             .into_any_element(),

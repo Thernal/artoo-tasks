@@ -2315,6 +2315,7 @@ impl Page {
         let acts = if mine {
             div()
                 .flex()
+                .items_center()
                 .gap(px(6.))
                 .invisible()
                 .group_hover("cmt", |s| s.visible())
@@ -2333,14 +2334,9 @@ impl Page {
                         })),
                 )
                 .child(
-                    div()
-                        .id(SharedString::from(format!("cmt-del-{}", c.id)))
-                        .cursor_pointer()
-                        .child(
-                            icons::icon("trash")
-                                .size(px(13.))
-                                .text_color(theme::muted()),
-                        )
+                    // A trash is the danger's: its colour on its tint (the owner, 2026-11-27).
+                    crate::look::square_button(format!("cmt-del-{}", c.id), "trash")
+                        .size(px(22.))
                         .tip("Delete")
                         .on_click(cx.listener(move |this, _: &ClickEvent, _, cx| {
                             this.delete_comment(&id2, cx)

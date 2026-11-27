@@ -169,7 +169,7 @@ fn card(store: &Store, key: &str) -> Option<IssueCard> {
         source: "Jira".to_owned(),
         host: site.host().to_owned(),
         // Tasks' own tab icon: where a click on the key opens it.
-        space_icon: Some("list-checks"),
+        space_icon: Some(look::TASKS_ICON),
         state: Some((
             look::display_state(&row.state.name),
             row.state.category == "done",
