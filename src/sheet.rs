@@ -1620,12 +1620,17 @@ impl Page {
             .flex()
             .flex_col()
             .overflow_y_scroll();
-        for d in &drafts {
+        for (n, d) in drafts.iter().enumerate() {
             let id = d.id;
             let on = id == pick;
             list = list.child(
                 div()
                     .id(SharedString::from(format!("draft-{id}")))
+                    // The first row's lit ground keeps inside the card's top corners: a clip is square (the owner,
+                    // 2026-11-27).
+                    .when(n == 0 && !artoo_plugin_sdk::kit::flat(), |s| {
+                        s.rounded_t(px(artoo_plugin_sdk::kit::ISLAND_RADIUS - 1.))
+                    })
                     .flex()
                     .flex_col()
                     .gap(px(4.))
